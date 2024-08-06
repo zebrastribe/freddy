@@ -1,22 +1,26 @@
 body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-h1 {
-  font-size: 10vw; /* Adjust the number to scale appropriately */
-  margin: 0;
-  word-wrap: break-word;
-  text-align: center;
-}
-.container{
-  display: flex;
-}
-.center{
-  text-align:center
-}
+        h1 {
+            font-size: 10vw; /* The scaling of the font size */
+            margin: 0;
+            word-wrap: break-word;
+            text-align: center;
+            opacity: 0; /* Start with the text hidden */
+            transform: scale(0.8); /* Start slightly smaller */
+            animation: fadeInScale 1.5s ease-in forwards; /* Animation properties */
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1; /* Fade in to full opacity */
+                transform: scale(1); /* Scale up to original size */
+            }
+        }
