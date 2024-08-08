@@ -7,7 +7,6 @@
     <link href="css/main.css" rel="stylesheet" />
     <link rel="icon" href="img/favicon.png" type="image/png">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
 </head>
 <body>
     <div class="container center">
@@ -15,31 +14,7 @@
     </div>
     <div id="map"></div>
 
-    <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
-    authDomain: "tracker-6a648.firebaseapp.com",
-    projectId: "tracker-6a648",
-    storageBucket: "tracker-6a648.appspot.com",
-    messagingSenderId: "789878332530",
-    appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
-    measurementId: "G-XMHHKFJ9QW"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-    
+    <script type="module" src="js/main.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="js/main.js"></script>
 </body>
 </html>
