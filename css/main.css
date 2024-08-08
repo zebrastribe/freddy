@@ -6,9 +6,9 @@ body, html {
             display: flex;
             justify-content: center;
             align-items: center;
-        }
+}
 
-        h1 {
+h1 {
             font-size: 10vw; /* The scaling of the font size */
             margin: 0;
             word-wrap: break-word;
@@ -16,11 +16,16 @@ body, html {
             opacity: 0; /* Start with the text hidden */
             transform: scale(0.8); /* Start slightly smaller */
             animation: fadeInScale 1.5s ease-in forwards; /* Animation properties */
-        }
+}
 
-        @keyframes fadeInScale {
-            to {
-                opacity: 1; /* Fade in to full opacity */
-                transform: scale(1); /* Scale up to original size */
-            }
-        }
+@keyframes fadeInScale {
+to {
+            opacity: 1; /* Fade in to full opacity */
+            transform: scale(1); /* Scale up to original size */
+   }
+}
+
+#map {
+            height: 400px;
+            width: 100%;
+}
