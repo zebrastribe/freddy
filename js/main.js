@@ -24,5 +24,5 @@ if (navigator.geolocation) {
     }
   );
 } else {
-  console.log("Geolocation is not supported by this browser.");
+  console.log("Geolocation is not supported by this browser...");
 }
