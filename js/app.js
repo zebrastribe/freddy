@@ -1,5 +1,5 @@
 // Import Firebase services
-import { db, auth, onAuthStateChanged } from './firebase-setup.js';
+import { db, auth, onAuthStateChanged } from './js/firebase-setup.js';
 
 // React component
 class App extends React.Component {
