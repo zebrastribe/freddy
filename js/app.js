@@ -25,7 +25,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
             latitude: latitude,
             longitude: longitude
           });
-          console.log("Document successfully written with GPS coordinates!");
+          console.log("Document successfully written with GPS coordinates!s");
           updateMap(latitude, longitude);
         } catch (error) {
           console.error("Error writing document: ", error);
