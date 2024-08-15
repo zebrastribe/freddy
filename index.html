@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Freddy: hvor er du?</title>
+  <title>React App with Firebase</title>
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <!-- Favicon -->
+  <link rel="icon" href="img/favicon.ico">
 </head>
 <body>
   <div id="root" class="container mx-auto mt-5"></div>
@@ -14,8 +18,9 @@
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js"></script>
   <!-- Babel for JSX transformation -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- Your custom script -->
+  <!-- Firebase setup using ES module syntax -->
   <script type="module" src="js/firebase-setup.js"></script>
+  <!-- Your custom script -->
   <script type="text/babel" src="js/app.js"></script>
 </body>
 </html>
