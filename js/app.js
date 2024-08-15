@@ -1,4 +1,4 @@
-import { db, auth, onAuthStateChanged, serverTimestamp } from './firebase-setup.js';
+import { db, auth, onAuthStateChanged, collection, addDoc, serverTimestamp } from './firebase-setup.js';
 
 let user = null;
 
@@ -11,19 +11,17 @@ onAuthStateChanged(auth, (currentUser) => {
   }
 });
 
-document.getElementById('clickButton').addEventListener('click', () => {
+document.getElementById('clickButton').addEventListener('click', async () => {
   if (user) {
-    // Ensure db.collection is called correctly
-    db.collection("clicks").add({
-      timestamp: serverTimestamp(),
-      userId: user.uid
-    })
-    .then(() => {
+    try {
+      await addDoc(collection(db, "clicks"), {
+        timestamp: serverTimestamp(),
+        userId: user.uid
+      });
       console.log("Document successfully written!");
-    })
-    .catch((error) => {
+    } catch (error) {
       console.error("Error writing document: ", error);
-    });
+    }
   } else {
     console.error("User is not authenticated, cannot add document");
   }
