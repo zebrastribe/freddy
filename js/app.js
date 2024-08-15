@@ -1,4 +1,5 @@
-import { db, auth, onAuthStateChanged, collection, addDoc, serverTimestamp } from './firebase-setup.js';
+import { db, auth, onAuthStateChanged } from './firebase-setup.js';
+import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 let user = null;
 
