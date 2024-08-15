@@ -1,10 +1,6 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+// app.js
 
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
   authDomain: "tracker-6a648.firebaseapp.com",
@@ -16,23 +12,33 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 // Sign in anonymously
-signInAnonymously(auth).catch((error) => {
+auth.signInAnonymously().catch((error) => {
   console.error("Error signing in anonymously: ", error);
 });
 
-// Function to store data on button click
-document.getElementById('myButton').addEventListener('click', () => {
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      addDoc(collection(db, "clicks"), {
-        timestamp: serverTimestamp(),
-        userId: user.uid
+// React component
+class App extends React.Component {
+  componentDidMount() {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        this.user = user;
+      } else {
+        console.error("User is not authenticated");
+      }
+    });
+  }
+
+  handleClick = () => {
+    if (this.user) {
+      db.collection("clicks").add({
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        userId: this.user.uid
       })
       .then(() => {
         console.log("Document successfully written!");
@@ -40,8 +46,19 @@ document.getElementById('myButton').addEventListener('click', () => {
       .catch((error) => {
         console.error("Error writing document: ", error);
       });
-    } else {
-      console.error("User is not authenticated");
     }
-  });
-});
+  };
+
+  render() {
+    return (
+      <div className="flex justify-center">
+        <button onClick={this.handleClick} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          Click Me
+        </button>
+      </div>
+    );
+  }
+}
+
+// Render the React component
+ReactDOM.render(<App />, document.getElementById('root'));
