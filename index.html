@@ -22,5 +22,14 @@
   </div>
   <!-- Your custom script -->
   <script type="module" src="js/app.js"></script>
+  <!-- Ensure initMap is defined globally -->
+  <script>
+    function initMap() {
+      window.map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 0, lng: 0 },
+        zoom: 2
+      });
+    }
+  </script>
 </body>
 </html>

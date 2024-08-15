@@ -2,7 +2,6 @@ import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 let user = null;
-let map;
 let marker;
 
 onAuthStateChanged(auth, (currentUser) => {
@@ -42,13 +41,6 @@ document.getElementById('clickButton').addEventListener('click', async () => {
   }
 });
 
-function initMap() {
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 0, lng: 0 },
-    zoom: 2
-  });
-}
-
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
   if (marker) {
@@ -56,12 +48,9 @@ function updateMap(latitude, longitude) {
   } else {
     marker = new google.maps.Marker({
       position: position,
-      map: map
+      map: window.map
     });
   }
-  map.setCenter(position);
-  map.setZoom(15);
+  window.map.setCenter(position);
+  window.map.setZoom(15);
 }
-
-// Expose initMap to the global scope
-window.initMap = initMap;
