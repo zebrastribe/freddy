@@ -16,7 +16,6 @@ onAuthStateChanged(auth, (currentUser) => {
 
 document.getElementById('clickButton').addEventListener('click', async () => {
   if (user) {
-<<<<<<< HEAD
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
@@ -34,24 +33,6 @@ document.getElementById('clickButton').addEventListener('click', async () => {
         }
       }, (error) => {
         console.error("Error getting geolocation: ", error);
-=======
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          await addDoc(collection(db, "clicks"), {
-            timestamp: serverTimestamp(),
-            userId: user.uid,
-            latitude: latitude,
-            longitude: longitude
-          });
-          console.log("Document successfully written with GPS coordinates!");
-        } catch (error) {
-          console.error("Error writing document: ", error);
-        }
-      }, (error) => {
-        console.error("Error getting geolocation: ", error);
->>>>>>> 7f6fa0b599393c7327de7428b1a2b852e299c952
       });
     } else {
       console.error("Geolocation is not supported by this browser.");
