@@ -1,7 +1,7 @@
 // Import Firebase services
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
@@ -26,5 +26,4 @@ signInAnonymously(auth).catch((error) => {
   console.error("Error signing in anonymously: ", error);
 });
 
-// Export Firebase services for use in app.js
-export { db, auth, onAuthStateChanged };
+export { db, auth, onAuthStateChanged, serverTimestamp };
