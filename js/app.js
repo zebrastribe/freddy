@@ -1,7 +1,7 @@
-// Import Firebase services.
+// Import Firebase services
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
@@ -41,7 +41,7 @@ class App extends React.Component {
   handleClick = () => {
     if (this.user) {
       db.collection("clicks").add({
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        timestamp: serverTimestamp(),
         userId: this.user.uid
       })
       .then(() => {
