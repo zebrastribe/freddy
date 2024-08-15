@@ -6,7 +6,7 @@ onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
   } else {
-    console.error("User is not authenticated");
+    console.error("User is not authenticated...");
   }
 });
 
