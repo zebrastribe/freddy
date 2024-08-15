@@ -1,5 +1,5 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 let user = null;
 let marker;
@@ -8,6 +8,7 @@ onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
     console.log("User authenticated:", user);
+    fetchLastCoordinates(); // Fetch last coordinates when user is authenticated
   } else {
     console.error("User is not authenticated");
   }
@@ -25,7 +26,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
             latitude: latitude,
             longitude: longitude
           });
-          console.log("Document successfully written with GPS coordinates!s");
+          console.log("Document successfully written with GPS coordinates!");
           updateMap(latitude, longitude);
         } catch (error) {
           console.error("Error writing document: ", error);
@@ -40,6 +41,20 @@ document.getElementById('clickButton').addEventListener('click', async () => {
     console.error("User is not authenticated, cannot add document");
   }
 });
+
+async function fetchLastCoordinates() {
+  if (user) {
+    const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const lastDoc = querySnapshot.docs[0];
+      const { latitude, longitude } = lastDoc.data();
+      updateMap(latitude, longitude);
+    } else {
+      console.log("No previous coordinates found.");
+    }
+  }
+}
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
