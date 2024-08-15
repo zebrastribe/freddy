@@ -14,14 +14,25 @@ onAuthStateChanged(auth, (currentUser) => {
 
 document.getElementById('clickButton').addEventListener('click', async () => {
   if (user) {
-    try {
-      await addDoc(collection(db, "clicks"), {
-        timestamp: serverTimestamp(),
-        userId: user.uid
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          await addDoc(collection(db, "clicks"), {
+            timestamp: serverTimestamp(),
+            userId: user.uid,
+            latitude: latitude,
+            longitude: longitude
+          });
+          console.log("Document successfully written with GPS coordinates!");
+        } catch (error) {
+          console.error("Error writing document: ", error);
+        }
+      }, (error) => {
+        console.error("Error getting geolocation: ", error);
       });
-      console.log("Document successfully written!");
-    } catch (error) {
-      console.error("Error writing document: ", error);
+    } else {
+      console.error("Geolocation is not supported by this browser.");
     }
   } else {
     console.error("User is not authenticated, cannot add document");
