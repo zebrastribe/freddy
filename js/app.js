@@ -3,6 +3,8 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 
 let user = null;
 let marker;
+let currentPage = 1;
+const entriesPerPage = 20;
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
@@ -89,14 +91,41 @@ async function fetchCheckIns() {
     const querySnapshot = await getDocs(q);
     const checkInsList = document.getElementById('checkInsList');
     checkInsList.innerHTML = ''; // Clear the list
-    querySnapshot.forEach((doc) => {
+
+    const docs = querySnapshot.docs;
+    const totalPages = Math.ceil(docs.length / entriesPerPage);
+    const start = (currentPage - 1) * entriesPerPage;
+    const end = start + entriesPerPage;
+    const currentDocs = docs.slice(start, end);
+
+    currentDocs.forEach((doc) => {
       const { name, latitude, longitude, timestamp } = doc.data();
+      const date = timestamp.toDate();
+      const day = date.toLocaleString('en-US', { weekday: 'long' });
+      const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
+      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
       const listItem = document.createElement('li');
-      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${timestamp.toDate()}`;
+      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${day} ${formattedDate} at ${time}`;
       checkInsList.appendChild(listItem);
     });
+
+    document.getElementById('prevPage').disabled = currentPage === 1;
+    document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
 }
+
+document.getElementById('prevPage').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    fetchCheckIns();
+  }
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+  currentPage++;
+  fetchCheckIns();
+});
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };

@@ -23,30 +23,17 @@
         <p class="mb-4 text-lg text-gray-900 font-black text-center max-w-lg">
             Feeling adventurous too? Don't forget to use the check-in function on this page to keep up with Freddy's latest exploits and join in on the fun!
         </p>
-        <div class="w-full">
-            <div class="flex border-b border-gray-200">
-                <button id="checkInTab" class="px-4 py-2 text-blue-600 border-b-2 border-blue-600 focus:outline-none">Check In</button>
-                <button id="recordedCheckInsTab" class="px-4 py-2 text-gray-600 hover:text-blue-600 focus:outline-none">Recorded Check-Ins</button>
-            </div>
-            <div id="checkInContent" class="p-4">
-                <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded">
-                <div id="error-message" class="text-red-500 mb-4 hidden">Please enter your name.</div>
-                <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center">
-                    <span>Check Freddy in 🐱!</span>
-                    <svg id="spinner" class="hidden ml-2 w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
-                </button>
-                <div id="success-message" class="text-green-500 mt-4 hidden">Successfully checked in!</div>
-                <div id="map" class="mt-5" style="height: 400px;"></div>
-            </div>
-            <div id="recordedCheckInsContent" class="p-4 hidden">
-                <ul id="checkInsList" class="list-disc list-inside">
-                  <ul id="checkInsList" class="mt-5 w-full max-w-lg"></ul>
-                  <div id="map" class="mt-5" style="height: 400px;"></div>
-                </ul>
-            </div>
+        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded">
+        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Check Freddy in 🐱!
+        </button>
+        <div id="map" class="mt-5" style="height: 400px;"></div>
+        <div id="checkInsListContainer" class="mt-5 w-full max-w-lg">
+          <ul id="checkInsList" class="list-disc list-inside"></ul>
+          <div id="pagination" class="flex justify-between mt-4">
+            <button id="prevPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Previous</button>
+            <button id="nextPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Next</button>
+          </div>
         </div>
     </div>
   </div>
@@ -61,25 +48,6 @@
       });
     }
     window.initMap = initMap; // Expose initMap to the global scope
-  </script>
-  <script>
-    document.getElementById('checkInTab').addEventListener('click', () => {
-      document.getElementById('checkInContent').classList.remove('hidden');
-      document.getElementById('recordedCheckInsContent').classList.add('hidden');
-      document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
-      document.getElementById('checkInTab').classList.remove('text-gray-600');
-      document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
-      document.getElementById('recordedCheckInsTab').classList.add('text-gray-600');
-    });
-
-    document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-      document.getElementById('checkInContent').classList.add('hidden');
-      document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-      document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-      document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
-      document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-      document.getElementById('checkInTab').classList.add('text-gray-600');
-    });
   </script>
 </body>
 </html>
