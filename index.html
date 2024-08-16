@@ -24,9 +24,13 @@
             Feeling adventurous too? Don't forget to use the check-in function on this page to keep up with Freddy's latest exploits and join in on the fun!
         </p>
         <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded" required>
-        <div id="error-message" class="text-red-500 mb-4 hidden">Come on, just write funny one ♥</div>
-        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Check Freddy in 🐱!
+        <div id="error-message" class="text-red-500 mb-4 hidden">Please enter your name.</div>
+        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center">
+            <span>Check Freddy in 🐱!</span>
+            <svg id="spinner" class="hidden ml-2 w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
         </button>
         <div id="map" class="mt-5" style="height: 400px;"></div>
     </div>

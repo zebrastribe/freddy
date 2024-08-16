@@ -17,6 +17,7 @@ onAuthStateChanged(auth, (currentUser) => {
 document.getElementById('clickButton').addEventListener('click', async () => {
   const nameInput = document.getElementById('nameInput');
   const errorMessage = document.getElementById('error-message');
+  const spinner = document.getElementById('spinner');
 
   if (nameInput.value.trim() === "") {
     errorMessage.classList.remove('hidden');
@@ -28,6 +29,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
   if (user) {
     const name = nameInput.value; // Get the value from the input field
     if (navigator.geolocation) {
+      spinner.classList.remove('hidden'); // Show spinner
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         try {
@@ -42,9 +44,12 @@ document.getElementById('clickButton').addEventListener('click', async () => {
           updateMap(latitude, longitude);
         } catch (error) {
           console.error("Error writing document: ", error);
+        } finally {
+          spinner.classList.add('hidden'); // Hide spinner
         }
       }, (error) => {
         console.error("Error getting geolocation: ", error);
+        spinner.classList.add('hidden'); // Hide spinner
       });
     } else {
       console.error("Geolocation is not supported by this browser.");
