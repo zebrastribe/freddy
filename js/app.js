@@ -16,6 +16,7 @@ onAuthStateChanged(auth, (currentUser) => {
 
 document.getElementById('clickButton').addEventListener('click', async () => {
   if (user) {
+    const name = document.getElementById('nameInput').value; // Get the value from the input field
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
@@ -23,10 +24,11 @@ document.getElementById('clickButton').addEventListener('click', async () => {
           await addDoc(collection(db, "clicks"), {
             timestamp: serverTimestamp(),
             userId: user.uid,
+            name: name, // Include the name in the document
             latitude: latitude,
             longitude: longitude
           });
-          console.log("Document successfully written with GPS coordinates!");
+          console.log("Document successfully written with GPS coordinates and name!");
           updateMap(latitude, longitude);
         } catch (error) {
           console.error("Error writing document: ", error);
