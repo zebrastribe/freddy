@@ -4,7 +4,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 let user = null;
 let marker;
 let currentPage = 1;
-const entriesPerPage = 20;
+const entriesPerPage = 10;
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
