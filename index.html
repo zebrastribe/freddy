@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Freddy: Were are you?</title>
+  <title>Freddy: Where are you?</title>
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <!-- Main CSS -->
@@ -23,7 +23,8 @@
         <p class="mb-4 text-lg text-gray-900 font-black text-center max-w-lg">
             Feeling adventurous too? Don't forget to use the check-in function on this page to keep up with Freddy's latest exploits and join in on the fun!
         </p>
-        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded">
+        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded" required>
+        <div id="error-message" class="text-red-500 mb-4 hidden">Come on, just write funny one ♥</div>
         <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Check Freddy in 🐱!
         </button>

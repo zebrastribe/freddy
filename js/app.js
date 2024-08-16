@@ -15,8 +15,18 @@ onAuthStateChanged(auth, (currentUser) => {
 });
 
 document.getElementById('clickButton').addEventListener('click', async () => {
+  const nameInput = document.getElementById('nameInput');
+  const errorMessage = document.getElementById('error-message');
+
+  if (nameInput.value.trim() === "") {
+    errorMessage.classList.remove('hidden');
+    return;
+  } else {
+    errorMessage.classList.add('hidden');
+  }
+
   if (user) {
-    const name = document.getElementById('nameInput').value; // Get the value from the input field
+    const name = nameInput.value; // Get the value from the input field
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
