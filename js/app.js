@@ -103,7 +103,7 @@ async function fetchCheckIns() {
       const date = timestamp.toDate();
       const day = date.toLocaleString('en-US', { weekday: 'long' });
       const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
       const listItem = document.createElement('li');
       listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${day} ${formattedDate} at ${time}`;
