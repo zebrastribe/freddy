@@ -9,6 +9,7 @@ onAuthStateChanged(auth, (currentUser) => {
     user = currentUser;
     console.log("User authenticated:", user);
     fetchLastCoordinates(); // Fetch last coordinates when user is authenticated
+    fetchCheckIns(); // Fetch and display all check-ins
   } else {
     console.error("User is not authenticated");
   }
@@ -50,6 +51,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
             nameInput.disabled = false; // Re-enable the input field after 15 seconds
             successMessage.classList.add('hidden'); // Hide success message
           }, 15000);
+          fetchCheckIns(); // Refresh the check-ins list
         } catch (error) {
           console.error("Error writing document: ", error);
         } finally {
@@ -78,6 +80,21 @@ async function fetchLastCoordinates() {
     } else {
       console.log("No previous coordinates found.");
     }
+  }
+}
+
+async function fetchCheckIns() {
+  if (user) {
+    const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
+    const querySnapshot = await getDocs(q);
+    const checkInsList = document.getElementById('checkInsList');
+    checkInsList.innerHTML = ''; // Clear the list
+    querySnapshot.forEach((doc) => {
+      const { name, latitude, longitude, timestamp } = doc.data();
+      const listItem = document.createElement('li');
+      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${timestamp.toDate()}`;
+      checkInsList.appendChild(listItem);
+    });
   }
 }
 
