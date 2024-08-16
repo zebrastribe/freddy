@@ -18,6 +18,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
   const nameInput = document.getElementById('nameInput');
   const errorMessage = document.getElementById('error-message');
   const spinner = document.getElementById('spinner');
+  const successMessage = document.getElementById('success-message');
 
   if (nameInput.value.trim() === "") {
     errorMessage.classList.remove('hidden');
@@ -42,6 +43,13 @@ document.getElementById('clickButton').addEventListener('click', async () => {
           });
           console.log("Document successfully written with GPS coordinates and name!");
           updateMap(latitude, longitude);
+          successMessage.classList.remove('hidden'); // Show success message
+          nameInput.value = ""; // Clear the input field
+          nameInput.disabled = true; // Disable the input field
+          setTimeout(() => {
+            nameInput.disabled = false; // Re-enable the input field after 15 seconds
+            successMessage.classList.add('hidden'); // Hide success message
+          }, 15000);
         } catch (error) {
           console.error("Error writing document: ", error);
         } finally {
