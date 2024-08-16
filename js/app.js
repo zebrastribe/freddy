@@ -90,7 +90,7 @@ async function fetchCheckIns() {
     const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
     const querySnapshot = await getDocs(q);
     const checkInsList = document.getElementById('checkInsList');
-    checkInsList.innerHTML = ''; // Clear the list
+    checkInsList.innerHTML = ''; // Clear the table body
 
     const docs = querySnapshot.docs;
     const totalPages = Math.ceil(docs.length / entriesPerPage);
@@ -105,9 +105,15 @@ async function fetchCheckIns() {
       const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
       const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-      const listItem = document.createElement('li');
-      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${day} ${formattedDate} at ${time}`;
-      checkInsList.appendChild(listItem);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="py-2 px-4 border-b border-gray-200">${name}</td>
+        <td class="py-2 px-4 border-b border-gray-200">${latitude}</td>
+        <td class="py-2 px-4 border-b border-gray-200">${longitude}</td>
+        <td class="py-2 px-4 border-b border-gray-200">${formattedDate}</td>
+        <td class="py-2 px-4 border-b border-gray-200">${time}</td>
+      `;
+      checkInsList.appendChild(row);
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
