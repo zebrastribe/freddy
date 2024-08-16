@@ -25,23 +25,28 @@
       </p>
       
       <!-- Tabs -->
-      <div class="tabs mb-4">
-        <button id="checkInTab" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Check In</button>
-        <button id="recordedCheckInsTab" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Recorded Check-Ins</button>
+      <div class="w-full max-w-lg">
+        <div class="flex border-b border-gray-200">
+          <button id="checkInTab" class="flex-1 py-2 px-4 text-center text-blue-600 border-b-2 border-blue-600">Check In</button>
+          <button id="recordedCheckInsTab" class="flex-1 py-2 px-4 text-center text-gray-600">Recorded Check-Ins</button>
+        </div>
       </div>
       
       <!-- Check In Content -->
-      <div id="checkInContent" class="tab-content">
-        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded">
-        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+      <div id="checkInContent" class="tab-content w-full max-w-lg">
+        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
+        <div id="error-message" class="hidden text-red-500 mb-4">Well, you could make one up – I guess?</div>
+        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
           Check Freddy in 🐱!
         </button>
-        <div id="map" class="mt-5" style="height: 400px;"></div>
+        <div id="spinner" class="hidden mt-4">Loading...</div>
+        <div id="success-message" class="hidden text-green-500 mt-4">Check-in successful!</div>
+        <div id="map" class="mt-5" style="height: 400px; width: 100%;"></div>
       </div>
       
       <!-- Recorded Check-Ins Content -->
-      <div id="recordedCheckInsContent" class="tab-content hidden">
-        <div id="checkInsListContainer" class="mt-5 w-full max-w-lg">
+      <div id="recordedCheckInsContent" class="tab-content hidden w-full max-w-lg">
+        <div id="checkInsListContainer" class="mt-5 w-full">
           <ul id="checkInsList" class="list-disc list-inside"></ul>
           <div id="pagination" class="flex justify-between mt-4">
             <button id="prevPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Previous</button>
@@ -67,19 +72,19 @@
     document.getElementById('checkInTab').addEventListener('click', () => {
       document.getElementById('checkInContent').classList.remove('hidden');
       document.getElementById('recordedCheckInsContent').classList.add('hidden');
-      document.getElementById('checkInTab').classList.add('bg-blue-500', 'text-white');
-      document.getElementById('checkInTab').classList.remove('bg-gray-300', 'text-gray-800');
-      document.getElementById('recordedCheckInsTab').classList.add('bg-gray-300', 'text-gray-800');
-      document.getElementById('recordedCheckInsTab').classList.remove('bg-blue-500', 'text-white');
+      document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
+      document.getElementById('checkInTab').classList.remove('text-gray-600');
+      document.getElementById('recordedCheckInsTab').classList.add('text-gray-600');
+      document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
     });
 
     document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
       document.getElementById('checkInContent').classList.add('hidden');
       document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-      document.getElementById('recordedCheckInsTab').classList.add('bg-blue-500', 'text-white');
-      document.getElementById('recordedCheckInsTab').classList.remove('bg-gray-300', 'text-gray-800');
-      document.getElementById('checkInTab').classList.add('bg-gray-300', 'text-gray-800');
-      document.getElementById('checkInTab').classList.remove('bg-blue-500', 'text-white');
+      document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
+      document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
+      document.getElementById('checkInTab').classList.add('text-gray-600');
+      document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
     });
   </script>
 </body>
