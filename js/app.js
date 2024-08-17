@@ -5,6 +5,7 @@ let user = null;
 let marker;
 let currentPage = 1;
 const entriesPerPage = 20;
+window.recordedMarkers = [];
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
