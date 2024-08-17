@@ -16,7 +16,7 @@ function initMap() {
   window.map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 55.6606892, lng: 12.5225537 },
     zoom: 10,
-    mapId: 'recordedCheckInsTab' // Replace with your valid Map ID
+    mapId: '8bac4e61a05fc3c2' // Replace with your valid Map ID
   });
 }
 
@@ -24,7 +24,7 @@ function initRecordedMap() {
   window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
     center: { lat: 55.6606892, lng: 12.5225537 },
     zoom: 10,
-    mapId: 'recordedMap' // Replace with your valid Map ID
+    mapId: '8bac4e61a05fc3c2' // Replace with your valid Map ID
   });
 }
 
