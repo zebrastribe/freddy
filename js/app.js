@@ -93,6 +93,7 @@ window.initRecordedMap = initRecordedMap; // Expose initRecordedMap to the globa
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
+  console.log("Updating map with position:", position);
   if (window.map) {
     if (window.marker) {
       window.marker.position = position;
@@ -111,6 +112,7 @@ function updateMap(latitude, longitude) {
 
 function addAdvancedMarker(latitude, longitude, title) {
   const position = { lat: latitude, lng: longitude };
+  console.log("Adding advanced marker with position:", position, "and title:", title);
   if (window.recordedMap) {
     const marker = new google.maps.marker.AdvancedMarkerElement({
       position: position,
@@ -121,7 +123,7 @@ function addAdvancedMarker(latitude, longitude, title) {
   } else {
     console.error("Recorded map is not initialized.");
   }
-} 
+}
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
