@@ -2,6 +2,10 @@
 import { db } from './firebase-setup.js';
 import { getUser } from './auth.js';
 import { addMarker } from './map.js';
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore"; // Import Firestore functions
+
+const entriesPerPage = 10; // Define the number of entries per page
+let currentPage = 1; // Initialize the current page
 
 export async function fetchLastCoordinates() {
   const user = getUser();
