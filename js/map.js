@@ -42,7 +42,5 @@ function updateMap(latitude, longitude) {
   map.setZoom(15);
 }
 
-// Ensure functions are globally accessible
-window.initMap = initMap;
-window.addMarker = addMarker;
-window.updateMap = updateMap;
+// Export functions for use in other modules
+export { initMap, addMarker, updateMap };
