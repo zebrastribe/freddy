@@ -215,7 +215,7 @@ async function fetchCheckIns() {
     const end = start + entriesPerPage;
     const currentDocs = docs.slice(start, end);
 
-    // Clear existing markers
+    // Clear existing markerss
     if (window.recordedMarkers) {
       window.recordedMarkers.forEach(marker => marker.setMap(null));
     }
