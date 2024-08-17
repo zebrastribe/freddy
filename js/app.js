@@ -7,6 +7,8 @@ let currentPage = 1;
 const entriesPerPage = 20;
 window.recordedMarkers = [];
 
+const MAP_ID = '8bac4e61a05fc3c2'; // Replace with your valid Map ID
+
 function initMaps() {
   initMap();
   initRecordedMap();
@@ -16,7 +18,7 @@ function initMap() {
   window.map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 55.6606892, lng: 12.5225537 },
     zoom: 10,
-    mapId: '8bac4e61a05fc3c2' // Replace with your valid Map ID
+    mapId: MAP_ID
   });
 }
 
@@ -24,11 +26,12 @@ function initRecordedMap() {
   window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
     center: { lat: 55.6606892, lng: 12.5225537 },
     zoom: 10,
-    mapId: '8bac4e61a05fc3c2' // Replace with your valid Map ID
+    mapId: MAP_ID
   });
 }
 
 window.initMaps = initMaps; // Expose initMaps to the global scope
+window.initRecordedMap = initRecordedMap; // Expose initRecordedMap to the global scope
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
