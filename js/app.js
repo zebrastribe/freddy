@@ -231,3 +231,25 @@ document.getElementById('checkInTab').addEventListener('click', () => {
   document.getElementById('recordedCheckInsContent').classList.add('hidden');
   document.getElementById('checkInContent').classList.remove('hidden');
 });
+
+document.getElementById('checkInTab').addEventListener('click', () => {
+  document.getElementById('recordedCheckInsContent').classList.add('hidden');
+  document.getElementById('checkInContent').classList.remove('hidden');
+  
+  // Update tab styles
+  document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
+  document.getElementById('checkInTab').classList.remove('text-gray-600', 'border-gray-200');
+  document.getElementById('recordedCheckInsTab').classList.add('text-gray-600', 'border-gray-200');
+  document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
+});
+
+document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
+  document.getElementById('checkInContent').classList.add('hidden');
+  document.getElementById('recordedCheckInsContent').classList.remove('hidden');
+  
+  // Update tab styles
+  document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
+  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
+  document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
+  document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
+});
