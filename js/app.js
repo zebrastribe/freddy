@@ -1,4 +1,7 @@
 // app.js
+import { db, auth } from './firebase-setup.js';
+
+// app.js
 document.addEventListener('DOMContentLoaded', () => {
   // Tab switching logic
   document.getElementById('checkInTab').addEventListener('click', () => {
