@@ -80,40 +80,6 @@
   <script type="module" src="js/app.js"></script>
   <!-- Ensure initMap and initRecordedMap are defined globally -->
   <script>
-  function initMaps() {
-    initMap();
-    initRecordedMap();
-  }
-
-  function initMap() {
-    window.map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 55.6606892, lng: 12.5225537 },
-      zoom: 10
-    });
-  }
-
-  function initRecordedMap() {
-    window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-      center: { lat: 55.6606892, lng: 12.5225537 },
-      zoom: 10
-    });
-  }
-
-  window.initMaps = initMaps; // Expose initMaps to the global scope
-
-  function updateMap(latitude, longitude) {
-    const position = { lat: latitude, lng: longitude };
-    if (marker) {
-      marker.position = position;
-    } else {
-      marker = new google.maps.Marker({
-        position: position,
-        map: window.map
-      });
-    }
-    window.map.setCenter(position);
-    window.map.setZoom(15);
-  }
 
     // Tab switching logic
     document.getElementById('checkInTab').addEventListener('click', () => {
