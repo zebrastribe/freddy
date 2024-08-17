@@ -9,16 +9,6 @@ function getUrlParameter(name) {
   return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
-// Get token from URL and validate it
-window.onload = () => {
-  const token = getUrlParameter('token');
-  if (token) {
-    validateToken(token);
-  } else {
-    document.getElementById('content').innerHTML = '<h1>Error: No Token Provided</h1>';
-  }
-};
-
 // Function to validate token
 async function validateToken(token) {
   try {
@@ -40,13 +30,30 @@ async function validateToken(token) {
       }
     } else {
       // Token does not exist
-      document.getElementById('content').innerHTML = '<h1>Error: Invalid Token</h1>';
+      const contentElement = document.getElementById('content');
+      if (contentElement) {
+        contentElement.innerHTML = '<h1>Error: Invalid Token</h1>';
+      }
     }
   } catch (error) {
     console.error("Error validating token:", error);
-    document.getElementById('content').innerHTML = '<h1>Error: Unable to Validate Token</h1>';
+    const contentElement = document.getElementById('content');
+    if (contentElement) {
+      contentElement.innerHTML = '<h1>Error: Unable to Validate Token</h1>';
+    }
   }
 }
+
+// Get token from URL and validate it
+window.onload = () => {
+  const token = getUrlParameter('token');
+  const contentElement = document.getElementById('content');
+  if (token) {
+    validateToken(token);
+  } else if (contentElement) {
+    contentElement.innerHTML = '<h1>Error: No Token Provided</h1>';
+  }
+};
 
 
 
