@@ -101,7 +101,7 @@ async function fetchCheckIns() {
 
     // Clear existing markers
     if (window.recordedMarkers) {
-      window.recordedMarkers.forEach(marker => marker.setMap(null));
+      window.recordedMarkers.forEach(marker => marker.map = null);
     }
     window.recordedMarkers = [];
 
@@ -141,8 +141,8 @@ async function fetchCheckIns() {
 
       checkInsList.appendChild(row);
 
-      // Add marker to the recorded map
-      const marker = new google.maps.Marker({
+      // Add marker to the recorded map using AdvancedMarkerElement
+      const marker = new google.maps.marker.AdvancedMarkerElement({
         position: { lat: latitude, lng: longitude },
         map: window.recordedMap,
         title: name
