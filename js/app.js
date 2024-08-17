@@ -1,5 +1,5 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Function to get URL parameter
 function getUrlParameter(name) {
