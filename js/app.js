@@ -42,6 +42,16 @@ function updateMap(latitude, longitude) {
   window.map.setZoom(15);
 }
 
+function addAdvancedMarker(latitude, longitude, title) {
+  const position = { lat: latitude, lng: longitude };
+  const marker = new google.maps.marker.AdvancedMarkerElement({
+    position: position,
+    map: window.recordedMap,
+    title: title
+  });
+  window.recordedMarkers.push(marker);
+}
+
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
@@ -177,12 +187,7 @@ async function fetchCheckIns() {
       checkInsList.appendChild(row);
 
       // Add marker to the recorded map using AdvancedMarkerElement
-      const marker = new google.maps.marker.AdvancedMarkerElement({
-        position: { lat: latitude, lng: longitude },
-        map: window.recordedMap,
-        title: name
-      });
-      window.recordedMarkers.push(marker);
+      addAdvancedMarker(latitude, longitude, name);
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
