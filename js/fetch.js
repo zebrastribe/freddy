@@ -7,6 +7,19 @@ import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.
 const entriesPerPage = 10; // Define the number of entries per page
 let currentPage = 1; // Initialize the current page
 
+// Define the updateMap function
+function updateMap(latitude, longitude) {
+  const map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: latitude, lng: longitude },
+    zoom: 8
+  });
+  new google.maps.Marker({
+    position: { lat: latitude, lng: longitude },
+    map: map,
+    title: "Last known location"
+  });
+}
+
 export async function fetchLastCoordinates() {
   const user = getUser();
   if (user) {

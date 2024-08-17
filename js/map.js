@@ -36,3 +36,6 @@ export function updateMap(latitude, longitude) {
   map.setCenter(position);
   map.setZoom(15);
 }
+
+// Ensure initMap is globally accessible
+window.initMap = initMap;
