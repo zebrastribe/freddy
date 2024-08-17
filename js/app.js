@@ -207,7 +207,7 @@ async function fetchCheckIns() {
       // Add click event listener to zoom in on the marker
       row.addEventListener('click', () => {
         window.recordedMap.setCenter({ lat: latitude, lng: longitude });
-        window.recordedMap.setZoom(15);
+        window.recordedMap.setZoom(18); // Tighter zoom level
       });
     });
 
