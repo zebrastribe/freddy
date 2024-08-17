@@ -98,6 +98,12 @@ async function fetchCheckIns() {
     const end = start + entriesPerPage;
     const currentDocs = docs.slice(start, end);
 
+    // Clear existing markers
+    if (window.recordedMarkers) {
+      window.recordedMarkers.forEach(marker => marker.setMap(null));
+    }
+    window.recordedMarkers = [];
+
     currentDocs.forEach((doc) => {
       const { name, latitude, longitude, timestamp } = doc.data();
       const date = timestamp.toDate();
@@ -133,6 +139,14 @@ async function fetchCheckIns() {
       row.appendChild(timeCell);
 
       checkInsList.appendChild(row);
+
+      // Add marker to the recorded map
+      const marker = new google.maps.Marker({
+        position: { lat: latitude, lng: longitude },
+        map: window.recordedMap,
+        title: name
+      });
+      window.recordedMarkers.push(marker);
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
