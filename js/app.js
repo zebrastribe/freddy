@@ -175,7 +175,7 @@ async function fetchCheckIns() {
       row.setAttribute('data-lng', longitude);
 
       const nameCell = document.createElement('td');
-      nameCell.className = 'py-2 px-4 border-b border-gray-200';
+      nameCell.className = 'py-2 px-4 border-b border-gray-200 text-purple-700 font-bold cursor-pointer';
       nameCell.textContent = name || 'undefined';
       row.appendChild(nameCell);
 
