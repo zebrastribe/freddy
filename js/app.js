@@ -9,18 +9,26 @@ function getUrlParameter(name) {
   return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
+// Function to get URL parameter
+function getUrlParameter(name) {
+  name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+  const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+  const results = regex.exec(location.search);
+  return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
 // Function to validate token
 async function validateToken(token) {
   try {
     const tokenDoc = await getDoc(doc(db, 'tokens', token));
-    const contentElement = document.getElementById('content');
-    if (!contentElement) {
-      console.error("Element with ID 'content' not found.");
-      return;
-    }
     if (tokenDoc.exists()) {
       const data = tokenDoc.data();
       const currentTime = Date.now();
+      const contentElement = document.getElementById('content');
+      if (!contentElement) {
+        console.error("Element with ID 'content' not found.");
+        return;
+      }
       if (!data.used && data.expiry > currentTime) {
         // Token is valid
         contentElement.innerHTML = '<h1>Access Granted</h1><form><!-- Your form here --></form>';
@@ -30,7 +38,7 @@ async function validateToken(token) {
       }
     } else {
       // Token does not exist
-      contentElement.innerHTML = '<h1>Error: Invalid Token</h1>';
+      document.getElementById('content').innerHTML = '<h1>Error: Invalid Token</h1>';
     }
   } catch (error) {
     console.error("Error validating token:", error);
