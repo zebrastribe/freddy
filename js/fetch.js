@@ -2,7 +2,7 @@
 import { db } from './firebase-setup.js';
 import { getUser } from './auth.js';
 import { addMarker } from './map.js';
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore"; // Import Firestore functions
+import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js"; // Import Firestore functions
 
 const entriesPerPage = 10; // Define the number of entries per page
 let currentPage = 1; // Initialize the current page
