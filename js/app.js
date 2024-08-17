@@ -32,9 +32,9 @@ function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
   if (window.map) {
     if (window.marker) {
-      window.marker.setPosition(position);
+      window.marker.position = position;
     } else {
-      window.marker = new google.maps.Marker({
+      window.marker = new google.maps.marker.AdvancedMarkerElement({
         position: position,
         map: window.map
       });
@@ -49,7 +49,7 @@ function updateMap(latitude, longitude) {
 function addAdvancedMarker(latitude, longitude, title) {
   const position = { lat: latitude, lng: longitude };
   if (window.recordedMap) {
-    const marker = new google.maps.Marker({
+    const marker = new google.maps.marker.AdvancedMarkerElement({
       position: position,
       map: window.recordedMap,
       title: title
@@ -154,7 +154,7 @@ async function fetchCheckIns() {
 
     // Clear existing markers
     if (window.recordedMarkers) {
-      window.recordedMarkers.forEach(marker => marker.setMap(null));
+      window.recordedMarkers.forEach(marker => marker.map = null);
     }
     window.recordedMarkers = [];
 
