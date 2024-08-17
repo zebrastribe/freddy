@@ -3,8 +3,6 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 
 let user = null;
 let marker;
-let currentPage = 1;
-const entriesPerPage = 10;
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
@@ -90,81 +88,15 @@ async function fetchCheckIns() {
     const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
     const querySnapshot = await getDocs(q);
     const checkInsList = document.getElementById('checkInsList');
-    checkInsList.innerHTML = ''; // Clear the table body
-
-    const docs = querySnapshot.docs;
-    const totalPages = Math.ceil(docs.length / entriesPerPage);
-    const start = (currentPage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-    const currentDocs = docs.slice(start, end);
-
-    currentDocs.forEach((doc) => {
+    checkInsList.innerHTML = ''; // Clear the list
+    querySnapshot.forEach((doc) => {
       const { name, latitude, longitude, timestamp } = doc.data();
-      const date = timestamp.toDate();
-      const day = date.toLocaleString('en-US', { weekday: 'long' });
-      const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="py-2 px-4 border-b border-gray-200">${name}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${latitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${longitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${formattedDate}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${time}</td>
-      `;
-      checkInsList.appendChild(row);
-
-      // Add marker to the map
-      new google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: window.recordedMap,
-        title: name
-      });
+      const listItem = document.createElement('li');
+      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${timestamp.toDate()}`;
+      checkInsList.appendChild(listItem);
     });
-
-    document.getElementById('prevPage').disabled = currentPage === 1;
-    document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
 }
-
-// Initialize the map for recorded check-ins
-function initRecordedMap() {
-  window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-    center: { lat: 0, lng: 0 },
-    zoom: 2
-  });
-}
-
-// Call initRecordedMap when the Recorded Check-Ins tab is clicked
-document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-  document.getElementById('checkInContent').classList.add('hidden');
-  document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-  document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
-  document.getElementById('checkInTab').classList.add('text-gray-600');
-  document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-
-  // Initialize the map if it hasn't been initialized yet
-  if (!window.recordedMap) {
-    initRecordedMap();
-  }
-
-  // Fetch and display check-ins
-  fetchCheckIns();
-});
-
-document.getElementById('prevPage').addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
-    fetchCheckIns();
-  }
-});
-
-document.getElementById('nextPage').addEventListener('click', () => {
-  currentPage++;
-  fetchCheckIns();
-});
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
