@@ -1,46 +1,46 @@
-// app.js
-import { initMap, addMarker } from './map.js';
-import { db } from './firebase-setup.js';
+// map.js
+let map;
+let recordedMap;
+let marker;
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Tab switching logic
-  document.getElementById('checkInTab').addEventListener('click', () => {
-    document.getElementById('checkInContent').classList.remove('hidden');
-    document.getElementById('recordedCheckInsContent').classList.add('hidden');
-    document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
-    document.getElementById('checkInTab').classList.remove('text-gray-600');
-    document.getElementById('recordedCheckInsTab').classList.add('text-gray-600');
-    document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
+export function initMap() {
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 0, lng: 0 },
+    zoom: 2
   });
 
-  document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-    document.getElementById('checkInContent').classList.add('hidden');
-    document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-    document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-    document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
-    document.getElementById('checkInTab').classList.add('text-gray-600');
-    document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-
-    // Initialize the map if it hasn't been initialized yet
-    if (!window.recordedMap) {
-      initMap();
-    }
-
-    // Fetch and display check-ins
-    fetchCheckIns();
+  recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+    center: { lat: 0, lng: 0 },
+    zoom: 2
   });
+}
 
-  // Function to fetch check-ins from Firestore and add markers
-  async function fetchCheckIns() {
-    try {
-      const querySnapshot = await db.collection("checkins").get();
-      querySnapshot.forEach((doc) => {
-        const checkIn = doc.data();
-        const position = { lat: checkIn.latitude, lng: checkIn.longitude };
-        addMarker(window.recordedMap, position, checkIn.name);
-      });
-    } catch (error) {
-      console.error('Error fetching check-ins:', error);
-    }
+export function addMarker(mapInstance, position, title) {
+  if (!(mapInstance instanceof google.maps.Map)) {
+    console.error('Invalid map instance');
+    return;
   }
-});
+
+  new google.maps.Marker({
+    map: mapInstance,
+    position: position,
+    title: title
+  });
+}
+
+export function updateMap(latitude, longitude) {
+  const position = { lat: latitude, lng: longitude };
+  if (marker) {
+    marker.setPosition(position);
+  } else {
+    marker = new google.maps.Marker({
+      position: position,
+      map: map
+    });
+  }
+  map.setCenter(position);
+  map.setZoom(15);
+}
+
+// Ensure initMap is globally accessible
+window.initMap = initMap;
