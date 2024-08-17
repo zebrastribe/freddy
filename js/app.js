@@ -28,7 +28,6 @@ function initRecordedMap() {
 
 window.initMaps = initMaps; // Expose initMaps to the global scope
 
-
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
