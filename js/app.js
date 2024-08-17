@@ -1,7 +1,8 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 
+// Function to get URL parameter
 function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
   const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
@@ -10,35 +11,36 @@ function getUrlParameter(name) {
 }
 
 // Function to validate token
-function validateToken(token) {
-  db.collection('tokens').doc(token).get().then((doc) => {
-      if (doc.exists) {
-          const data = doc.data();
-          const currentTime = Date.now();
-          if (!data.used && data.expiry > currentTime) {
-              // Token is valid
-              document.getElementById('content').innerHTML = '<h1>Access Granted</h1><form><!-- Your form here --></form>';
-          } else {
-              // Token is expired or already used
-              document.getElementById('content').innerHTML = '<h1>Error: Invalid or Expired Token</h1>';
-          }
+async function validateToken(token) {
+  try {
+    const tokenDoc = await getDoc(doc(db, 'tokens', token));
+    if (tokenDoc.exists()) {
+      const data = tokenDoc.data();
+      const currentTime = Date.now();
+      if (!data.used && data.expiry > currentTime) {
+        // Token is valid
+        document.getElementById('content').innerHTML = '<h1>Access Granted</h1><form><!-- Your form here --></form>';
       } else {
-          // Token does not exist
-          document.getElementById('content').innerHTML = '<h1>Error: Invalid Token</h1>';
+        // Token is expired or already used
+        document.getElementById('content').innerHTML = '<h1>Error: Invalid or Expired Token</h1>';
       }
-  }).catch((error) => {
-      console.error("Error validating token:", error);
-      document.getElementById('content').innerHTML = '<h1>Error: Unable to Validate Token</h1>';
-  });
+    } else {
+      // Token does not exist
+      document.getElementById('content').innerHTML = '<h1>Error: Invalid Token</h1>';
+    }
+  } catch (error) {
+    console.error("Error validating token:", error);
+    document.getElementById('content').innerHTML = '<h1>Error: Unable to Validate Token</h1>';
+  }
 }
 
 // Get token from URL and validate it
 window.onload = () => {
   const token = getUrlParameter('token');
   if (token) {
-      validateToken(token);
+    validateToken(token);
   } else {
-      document.getElementById('content').innerHTML = '<h1>Error: No Token Provided</h1>';
+    document.getElementById('content').innerHTML = '<h1>Error: No Token Provided</h1>';
   }
 };
 
