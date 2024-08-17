@@ -1,7 +1,7 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-// Function to get URL parameter
+// Function to get URL parameter...
 function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
   const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
