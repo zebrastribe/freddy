@@ -7,6 +7,28 @@ let currentPage = 1;
 const entriesPerPage = 20;
 window.recordedMarkers = [];
 
+function initMaps() {
+  initMap();
+  initRecordedMap();
+}
+
+function initMap() {
+  window.map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 55.6606892, lng: 12.5225537 },
+    zoom: 10
+  });
+}
+
+function initRecordedMap() {
+  window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+    center: { lat: 55.6606892, lng: 12.5225537 },
+    zoom: 10
+  });
+}
+
+window.initMaps = initMaps; // Expose initMaps to the global scope
+
+
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
