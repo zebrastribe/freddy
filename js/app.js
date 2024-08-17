@@ -6,6 +6,15 @@ let marker;
 let currentPage = 1;
 const entriesPerPage = 10;
 
+// Ensure the map is initialized before adding markers
+function addMarker(map, position, title) {
+  new google.maps.Marker({
+    map: map,
+    position: position,
+    title: title
+  });
+}
+
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
@@ -116,11 +125,7 @@ async function fetchCheckIns() {
       checkInsList.appendChild(row);
 
       // Add marker to the map
-      new google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: window.recordedMap,
-        title: name
-      });
+      addMarker(window.recordedMap, { lat: latitude, lng: longitude }, name);
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
@@ -179,3 +184,16 @@ function updateMap(latitude, longitude) {
   window.map.setCenter(position);
   window.map.setZoom(15);
 }
+
+// Initialize the app
+function initApp() {
+  onAuthStateChanged(auth, (currentUser) => {
+    if (currentUser) {
+      user = currentUser;
+      console.log('User authenticated:', user);
+      fetchLastCoordinates();
+    }
+  });
+}
+
+initApp();
