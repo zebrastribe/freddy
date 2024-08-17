@@ -105,9 +105,34 @@ async function fetchCheckIns() {
       const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
       const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-      const listItem = document.createElement('li');
-      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${day} ${formattedDate} at ${time}`;
-      checkInsList.appendChild(listItem);
+      const row = document.createElement('tr');
+
+      const nameCell = document.createElement('td');
+      nameCell.className = 'py-2 px-4 border-b border-gray-200';
+      nameCell.textContent = name || 'undefined';
+      row.appendChild(nameCell);
+
+      const latitudeCell = document.createElement('td');
+      latitudeCell.className = 'py-2 px-4 border-b border-gray-200';
+      latitudeCell.textContent = latitude || 'undefined';
+      row.appendChild(latitudeCell);
+
+      const longitudeCell = document.createElement('td');
+      longitudeCell.className = 'py-2 px-4 border-b border-gray-200';
+      longitudeCell.textContent = longitude || 'undefined';
+      row.appendChild(longitudeCell);
+
+      const dateCell = document.createElement('td');
+      dateCell.className = 'py-2 px-4 border-b border-gray-200';
+      dateCell.textContent = `${day} ${formattedDate}`;
+      row.appendChild(dateCell);
+
+      const timeCell = document.createElement('td');
+      timeCell.className = 'py-2 px-4 border-b border-gray-200';
+      timeCell.textContent = time;
+      row.appendChild(timeCell);
+
+      checkInsList.appendChild(row);
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
