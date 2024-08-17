@@ -11,7 +11,7 @@
   <!-- Favicon -->
   <link rel="icon" href="img/favicon.ico">
   <!-- Google Maps JavaScript API -->
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&callback=initMap"></script>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
 </head>
 <body>
   <div class="container mx-auto p-4">
@@ -78,78 +78,5 @@
   </div>
   <!-- Your custom script -->
   <script type="module" src="js/app.js"></script>
-  <!-- Ensure initMap is defined globally -->
-  <script>
- function initMap() {
-    window.map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 0, lng: 0 },
-      zoom: 2
-    });
-  }
-  window.initMap = initMap; // Expose initMap to the global scope
-
-  // Initialize the map for recorded check-ins
-  function initRecordedMap() {
-    window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-      center: { lat: 0, lng: 0 },
-      zoom: 2
-    });
-  }
-
-  // Function to add a marker to the map
-  function addMarker(map, position, title) {
-    if (map instanceof google.maps.Map) {
-      new google.maps.Marker({
-        position: position,
-        map: map,
-        title: title
-      });
-    } else {
-      console.error('Invalid map instance');
-    }
-  }
-
-  // Tab switching logic
-  document.getElementById('checkInTab').addEventListener('click', () => {
-    document.getElementById('checkInContent').classList.remove('hidden');
-    document.getElementById('recordedCheckInsContent').classList.add('hidden');
-    document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
-    document.getElementById('checkInTab').classList.remove('text-gray-600');
-    document.getElementById('recordedCheckInsTab').classList.add('text-gray-600');
-    document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
-  });
-
-  document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-    document.getElementById('checkInContent').classList.add('hidden');
-    document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-    document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-    document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
-    document.getElementById('checkInTab').classList.add('text-gray-600');
-    document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-
-    // Initialize the map if it hasn't been initialized yet
-    if (!window.recordedMap) {
-      initRecordedMap();
-    }
-
-    // Fetch and display check-ins
-    fetchCheckIns();
-  });
-
-  // Example function to fetch check-ins and add markers
-  async function fetchCheckIns() {
-    try {
-      const response = await fetch('/api/checkins');
-      const checkIns = await response.json();
-
-      checkIns.forEach(checkIn => {
-        const position = { lat: checkIn.latitude, lng: checkIn.longitude };
-        addMarker(window.recordedMap, position, checkIn.name);
-      });
-    } catch (error) {
-      console.error('Error fetching check-ins:', error);
-    }
-  }
-  </script>
 </body>
 </html>
