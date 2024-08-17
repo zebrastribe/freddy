@@ -173,29 +173,30 @@ async function fetchCheckIns() {
       const row = document.createElement('tr');
       row.setAttribute('data-lat', latitude);
       row.setAttribute('data-lng', longitude);
+      row.className = 'hover:bg-gray-100 cursor-pointer'; // Add hover effect and cursor pointer
 
       const nameCell = document.createElement('td');
-      nameCell.className = 'py-2 px-4 border-b border-gray-200 text-purple-700 font-bold cursor-pointer';
+      nameCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-purple-700 font-bold cursor-pointer';
       nameCell.textContent = name || 'undefined';
       row.appendChild(nameCell);
 
       const latitudeCell = document.createElement('td');
-      latitudeCell.className = 'py-2 px-4 border-b border-gray-200';
+      latitudeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
       latitudeCell.textContent = latitude || 'undefined';
       row.appendChild(latitudeCell);
 
       const longitudeCell = document.createElement('td');
-      longitudeCell.className = 'py-2 px-4 border-b border-gray-200';
+      longitudeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
       longitudeCell.textContent = longitude || 'undefined';
       row.appendChild(longitudeCell);
 
       const dateCell = document.createElement('td');
-      dateCell.className = 'py-2 px-4 border-b border-gray-200';
+      dateCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
       dateCell.textContent = `${day} ${formattedDate}`;
       row.appendChild(dateCell);
 
       const timeCell = document.createElement('td');
-      timeCell.className = 'py-2 px-4 border-b border-gray-200';
+      timeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
       timeCell.textContent = time;
       row.appendChild(timeCell);
 
