@@ -171,6 +171,8 @@ async function fetchCheckIns() {
       const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
       const row = document.createElement('tr');
+      row.setAttribute('data-lat', latitude);
+      row.setAttribute('data-lng', longitude);
 
       const nameCell = document.createElement('td');
       nameCell.className = 'py-2 px-4 border-b border-gray-200';
@@ -201,6 +203,12 @@ async function fetchCheckIns() {
 
       // Add marker to the recorded map using AdvancedMarkerElement
       addAdvancedMarker(latitude, longitude, name);
+
+      // Add click event listener to zoom in on the marker
+      row.addEventListener('click', () => {
+        window.recordedMap.setCenter({ lat: latitude, lng: longitude });
+        window.recordedMap.setZoom(15);
+      });
     });
 
     document.getElementById('prevPage').disabled = currentPage === 1;
