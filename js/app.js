@@ -1,6 +1,23 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
+const MAP_ID = '8bac4e61a05fc3c2'; // Replace with your valid Map ID
+
+function initSimpleMap() {
+  const map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 55.6606892, lng: 12.5225537 },
+    zoom: 10,
+    mapId: MAP_ID
+  });
+
+  const marker = new google.maps.Marker({
+    position: { lat: 55.6606892, lng: 12.5225537 },
+    map: map
+  });
+}
+
+window.initSimpleMap = initSimpleMap; // Expose initSimpleMap to the global scope
+
 // Function to get URL parameter...
 function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
