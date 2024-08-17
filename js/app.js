@@ -1,7 +1,6 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-
 // Function to get URL parameter
 function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
@@ -14,19 +13,24 @@ function getUrlParameter(name) {
 async function validateToken(token) {
   try {
     const tokenDoc = await getDoc(doc(db, 'tokens', token));
+    const contentElement = document.getElementById('content');
+    if (!contentElement) {
+      console.error("Element with ID 'content' not found.");
+      return;
+    }
     if (tokenDoc.exists()) {
       const data = tokenDoc.data();
       const currentTime = Date.now();
       if (!data.used && data.expiry > currentTime) {
         // Token is valid
-        document.getElementById('content').innerHTML = '<h1>Access Granted</h1><form><!-- Your form here --></form>';
+        contentElement.innerHTML = '<h1>Access Granted</h1><form><!-- Your form here --></form>';
       } else {
         // Token is expired or already used
-        document.getElementById('content').innerHTML = '<h1>Error: Invalid or Expired Token</h1>';
+        contentElement.innerHTML = '<h1>Error: Invalid or Expired Token</h1>';
       }
     } else {
       // Token does not exist
-      document.getElementById('content').innerHTML = '<h1>Error: Invalid Token</h1>';
+      contentElement.innerHTML = '<h1>Error: Invalid Token</h1>';
     }
   } catch (error) {
     console.error("Error validating token:", error);
