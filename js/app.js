@@ -1,5 +1,5 @@
 // app.js
-import { db, auth } from './firebase-setup.js';
+import { db, auth, onAuthStateChanged  } from './firebase-setup.js';
 import { initMap, addMarker } from './map.js'; // Ensure these functions are imported
 
 document.addEventListener('DOMContentLoaded', () => {
