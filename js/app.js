@@ -269,7 +269,7 @@ async function fetchCheckIns() {
       checkInsList.appendChild(row);
 
       // Add marker to the recorded map using AdvancedMarkerElement
-      addAdvancedMarker(latitude, longitude, name);
+      // addAdvancedMarker(latitude, longitude, name);
 
       // Add click event listener to zoom in on the marker
       row.addEventListener('click', () => {
