@@ -1,5 +1,5 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, getDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Function to get URL parameter
 function getUrlParameter(name) {
@@ -22,7 +22,7 @@ window.onload = () => {
 // Function to validate token
 async function validateToken(token) {
   try {
-    const tokenDoc = await getDocs(doc(db, 'tokens', token));
+    const tokenDoc = await getDoc(doc(db, 'tokens', token));
     if (tokenDoc.exists()) {
       const data = tokenDoc.data();
       const currentTime = Date.now();
