@@ -3,7 +3,7 @@ let map;
 let recordedMap;
 let marker;
 
-function initMap() {
+export function initMap() {
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 0, lng: 0 },
     zoom: 2
@@ -13,11 +13,9 @@ function initMap() {
     center: { lat: 0, lng: 0 },
     zoom: 2
   });
-
-  return recordedMap; // Ensure initMap returns the map instance
 }
 
-function addMarker(mapInstance, position, title) {
+export function addMarker(mapInstance, position, title) {
   if (!(mapInstance instanceof google.maps.Map)) {
     console.error('Invalid map instance');
     return;
@@ -30,7 +28,7 @@ function addMarker(mapInstance, position, title) {
   });
 }
 
-function updateMap(latitude, longitude) {
+export function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
   if (marker) {
     marker.setPosition(position);
@@ -44,5 +42,5 @@ function updateMap(latitude, longitude) {
   map.setZoom(15);
 }
 
-// Export functions for use in other modules
-export { initMap, addMarker, updateMap };
+// Ensure initMap is globally accessible
+window.initMap = initMap;
