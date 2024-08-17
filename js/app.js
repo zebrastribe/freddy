@@ -128,6 +128,23 @@ async function fetchCheckIns() {
   }
 }
 
+const MAP_ID = '8bac4e61a05fc3c2'; // Replace with your valid Map ID
+
+function initMaps() {
+  const map = new google.maps.Map(document.getElementById('map'), {
+    center: { lat: 55.6606892, lng: 12.5225537 },
+    zoom: 10,
+    mapId: MAP_ID
+  });
+
+  const marker = new google.maps.Marker({
+    position: { lat: 55.6606892, lng: 12.5225537 },
+    map: map
+  });
+}
+
+window.initMaps = initMaps; // Expose initMaps to the global scope
+
 // Initialize the map for recorded check-ins
 function initRecordedMap() {
   window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
