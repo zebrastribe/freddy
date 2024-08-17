@@ -18,7 +18,7 @@ function initSimpleMap() {
 
 window.initSimpleMap = initSimpleMap; // Expose initSimpleMap to the global scope
 
-// Function to get URL parameter...
+// Function to get URL parameter.
 function getUrlParameter(name) {
   name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
   const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
