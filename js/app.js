@@ -101,8 +101,7 @@ function updateMap(latitude, longitude) {
       window.marker = new google.maps.marker.AdvancedMarkerElement({
         position: position,
         map: window.map,
-        mapId: MAP_ID, // Add your Map ID here
-        title: "Current Location"
+        mapId: MAP_ID // Add your Map ID here
       });
     }
     window.map.setCenter(position);
@@ -112,15 +111,14 @@ function updateMap(latitude, longitude) {
   }
 }
 
-function addAdvancedMarker(latitude, longitude, title) {
+function addAdvancedMarker(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
-  console.log("Adding advanced marker with position:", position, "and title:", title);
+  console.log("Adding advanced marker with position:", position);
   if (window.recordedMap) {
     const marker = new google.maps.marker.AdvancedMarkerElement({
       position: position,
       map: window.recordedMap,
-      mapId: MAP_ID, // Add your Map ID here
-      title: title
+      mapId: MAP_ID // Add your Map ID here
     });
     window.recordedMarkers.push(marker);
   } else {
