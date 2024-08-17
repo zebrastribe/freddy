@@ -120,6 +120,9 @@ function addAdvancedMarker(latitude, longitude) {
       map: window.recordedMap,
       mapId: MAP_ID // Add your Map ID here
     });
+    if (!window.recordedMarkers) {
+      window.recordedMarkers = [];
+    }
     window.recordedMarkers.push(marker);
   } else {
     console.error("Recorded map is not initialized.");
