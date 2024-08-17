@@ -13,6 +13,8 @@ function initMap() {
     center: { lat: 0, lng: 0 },
     zoom: 2
   });
+
+  return recordedMap; // Ensure initMap returns the map instance
 }
 
 function addMarker(mapInstance, position, title) {
