@@ -1,4 +1,3 @@
-// fetch.js
 import { db } from './firebase-setup.js';
 import { getUser } from './auth.js';
 import { addMarker } from './map.js';
@@ -6,6 +5,7 @@ import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.
 
 const entriesPerPage = 10; // Define the number of entries per page
 let currentPage = 1; // Initialize the current page
+let recordedMap; // Declare recordedMap
 
 // Define the updateMap function
 function updateMap(latitude, longitude) {
@@ -49,6 +49,14 @@ export async function fetchCheckIns() {
     const end = start + entriesPerPage;
     const currentDocs = docs.slice(start, end);
 
+    // Initialize recordedMap if not already initialized
+    if (!recordedMap) {
+      recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+        center: { lat: 0, lng: 0 },
+        zoom: 2
+      });
+    }
+
     currentDocs.forEach((doc) => {
       const { name, latitude, longitude, timestamp } = doc.data();
       const date = timestamp.toDate();
@@ -74,3 +82,16 @@ export async function fetchCheckIns() {
     document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
 }
+
+// Event listeners for pagination buttons
+document.getElementById('prevPage').addEventListener('click', () => {
+  if (currentPage > 1) {
+    currentPage--;
+    fetchCheckIns();
+  }
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+  currentPage++;
+  fetchCheckIns();
+});

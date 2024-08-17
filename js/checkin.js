@@ -3,6 +3,7 @@ import { db, auth } from './firebase-setup.js';
 import { getUser } from './auth.js';
 import { updateMap, addMarker } from './map.js';
 import { fetchCheckIns } from './fetch.js';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore'; // Ensure these are imported
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clickButton').addEventListener('click', async () => {

@@ -1,7 +1,7 @@
 // app.js
 import { db, auth } from './firebase-setup.js';
+import { initMap, addMarker } from './map.js'; // Ensure these functions are imported
 
-// app.js
 document.addEventListener('DOMContentLoaded', () => {
   // Tab switching logic
   document.getElementById('checkInTab').addEventListener('click', () => {
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the map if it hasn't been initialized yet
     if (!window.recordedMap) {
-      initMap();
+      window.recordedMap = initMap(); // Ensure initMap initializes and returns the map
     }
 
     // Fetch and display check-ins
@@ -33,11 +33,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to fetch check-ins from Firestore and add markers
   async function fetchCheckIns() {
     try {
-      const querySnapshot = await firebase.firestore().collection("checkins").get();
+      const querySnapshot = await db.collection("checkins").get(); // Ensure Firestore is correctly initialized
       querySnapshot.forEach((doc) => {
         const checkIn = doc.data();
         const position = { lat: checkIn.latitude, lng: checkIn.longitude };
-        addMarker(window.recordedMap, position, checkIn.name);
+        addMarker(window.recordedMap, position, checkIn.name); // Ensure addMarker is correctly defined
       });
     } catch (error) {
       console.error('Error fetching check-ins:', error);
