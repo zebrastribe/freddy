@@ -201,17 +201,3 @@ document.getElementById('nextPage').addEventListener('click', () => {
   currentPage++;
   fetchCheckIns();
 });
-
-function updateMap(latitude, longitude) {
-  const position = { lat: latitude, lng: longitude };
-  if (marker) {
-    marker.setPosition(position);
-  } else {
-    marker = new google.maps.Marker({
-      position: position,
-      map: window.map
-    });
-  }
-  window.map.setCenter(position);
-  window.map.setZoom(15);
-}
