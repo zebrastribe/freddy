@@ -15,9 +15,14 @@ export function initMap() {
   });
 }
 
-export function addMarker(map, position, title) {
+export function addMarker(mapInstance, position, title) {
+  if (!(mapInstance instanceof google.maps.Map)) {
+    console.error('Invalid map instance');
+    return;
+  }
+
   new google.maps.Marker({
-    map: map,
+    map: mapInstance,
     position: position,
     title: title
   });
