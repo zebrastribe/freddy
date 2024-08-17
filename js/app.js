@@ -219,3 +219,15 @@ document.getElementById('nextPage').addEventListener('click', () => {
   currentPage++;
   fetchCheckIns();
 });
+
+document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
+  document.getElementById('checkInContent').classList.add('hidden');
+  document.getElementById('recordedCheckInsContent').classList.remove('hidden');
+  initRecordedMap(); // Initialize the recorded map when the tab is clicked
+  fetchCheckIns(); // Fetch and display check-ins
+});
+
+document.getElementById('checkInTab').addEventListener('click', () => {
+  document.getElementById('recordedCheckInsContent').classList.add('hidden');
+  document.getElementById('checkInContent').classList.remove('hidden');
+});
