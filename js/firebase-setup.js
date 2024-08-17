@@ -18,5 +18,3 @@ const auth = firebase.auth();
 auth.signInAnonymously().catch((error) => {
   console.error("Error signing in anonymously: ", error);
 });
-
-export { db, auth, firebase };

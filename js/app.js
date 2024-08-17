@@ -1,5 +1,5 @@
 // app.js
-import { initMap, addMarker, updateMap } from './map.js';
+import { initMap, addMarker } from './map.js';
 import { db } from './firebase-setup.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to fetch check-ins from Firestore and add markers
   async function fetchCheckIns() {
     try {
-      const querySnapshot = await firebase.firestore().collection("checkins").get();
+      const querySnapshot = await db.collection("checkins").get();
       querySnapshot.forEach((doc) => {
         const checkIn = doc.data();
         const position = { lat: checkIn.latitude, lng: checkIn.longitude };
