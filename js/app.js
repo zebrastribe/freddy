@@ -9,7 +9,7 @@ function getUrlParameter(name) {
   return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
-// Function to validate token
+// Function to validate token.
 async function validateToken(token) {
   try {
     const tokenDoc = await getDoc(doc(db, 'tokens', token));
