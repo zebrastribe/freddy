@@ -3,67 +3,6 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 
 let user = null;
 let marker;
-let currentPage = 1;
-const entriesPerPage = 20;
-window.recordedMarkers = [];
-
-const MAP_ID = '8bac4e61a05fc3c2'; // Replace with your valid Map ID
-
-function initMaps() {
-  initMap();
-  initRecordedMap();
-}
-
-function initMap() {
-  window.map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 55.6606892, lng: 12.5225537 },
-    zoom: 10,
-    mapId: MAP_ID
-  });
-}
-
-function initRecordedMap() {
-  window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-    center: { lat: 55.6606892, lng: 12.5225537 },
-    zoom: 10,
-    mapId: MAP_ID
-  });
-}
-
-window.initMaps = initMaps; // Expose initMaps to the global scope
-window.initRecordedMap = initRecordedMap; // Expose initRecordedMap to the global scope
-
-function updateMap(latitude, longitude) {
-  const position = { lat: latitude, lng: longitude };
-  if (window.map) {
-    if (window.marker) {
-      window.marker.position = position;
-    } else {
-      window.marker = new google.maps.marker.AdvancedMarkerElement({
-        position: position,
-        map: window.map
-      });
-    }
-    window.map.setCenter(position);
-    window.map.setZoom(15);
-  } else {
-    console.error("Map is not initialized.");
-  }
-}
-
-function addAdvancedMarker(latitude, longitude, title) {
-  const position = { lat: latitude, lng: longitude };
-  if (window.recordedMap) {
-    const marker = new google.maps.marker.AdvancedMarkerElement({
-      position: position,
-      map: window.recordedMap,
-      title: title
-    });
-    window.recordedMarkers.push(marker);
-  } else {
-    console.error("Recorded map is not initialized.");
-  }
-}
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
@@ -150,106 +89,25 @@ async function fetchCheckIns() {
     const querySnapshot = await getDocs(q);
     const checkInsList = document.getElementById('checkInsList');
     checkInsList.innerHTML = ''; // Clear the list
-
-    const docs = querySnapshot.docs;
-    const totalPages = Math.ceil(docs.length / entriesPerPage);
-    const start = (currentPage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-    const currentDocs = docs.slice(start, end);
-
-    // Clear existing markers
-    if (window.recordedMarkers) {
-      window.recordedMarkers.forEach(marker => marker.map = null);
-    }
-    window.recordedMarkers = [];
-
-    currentDocs.forEach((doc) => {
+    querySnapshot.forEach((doc) => {
       const { name, latitude, longitude, timestamp } = doc.data();
-      const date = timestamp.toDate();
-      const day = date.toLocaleString('en-US', { weekday: 'long' });
-      const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-      const row = document.createElement('tr');
-      row.setAttribute('data-lat', latitude);
-      row.setAttribute('data-lng', longitude);
-
-      const nameCell = document.createElement('td');
-      nameCell.className = 'py-2 px-4 border-b border-gray-200';
-      nameCell.textContent = name || 'undefined';
-      row.appendChild(nameCell);
-
-      const latitudeCell = document.createElement('td');
-      latitudeCell.className = 'py-2 px-4 border-b border-gray-200';
-      latitudeCell.textContent = latitude || 'undefined';
-      row.appendChild(latitudeCell);
-
-      const longitudeCell = document.createElement('td');
-      longitudeCell.className = 'py-2 px-4 border-b border-gray-200';
-      longitudeCell.textContent = longitude || 'undefined';
-      row.appendChild(longitudeCell);
-
-      const dateCell = document.createElement('td');
-      dateCell.className = 'py-2 px-4 border-b border-gray-200';
-      dateCell.textContent = `${day} ${formattedDate}`;
-      row.appendChild(dateCell);
-
-      const timeCell = document.createElement('td');
-      timeCell.className = 'py-2 px-4 border-b border-gray-200';
-      timeCell.textContent = time;
-      row.appendChild(timeCell);
-
-      checkInsList.appendChild(row);
-
-      // Add marker to the recorded map using AdvancedMarkerElement
-      addAdvancedMarker(latitude, longitude, name);
-
-      // Add click event listener to zoom in on the marker
-      row.addEventListener('click', () => {
-        window.recordedMap.setCenter({ lat: latitude, lng: longitude });
-        window.recordedMap.setZoom(15);
-      });
+      const listItem = document.createElement('li');
+      listItem.textContent = `${name} checked in at (${latitude}, ${longitude}) on ${timestamp.toDate()}`;
+      checkInsList.appendChild(listItem);
     });
-
-    document.getElementById('prevPage').disabled = currentPage === 1;
-    document.getElementById('nextPage').disabled = currentPage === totalPages;
   }
 }
 
-document.getElementById('prevPage').addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
-    fetchCheckIns();
+function updateMap(latitude, longitude) {
+  const position = { lat: latitude, lng: longitude };
+  if (marker) {
+    marker.setPosition(position);
+  } else {
+    marker = new google.maps.Marker({
+      position: position,
+      map: window.map
+    });
   }
-});
-
-document.getElementById('nextPage').addEventListener('click', () => {
-  currentPage++;
-  fetchCheckIns();
-});
-
-document.getElementById('checkInTab').addEventListener('click', () => {
-  document.getElementById('recordedCheckInsContent').classList.add('hidden');
-  document.getElementById('checkInContent').classList.remove('hidden');
-  
-  // Update tab styles
-  document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
-  document.getElementById('checkInTab').classList.remove('text-gray-600', 'border-gray-200');
-  document.getElementById('recordedCheckInsTab').classList.add('text-gray-600', 'border-gray-200');
-  document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
-});
-
-document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-  document.getElementById('checkInContent').classList.add('hidden');
-  document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-  
-  // Initialize the recorded map and fetch check-ins
-  initRecordedMap();
-  fetchCheckIns();
-  
-  // Update tab styles
-  document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
-  document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
-  document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-});
+  window.map.setCenter(position);
+  window.map.setZoom(15);
+}
