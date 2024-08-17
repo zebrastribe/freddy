@@ -30,26 +30,34 @@ window.initMaps = initMaps; // Expose initMaps to the global scope
 
 function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
-  if (window.marker) {
-    window.marker.setPosition(position);
+  if (window.map) {
+    if (window.marker) {
+      window.marker.setPosition(position);
+    } else {
+      window.marker = new google.maps.Marker({
+        position: position,
+        map: window.map
+      });
+    }
+    window.map.setCenter(position);
+    window.map.setZoom(15);
   } else {
-    window.marker = new google.maps.Marker({
-      position: position,
-      map: window.map
-    });
+    console.error("Map is not initialized.");
   }
-  window.map.setCenter(position);
-  window.map.setZoom(15);
 }
 
 function addAdvancedMarker(latitude, longitude, title) {
   const position = { lat: latitude, lng: longitude };
-  const marker = new google.maps.marker.AdvancedMarkerElement({
-    position: position,
-    map: window.recordedMap,
-    title: title
-  });
-  window.recordedMarkers.push(marker);
+  if (window.recordedMap) {
+    const marker = new google.maps.marker.AdvancedMarkerElement({
+      position: position,
+      map: window.recordedMap,
+      title: title
+    });
+    window.recordedMarkers.push(marker);
+  } else {
+    console.error("Recorded map is not initialized.");
+  }
 }
 
 onAuthStateChanged(auth, (currentUser) => {
