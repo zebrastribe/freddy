@@ -1,3 +1,5 @@
+import { db, auth, onAuthStateChanged } from './firebase-setup.js';
+
 let map;
 let recordedMap;
 let marker;
