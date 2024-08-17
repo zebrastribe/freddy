@@ -55,8 +55,6 @@ window.onload = () => {
   }
 };
 
-
-
 let user = null;
 let marker;
 let currentPage = 1;
@@ -93,9 +91,9 @@ function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
   if (window.map) {
     if (window.marker) {
-      window.marker.position = position;
+      window.marker.setPosition(position);
     } else {
-      window.marker = new google.maps.marker.AdvancedMarkerElement({
+      window.marker = new google.maps.Marker({
         position: position,
         map: window.map
       });
@@ -110,7 +108,7 @@ function updateMap(latitude, longitude) {
 function addAdvancedMarker(latitude, longitude, title) {
   const position = { lat: latitude, lng: longitude };
   if (window.recordedMap) {
-    const marker = new google.maps.marker.AdvancedMarkerElement({
+    const marker = new google.maps.Marker({
       position: position,
       map: window.recordedMap,
       title: title
@@ -215,7 +213,7 @@ async function fetchCheckIns() {
 
     // Clear existing markers
     if (window.recordedMarkers) {
-      window.recordedMarkers.forEach(marker => marker.map = null);
+      window.recordedMarkers.forEach(marker => marker.setMap(null));
     }
     window.recordedMarkers = [];
 
@@ -258,7 +256,7 @@ async function fetchCheckIns() {
 
       checkInsList.appendChild(row);
 
-      // Add marker to the recorded map using AdvancedMarkerElement
+      // Add marker to the recorded map using standard Marker
       addAdvancedMarker(latitude, longitude, name);
 
       // Add click event listener to zoom in on the marker
