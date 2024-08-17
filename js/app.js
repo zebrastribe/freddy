@@ -1,5 +1,7 @@
 // app.js
 import { initMap, addMarker, updateMap } from './map.js';
+import { db } from './firebase-setup.js';
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // Tab switching logic
@@ -29,20 +31,12 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCheckIns();
   });
 
-  // Example function to fetch check-ins and add markers
+  // Function to fetch check-ins from Firestore and add markers
   async function fetchCheckIns() {
     try {
-      const response = await fetch('/api/checkins');
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new TypeError("Received non-JSON response");
-      }
-      const checkIns = await response.json();
-
-      checkIns.forEach(checkIn => {
+      const querySnapshot = await getDocs(collection(db, "checkins"));
+      querySnapshot.forEach((doc) => {
+        const checkIn = doc.data();
         const position = { lat: checkIn.latitude, lng: checkIn.longitude };
         addMarker(window.recordedMap, position, checkIn.name);
       });
