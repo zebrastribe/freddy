@@ -121,7 +121,7 @@ function addAdvancedMarker(latitude, longitude, title) {
   } else {
     console.error("Recorded map is not initialized.");
   }
-}
+} 
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
