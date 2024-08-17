@@ -1,13 +1,12 @@
 // firebase-setup.js
-// firebase-setup.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+  apiKey: "AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY",
   authDomain: "tracker-6a648.firebaseapp.com",
   projectId: "tracker-6a648",
   storageBucket: "tracker-6a648.appspot.com",
@@ -26,4 +25,4 @@ signInAnonymously(auth).catch((error) => {
   console.error("Error signing in anonymously: ", error);
 });
 
-export { db, auth };
+export { db, auth, onAuthStateChanged };
