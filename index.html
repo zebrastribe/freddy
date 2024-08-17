@@ -92,19 +92,19 @@
     document.getElementById('checkInTab').addEventListener('click', () => {
       document.getElementById('checkInContent').classList.remove('hidden');
       document.getElementById('recordedCheckInsContent').classList.add('hidden');
-      document.getElementById('checkInTab').classList.add('bg-blue-500', 'text-white');
-      document.getElementById('checkInTab').classList.remove('bg-gray-300', 'text-gray-800');
-      document.getElementById('recordedCheckInsTab').classList.add('bg-gray-300', 'text-gray-800');
-      document.getElementById('recordedCheckInsTab').classList.remove('bg-blue-500', 'text-white');
+      document.getElementById('checkInTab').classList.add('text-blue-600', 'border-blue-600');
+      document.getElementById('checkInTab').classList.remove('text-gray-600');
+      document.getElementById('recordedCheckInsTab').classList.add('text-gray-600');
+      document.getElementById('recordedCheckInsTab').classList.remove('text-blue-600', 'border-blue-600');
     });
-
+  
     document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
       document.getElementById('checkInContent').classList.add('hidden');
       document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-      document.getElementById('recordedCheckInsTab').classList.add('bg-blue-500', 'text-white');
-      document.getElementById('recordedCheckInsTab').classList.remove('bg-gray-300', 'text-gray-800');
-      document.getElementById('checkInTab').classList.add('bg-gray-300', 'text-gray-800');
-      document.getElementById('checkInTab').classList.remove('bg-blue-500', 'text-white');
+      document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
+      document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
+      document.getElementById('checkInTab').classList.add('text-gray-600');
+      document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
     });
   </script>
 </body>
