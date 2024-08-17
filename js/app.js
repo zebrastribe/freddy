@@ -101,7 +101,8 @@ function updateMap(latitude, longitude) {
       window.marker = new google.maps.marker.AdvancedMarkerElement({
         position: position,
         map: window.map,
-        title: "Current Location" // Add a title or other required properties
+        mapId: MAP_ID, // Add your Map ID here
+        title: "Current Location"
       });
     }
     window.map.setCenter(position);
@@ -118,7 +119,8 @@ function addAdvancedMarker(latitude, longitude, title) {
     const marker = new google.maps.marker.AdvancedMarkerElement({
       position: position,
       map: window.recordedMap,
-      title: title // Ensure title or other required properties are provided
+      mapId: MAP_ID, // Add your Map ID here
+      title: title
     });
     window.recordedMarkers.push(marker);
   } else {
