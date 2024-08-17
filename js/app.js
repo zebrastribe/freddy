@@ -1,7 +1,6 @@
 // app.js
 import { initMap, addMarker, updateMap } from './map.js';
 import { db } from './firebase-setup.js';
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
   // Tab switching logic
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Function to fetch check-ins from Firestore and add markers
   async function fetchCheckIns() {
     try {
-      const querySnapshot = await getDocs(collection(db, "checkins"));
+      const querySnapshot = await firebase.firestore().collection("checkins").get();
       querySnapshot.forEach((doc) => {
         const checkIn = doc.data();
         const position = { lat: checkIn.latitude, lng: checkIn.longitude };
