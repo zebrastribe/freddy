@@ -28,6 +28,20 @@ function initRecordedMap() {
 
 window.initMaps = initMaps; // Expose initMaps to the global scope
 
+function updateMap(latitude, longitude) {
+  const position = { lat: latitude, lng: longitude };
+  if (window.marker) {
+    window.marker.setPosition(position);
+  } else {
+    window.marker = new google.maps.Marker({
+      position: position,
+      map: window.map
+    });
+  }
+  window.map.setCenter(position);
+  window.map.setZoom(15);
+}
+
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
