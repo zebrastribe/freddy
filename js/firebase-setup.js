@@ -1,5 +1,10 @@
 // firebase-setup.js
-// Initialize Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
   authDomain: "tracker-6a648.firebaseapp.com",
@@ -10,11 +15,14 @@ const firebaseConfig = {
   measurementId: "G-XMHHKFJ9QW"
 };
 
-firebase.initializeApp(firebaseConfig);
-const analytics = firebase.analytics();
-const db = firebase.firestore();
-const auth = firebase.auth();
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+const db = getFirestore(app);
+const auth = getAuth(app);
 
-auth.signInAnonymously().catch((error) => {
+signInAnonymously(auth).catch((error) => {
   console.error("Error signing in anonymously: ", error);
 });
+
+export { db, auth };
