@@ -9,6 +9,16 @@ function getUrlParameter(name) {
   return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
+// Get token from URL and validate it
+window.onload = () => {
+  const token = getUrlParameter('token');
+  if (token) {
+    validateToken(token);
+  } else {
+    document.getElementById('content').innerHTML = '<h1>Error: No Token Provided</h1>';
+  }
+};
+
 // Function to validate token
 async function validateToken(token) {
   try {
@@ -38,15 +48,7 @@ async function validateToken(token) {
   }
 }
 
-// Get token from URL and validate it
-window.onload = () => {
-  const token = getUrlParameter('token');
-  if (token) {
-    validateToken(token);
-  } else {
-    document.getElementById('content').innerHTML = '<h1>Error: No Token Provided</h1>';
-  }
-};
+
 
 let user = null;
 let marker;
