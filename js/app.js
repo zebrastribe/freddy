@@ -32,9 +32,9 @@ function updateMap(latitude, longitude) {
   const position = { lat: latitude, lng: longitude };
   if (window.map) {
     if (window.marker) {
-      window.marker.setPosition(position);
+      window.marker.position = position;
     } else {
-      window.marker = new google.maps.Marker({
+      window.marker = new google.maps.marker.AdvancedMarkerElement({
         position: position,
         map: window.map
       });
