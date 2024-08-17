@@ -69,19 +69,23 @@ function initMaps() {
 }
 
 function initMap() {
-  window.map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 55.6606892, lng: 12.5225537 },
-    zoom: 10,
-    mapId: MAP_ID
-  });
+  if (!window.map) {
+    window.map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 55.6606892, lng: 12.5225537 },
+      zoom: 10,
+      mapId: MAP_ID
+    });
+  }
 }
 
 function initRecordedMap() {
-  window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-    center: { lat: 55.6606892, lng: 12.5225537 },
-    zoom: 10,
-    mapId: MAP_ID
-  });
+  if (!window.recordedMap) {
+    window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+      center: { lat: 55.6606892, lng: 12.5225537 },
+      zoom: 10,
+      mapId: MAP_ID
+    });
+  }
 }
 
 window.initMaps = initMaps; // Expose initMaps to the global scope
