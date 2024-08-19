@@ -1,3 +1,6 @@
+import { db } from './firebase-setup.js';
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
 let token = null;
 
 export function logTokenFromUrl() {
@@ -21,4 +24,50 @@ export function logTokenFromUrl() {
 // Export a function to get the token value
 export function getToken() {
     return token;
+}
+
+// Function to check if the token is valid
+export async function isTokenValid() {
+    if (!token) {
+        console.log('No token available.');
+        return false;
+    }
+
+    const tokenDoc = doc(db, 'tokens', token);
+    const tokenSnapshot = await getDoc(tokenDoc);
+
+    if (!tokenSnapshot.exists()) {
+        console.log('Token does not exist.');
+        return false;
+    }
+
+    const tokenData = tokenSnapshot.data();
+    const now = new Date();
+
+    if (tokenData.used) {
+        console.log('Token has already been used.');
+        return false;
+    }
+
+    if (tokenData.expiry.toDate() < now) {
+        console.log('Token has expired.');
+        return false;
+    }
+
+    return true;
+}
+
+// Function to mark the token as used
+export async function useToken() {
+    if (!token) {
+        console.log('No token available.');
+        return;
+    }
+
+    const tokenDoc = doc(db, 'tokens', token);
+    await updateDoc(tokenDoc, {
+        used: true
+    });
+
+    console.log('Token marked as used.');
 }
