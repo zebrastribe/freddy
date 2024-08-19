@@ -1,10 +1,18 @@
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import * as incoming from './incoming.js';
 
 let user = null;
 let marker;
 let currentPage = 1;
 const entriesPerPage = 10;
+
+try {
+  incoming.someFunction();
+} catch (error) {
+  console.error('Error in someFunction:', error);
+}
+
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
