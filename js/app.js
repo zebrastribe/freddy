@@ -7,8 +7,25 @@ let marker;
 let currentPage = 1;
 const entriesPerPage = 10;
 
+// Import the functions from incoming.js
+import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
+
 // Call the function to log the token
 logTokenFromUrl();
+
+// Check if the token is valid and use it
+async function processToken() {
+    const valid = await isTokenValid();
+    if (valid) {
+        console.log('Token is valid.');
+        await useToken();
+    } else {
+        console.log('Token is not valid.');
+    }
+}
+
+// Call the function to process the token
+processToken();
 
 
 onAuthStateChanged(auth, (currentUser) => {
