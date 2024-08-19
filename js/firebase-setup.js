@@ -4,7 +4,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebas
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration 
 const firebaseConfig = {
   apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
   authDomain: "tracker-6a648.firebaseapp.com",
@@ -46,4 +46,4 @@ function checkAuthState() {
 }
 
 // Export necessary functions and variables
-export { db, auth, checkAuthState };
+export { db, auth, checkAuthState, onAuthStateChanged };
