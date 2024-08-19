@@ -21,9 +21,29 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Sign in anonymously
-signInAnonymously(auth).catch((error) => {
-  console.error("Error signing in anonymously: ", error);
-});
+// Function to handle user authentication
+function authenticateUser() {
+  return signInAnonymously(auth).catch((error) => {
+    console.error("Error signing in anonymously: ", error);
+  });
+}
 
-export { db, auth, onAuthStateChanged };
+// Check authentication state and re-authenticate if necessary
+function checkAuthState() {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("User is authenticated on SiteB");
+      // Proceed with your logic here
+    } else {
+      console.log("User is not authenticated on SiteB, re-authenticating...");
+      authenticateUser().then(() => {
+        // Proceed with your logic here
+      }).catch((error) => {
+        console.error("Error during re-authentication on SiteB:", error);
+      });
+    }
+  });
+}
+
+// Export necessary functions and variables
+export { db, auth, checkAuthState };
