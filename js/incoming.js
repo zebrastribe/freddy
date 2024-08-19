@@ -49,7 +49,9 @@ export async function isTokenValid() {
         return false;
     }
 
-    if (tokenData.expiry.toDate() < now) {
+    const expiryDate = new Date(tokenData.expiry);
+
+    if (expiryDate < now) {
         console.log('Token has expired.');
         return false;
     }
