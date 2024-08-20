@@ -8,7 +8,8 @@ export class Translation {
     detectLanguage() {
       const supportedLanguages = ['en_GB', 'da_DK'];
       const browserLanguage = navigator.language || navigator.userLanguage || 'en_GB';
-      return supportedLanguages.includes(browserLanguage) ? browserLanguage : 'en_GB';
+      const language = supportedLanguages.find(lang => browserLanguage.startsWith(lang.split('_')[0])) || 'en_GB';
+      return language;
     }
   
     async loadTranslations() {
