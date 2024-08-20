@@ -6,15 +6,25 @@ export class Translation {
     }
   
     detectLanguage() {
-      const supportedLanguages = ['en_GB', 'da_DK'];
-      const browserLanguage = navigator.language || navigator.userLanguage || 'en_GB';
-      const language = supportedLanguages.find(lang => browserLanguage.startsWith(lang.split('_')[0])) || 'en_GB';
-      return language;
+      const supportedLanguages = {
+        'en': 'en_GB',
+        'da': 'da_DK'
+      };
+      const browserLanguages = navigator.languages || [navigator.language || navigator.userLanguage || 'en'];
+  
+      for (const lang of browserLanguages) {
+        const languageCode = lang.split('-')[0]; // Extract the language code (e.g., 'da' from 'da-DK')
+        if (supportedLanguages[languageCode]) {
+          return supportedLanguages[languageCode];
+        }
+      }
+  
+      return 'en_GB'; // Default to English if no supported language is found
     }
   
     async loadTranslations() {
       try {
-        const response = await fetch(`./js/modules/translation/json/${this.language}.json`);
+        const response = await fetch(`./json/${this.language}.json`);
         this.translations = await response.json();
       } catch (error) {
         console.error('Error loading translation file:', error);
