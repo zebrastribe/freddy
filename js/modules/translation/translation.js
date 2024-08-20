@@ -1,4 +1,4 @@
-// modules/translation/translation.js
+// modules/translation.js
 export class Translation {
     constructor() {
       this.language = this.detectLanguage();
@@ -13,7 +13,7 @@ export class Translation {
   
     async loadTranslations() {
       try {
-        const response = await fetch(`/modules/translation/json/${this.language}.json`);
+        const response = await fetch(`./json/${this.language}.json`);
         this.translations = await response.json();
       } catch (error) {
         console.error('Error loading translation file:', error);
