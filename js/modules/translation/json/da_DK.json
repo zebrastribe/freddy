@@ -13,6 +13,8 @@
     "checkin_success": "Indtjekning lykkedes!",
     "checkin_points_description": "Alle Freddys mødepunkter. Nogle af de steder, han har vovet sig hen.",
     "checkin_point": "Point",
+    "checkin_point_date": "Dato",
+    "checkin_point_time": "Tidspunkt",
     "checkin_point_lat": "Breddegrad",
     "checkin_point_long": "Længdegrad",
     "checkin_point_prev": "Tidligere",

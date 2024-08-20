@@ -13,8 +13,10 @@
     "checkin_success": "Check-in successful!",
     "checkin_points_description": "All Freddy's check-ins. The places he has ventured.",
     "checkin_point": "Name",
+    "checkin_point_date": "Date",
+    "checkin_point_time": "Time",
     "checkin_point_lat": "Latitude",
     "checkin_point_long": "Longitude",
-    "checkin_point_prev": "Date",
+    "checkin_point_prev": "Previous",
     "checkin_point_next": "Time"
 }
