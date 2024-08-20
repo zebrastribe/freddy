@@ -1,4 +1,4 @@
-// modules/translation.js
+// modules/translation.js 
 export class Translation {
     constructor() {
       this.language = this.detectLanguage();
