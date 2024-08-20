@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Freddy: Where are you?</title>
+  <title data-translate="welcome_title">Freddy: Where are you?</title>
   <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <!-- Main CSS -->
@@ -17,41 +17,41 @@
   <div class="container mx-auto p-4">
     <div id="content"></div>
     <div id="root" class="flex flex-col items-center my-4 min-h-screen">
-      <h1 class="text-3xl font-bold mb-4">Wow you met Freddy! 🐈</h1>
-      <p class="mb-4 text-lg text-gray-700 text-center max-w-lg">
+      <h1 data-translate="welcome_message" class="text-3xl font-bold mb-4">Wow! you met Freddy 🐈</h1>
+      <p data-translate="description_part1" class="mb-4 text-lg text-gray-700 text-center max-w-lg">
         ... the friendly and adventurous ginger cat with a heart as fiery as his fur! Freddy is always on the move, exploring new places and turning every corner into his personal playground.
       </p>
-      <p class="mb-4 text-lg text-gray-900 font-black text-center max-w-lg">
+      <p data-translate="description_part2" class="mb-4 text-lg text-gray-900 font-black text-center max-w-lg">
         Feeling adventurous too?
       </p>
       
       <!-- Tabs -->
       <div class="w-full max-w-lg">
         <div class="flex border-b border-gray-200">
-          <button id="checkInTab" class="flex-1 py-2 px-4 text-center text-blue-600 border-b-2 border-blue-600">Check In</button>
-          <button id="recordedCheckInsTab" class="flex-1 py-2 px-4 text-center text-gray-600 border-b-2 border-gray-200">Freddys trail</button>
+          <button data-translate="checkin_tab" id="checkInTab" class="flex-1 py-2 px-4 text-center text-blue-600 border-b-2 border-blue-600">Check In</button>
+          <button data-translate="checkin_ponts_tab" id="recordedCheckInsTab" class="flex-1 py-2 px-4 text-center text-gray-600 border-b-2 border-gray-200">Freddys trail</button>
         </div>
       </div>
       
       <!-- Check In Content -->
       <div id="checkInContent" class="tab-content w-full max-w-5xl my-5">
-        <p class="text-gray-700 text-base mb-4 my-4">
+        <p data-translate="description_checkin" class="text-gray-700 text-base mb-4 my-4">
           Check Freddy in. You have met Freddy and are okay with giving the coordinates to me and the rest of the world – Only GPS coordinates and the name will be stored.  
         </p>
-        <input type="text" id="nameInput" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
-        <div id="error-message" class="hidden text-red-500 mb-4">Well, you could make one up – I guess?</div>
-        <button id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
+        <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
+        <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4">Well, you could make one up – I guess?</div>
+        <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full">
           Check Freddy in 🐱!
         </button>
-        <div id="spinner" class="hidden mt-4">Loading...</div>
-        <div id="success-message" class="hidden text-green-500 mt-4">Check-in successful!</div>
+        <div data-translate="checkin_loading" id="spinner" class="hidden mt-4">Loading...</div>
+        <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4">Check-in successful!</div>
         <div id="map" class="mt-5" style="height: 400px; width: 100%;"></div>
       </div>
       
       <!-- Recorded Check-Ins Content -->
       <div id="recordedCheckInsContent" class="tab-content hidden w-full max-w-5xl my-5">
         <div id="checkInsListContainer" class="mt-5 w-full">
-          <p class="text-gray-700 text-base mb-4 my-4">
+          <p data-translate="checkin_points_description" class="text-gray-700 text-base mb-4 my-4">
             All Freddy's check-ins. The places he has ventured.
           </p>
           <div id="recordedMap" class="mt-5 my-5" style="height: 400px; width: 100%;"></div>
@@ -59,11 +59,11 @@
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
                 <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latitude</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Longitude</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                  <th data-translate="checkin_point" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th data-translate="checkin_point_lat" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Latitude</th>
+                  <th data-translate="checkin_point_long" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Longitude</th>
+                  <th data-translate="checkin_point_date" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  <th data-translate="checkin_point_time" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
                 </tr>
               </thead>
               <tbody id="checkInsList" class="bg-white divide-y divide-gray-200">
@@ -72,8 +72,8 @@
             </table>
           </div>
           <div class="flex justify-between mt-4">
-            <button id="prevPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Previous</button>
-            <button id="nextPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Next</button>
+            <button data-translate="checkin_point_prev" id="prevPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Previous</button>
+            <button data-translate="checkin_point_next" id="nextPage" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">Next</button>
           </div>
         </div>
       </div>

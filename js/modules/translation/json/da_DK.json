@@ -1,0 +1,20 @@
+{
+    "welcome_title": "Freddy: Hvor er du henne?",
+    "welcome_message": "Wow! Du har mødt Freddy 🐈",
+    "description_part1": "... den venlige og eventyrlystne røde kat med et hjerte lige så brændende som sin pels! Freddy er altid på farten, udforsker nye steder og gør hvert hjørne til sin personlige legeplads.",
+    "description_part2": "Føler du dig også eventyrlysten?",
+    "checkin_tab": "Registrer dit møde",
+    "checkin_ponts_tab": "Freddys møder med andre",
+    "description_checkin": "Tjek Freddy ind. Du har mødt Freddy og er okay med at give koordinaterne til mig og resten af ​​verden - Kun GPS-koordinater og navnet vil blive gemt.",
+    "checkin_name_placeholder": "Dit navn?",
+    "checkin_error": "Nå, du kunne jo finde på et?",
+    "checkin_button_text": "Registrer Freddy 🐱!",
+    "checkin_loading": "Vent et øjeblik...",
+    "checkin_success": "Indtjekning lykkedes!",
+    "checkin_points_description": "Alle Freddys mødepunkter. Nogle af de steder, han har vovet sig hen.",
+    "checkin_point": "Point",
+    "checkin_point_lat": "Breddegrad",
+    "checkin_point_long": "Længdegrad",
+    "checkin_point_prev": "Tidligere",
+    "checkin_point_next": "Næste"
+}

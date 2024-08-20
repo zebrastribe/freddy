@@ -2,6 +2,13 @@ import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 
+import { Translation } from './modules/translation/translation.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const translation = new Translation('da_DK');
+  await translation.loadTranslations();
+  translation.applyTranslations();
+});
 
 let user = null;
 let marker;
