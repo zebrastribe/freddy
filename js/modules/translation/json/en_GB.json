@@ -1,0 +1,20 @@
+{
+    "welcome_title": "Freddy: Where are you?",
+    "welcome_message": "Wow! you met Freddy 🐈",
+    "description_part1": "... the friendly and adventurous ginger cat with a heart as fiery as his fur! Freddy is always on the move, exploring new places and turning every corner into his personal playground.", 
+    "description_part2": "Feeling adventurous too?",
+    "checkin_tab": "Check In",
+    "checkin_ponts_tab": "Freddys trail",
+    "description_checkin": "Check Freddy in. You have met Freddy and are okay with giving the coordinates to me and the rest of the world – Only GPS coordinates and the name will be stored.",
+    "checkin_name_placeholder": "Your name?",
+    "checkin_error": "Well, you could make one up – I guess?",
+    "checkin_button_text": "Check Freddy in 🐱!",
+    "checkin_loading": "Wait just one moment...",
+    "checkin_success": "Check-in successful!",
+    "checkin_points_description": "All Freddy's check-ins. The places he has ventured.",
+    "checkin_point": "Name",
+    "checkin_point_lat": "Latitude",
+    "checkin_point_long": "Longitude",
+    "checkin_point_prev": "Date",
+    "checkin_point_next": "Time"
+}

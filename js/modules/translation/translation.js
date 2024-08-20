@@ -1,8 +1,14 @@
 // modules/translation/translation.js
 export class Translation {
-    constructor(language) {
-      this.language = language;
+    constructor() {
+      this.language = this.detectLanguage();
       this.translations = {};
+    }
+  
+    detectLanguage() {
+      const supportedLanguages = ['en_GB', 'da_DK'];
+      const browserLanguage = navigator.language || navigator.userLanguage || 'en_GB';
+      return supportedLanguages.includes(browserLanguage) ? browserLanguage : 'en_GB';
     }
   
     async loadTranslations() {
