@@ -12,6 +12,11 @@ export class Translation {
       };
       const browserLanguages = navigator.languages || [navigator.language || navigator.userLanguage || 'en'];
   
+      // Explicitly check if 'da' is in browserLanguages
+      if (browserLanguages.includes('da')) {
+        return 'da_DK';
+      }
+  
       for (const lang of browserLanguages) {
         const languageCode = lang.split('-')[0]; // Extract the language code (e.g., 'da' from 'da-DK')
         if (supportedLanguages[languageCode]) {
