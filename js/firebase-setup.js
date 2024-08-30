@@ -1,3 +1,13 @@
+/*
+The provided JavaScript code sets up Firebase services for a web application, including initialization, analytics, Firestore, and authentication. It also includes functions to handle user authentication and monitor authentication state changes.
+The script begins by importing necessary Firebase services from the Firebase CDN. These services include initializeApp for initializing the Firebase app, getAnalytics for Firebase Analytics, getFirestore for Firestore database, and getAuth, signInAnonymously, and onAuthStateChanged for authentication.
+Next, the script defines the Firebase configuration object, firebaseConfig, which contains the necessary credentials and identifiers for the Firebase project. This configuration includes the API key, authentication domain, project ID, storage bucket, messaging sender ID, app ID, and measurement ID.
+The Firebase app is then initialized using the initializeApp function with the provided configuration. The getAnalytics, getFirestore, and getAuth functions are called to initialize Firebase Analytics, Firestore, and Authentication services, respectively. These initialized services are stored in the analytics, db, and auth constants.
+The authenticateUser function handles user authentication by signing in anonymously using the signInAnonymously function from Firebase Authentication. If an error occurs during the sign-in process, it is caught and logged to the console.
+The checkAuthState function monitors the authentication state of the user using the onAuthStateChanged function. It checks if the user is authenticated and logs a message accordingly. If the user is not authenticated, it attempts to re-authenticate the user by calling the authenticateUser function. Any errors during re-authentication are caught and logged to the console.
+Finally, the script exports the db, auth, checkAuthState, and onAuthStateChanged variables and functions, making them available for use in other parts of the application. This setup ensures that the Firebase services are properly initialized and that user authentication is managed effectively.
+*/
+
 // Import Firebase services
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";

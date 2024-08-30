@@ -1,3 +1,14 @@
+/*
+The provided JavaScript code is a comprehensive script that integrates various functionalities, including translation, token validation, user authentication, and map interactions using Google Maps and Firebase Firestore.
+The script begins by importing necessary modules and functions from Firebase and other local files. It then sets up an event listener for the DOMContentLoaded event to initialize translations using the Translation class. This class detects the user's language, loads the appropriate translation file, and applies translations to elements with the data-translate attribute.
+The script defines several asynchronous functions to handle token validation and usage. The processToken function checks if a token is valid using isTokenValid and marks it as used with useToken if valid. The logTokenFromUrl function extracts a token from the URL and logs it to the console.
+User authentication is managed using Firebase's onAuthStateChanged function, which sets the user variable when a user is authenticated. Upon authentication, it fetches the last known coordinates and all check-ins from Firestore, updating the map and displaying check-ins in a table.
+The script also includes an event listener for a button click that captures the user's geolocation, adds a document to the Firestore collection with the user's name and coordinates, and updates the map. It handles errors and displays appropriate messages during this process.
+The fetchLastCoordinates and fetchCheckIns functions query Firestore to retrieve the last known coordinates and all check-ins, respectively. The check-ins are displayed in a paginated table, and markers are added to the map for each check-in.
+The initMaps and initRecordedMap functions initialize Google Maps for displaying the user's current location and recorded check-ins. The script also includes event listeners for pagination controls and tab switching to manage the display of check-ins.
+Overall, this script provides a robust solution for handling translations, token validation, user authentication, and map interactions, leveraging Firebase Firestore and Google Maps APIs.
+*/
+
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
