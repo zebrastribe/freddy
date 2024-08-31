@@ -33,6 +33,10 @@ Please note that the file path is provided for reference.
   <link rel="icon" href="img/favicon.ico">
   <!-- Google Maps JavaScript API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&callback=initMap" async defer></script>
+<<<<<<< HEAD
+=======
+  <!-- reCAPTCHA -->
+>>>>>>> b2c71d2 (bh)
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body onload="initMap()">
@@ -54,6 +58,7 @@ Please note that the file path is provided for reference.
       <!-- Check In Content -->
       <div id="checkInContent" class="tab-content w-full max-w-5xl my-5">
         <p data-translate="description_checkin" class="text-gray-700 text-base mb-4 my-4"></p>
+<<<<<<< HEAD
         <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
         <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4"></div>
         <form id="checkInForm" onsubmit="handleFormSubmit(event)">
@@ -63,6 +68,16 @@ Please note that the file path is provided for reference.
         </form>
         <div data-translate="checkin_loading" id="spinner" class="hidden mt-4"></div>
         <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4"></div>
+=======
+        <form id="checkin-form">
+          <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
+          <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4"></div>
+          <div class="g-recaptcha" data-sitekey="6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ"></div>
+          <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"></button>
+          <div data-translate="checkin_loading" id="spinner" class="hidden mt-4"></div>
+          <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4"></div>
+        </form>
+>>>>>>> b2c71d2 (bh)
         <div id="map" class="mt-5" style="height: 400px; width: 100%;"></div>
       </div>
       
@@ -126,6 +141,29 @@ Please note that the file path is provided for reference.
       document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
       document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
       document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
+    });
+
+    // reCAPTCHA handling
+    document.getElementById('checkin-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      grecaptcha.ready(function() {
+        grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'submit'}).then(function(token) {
+          const name = document.getElementById('nameInput').value;
+          const recaptchaResponse = token;
+
+          // Send data to Firebase
+          firebase.firestore().collection('checkins').add({
+            name: name,
+            recaptchaResponse: recaptchaResponse,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          }).then(() => {
+            document.getElementById('success-message').classList.remove('hidden');
+          }).catch((error) => {
+            document.getElementById('error-message').innerText = error.message;
+            document.getElementById('error-message').classList.remove('hidden');
+          });
+        });
+      });
     });
   </script>
 </body>
