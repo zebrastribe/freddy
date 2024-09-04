@@ -12,6 +12,7 @@
   <link rel="icon" href="img/favicon.ico">
   <!-- Google Maps JavaScript API -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&callback=initMap" async defer></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body onload="initMap()">
   <div class="container mx-auto p-4">
@@ -34,7 +35,11 @@
         <p data-translate="description_checkin" class="text-gray-700 text-base mb-4 my-4"></p>
         <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
         <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4"></div>
-        <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"></button>
+        <form id="checkInForm" onsubmit="handleFormSubmit(event)">
+          <!-- Existing form fields -->
+          <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY"></div>
+          <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"></button>
+        </form>
         <div data-translate="checkin_loading" id="spinner" class="hidden mt-4"></div>
         <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4"></div>
         <div id="map" class="mt-5" style="height: 400px; width: 100%;"></div>
