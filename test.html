@@ -210,14 +210,16 @@
             }
             
             try {
-                statusDiv.innerHTML = '<span style="color: orange;">⏳ Testing complete check-in process...</span>';
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 1: Starting authentication...</span>';
                 
                 // Ensure anonymous authentication
                 try {
                     await signInAnonymously(auth);
                     console.log('Anonymous authentication successful');
+                    statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 2: Authentication complete, testing reCAPTCHA...</span>';
                 } catch (authError) {
                     console.log('Already authenticated or auth error:', authError.message);
+                    statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 2: Authentication check complete, testing reCAPTCHA...</span>';
                 }
                 
                 // Test reCAPTCHA
@@ -231,32 +233,53 @@
                     throw new Error('reCAPTCHA verification failed');
                 }
                 
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 3: reCAPTCHA complete, getting geolocation...</span>';
+                
                 // Test geolocation
                 const position = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    });
                 });
+                
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 4: Geolocation complete, checking Firebase...</span>';
                 
                 // Test Firebase (just check if we can access it)
                 if (!db) {
                     throw new Error('Firebase not initialized');
                 }
                 
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Step 5: Firebase ready, attempting to write document...</span>';
+                
                 console.log("Attempting to write document...");
-                await addDoc(collection(db, "clicks"), {
+                console.log("Document data:", {
+                    timestamp: 'serverTimestamp()',
+                    userId: auth.currentUser?.uid || null,
+                    name: name,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    recaptchaToken: recaptchaToken.substring(0, 20) + '...'
+                });
+                
+                const docRef = await addDoc(collection(db, "clicks"), {
                     timestamp: serverTimestamp(),
-                    userId: (typeof user !== 'undefined' && user && user.uid) ? user.uid : null,
+                    userId: auth.currentUser?.uid || null,
                     name: name,
                     latitude: position.coords.latitude,
                     longitude: position.coords.longitude,
                     recaptchaToken: recaptchaToken
                 });
-                console.log("Document write attempted!");
                 
-                statusDiv.innerHTML = `<span style="color: green;">✅ All systems working! Name: ${name}, Location: ${position.coords.latitude}, ${position.coords.longitude}, reCAPTCHA: ✅</span>`;
+                console.log("Document write successful! ID:", docRef.id);
+                
+                statusDiv.innerHTML = `<span style="color: green;">✅ All systems working!<br>Name: ${name}<br>Location: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}<br>Document ID: ${docRef.id}<br>reCAPTCHA: ✅</span>`;
                 statusDiv.parentElement.className = 'test-section success';
                 
             } catch (error) {
-                statusDiv.innerHTML = `<span style="color: red;">❌ Check-in test failed: ${error.message}</span>`;
+                console.error('Complete check-in test failed:', error);
+                statusDiv.innerHTML = `<span style="color: red;">❌ Check-in test failed: ${error.message}<br><small>Error type: ${error.name}</small></span>`;
                 statusDiv.parentElement.className = 'test-section error';
             }
         };
