@@ -55,6 +55,8 @@
     
     <script type="module">
         import { db, auth } from './js/firebase-setup.js';
+        import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
         
         // Test Google Maps
         function testGoogleMaps() {
@@ -154,6 +156,14 @@
             
             try {
                 statusDiv.innerHTML = '<span style="color: orange;">⏳ Testing complete check-in process...</span>';
+                
+                // Ensure anonymous authentication
+                try {
+                    await signInAnonymously(auth);
+                    console.log('Anonymous authentication successful');
+                } catch (authError) {
+                    console.log('Already authenticated or auth error:', authError.message);
+                }
                 
                 // Test reCAPTCHA
                 if (typeof grecaptcha === 'undefined') {
