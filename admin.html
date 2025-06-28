@@ -9,6 +9,7 @@
     .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
     button { padding: 10px 20px; margin: 5px; cursor: pointer; }
     .instructions { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    #admin-controls { display: none; }
   </style>
   <script type="module">
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
@@ -31,12 +32,13 @@
         document.body.innerHTML = '<h2>Access denied.</h2>';
         return;
       }
-      
+      document.getElementById('admin-controls').style.display = '';
       try {
         const mode = await getFreddyStatus();
         document.getElementById('current-status').innerText = mode;
       } catch (error) {
         console.error('Error getting status:', error);
+        document.getElementById('current-status').innerText = 'Unknown';
         if (error.message.includes('permissions')) {
           document.getElementById('status-message').innerHTML = `
             <div class="error">
@@ -68,7 +70,9 @@
   <h1>Freddy Admin</h1>
   <p>Current status: <span id="current-status">...</span></p>
   <div id="status-message"></div>
-  <button onclick="setMissing()">Set MISSING</button>
-  <button onclick="setOk()">Set FOUND/OK</button>
+  <div id="admin-controls">
+    <button onclick="setMissing()">Set MISSING</button>
+    <button onclick="setOk()">Set FOUND/OK</button>
+  </div>
 </body>
 </html> 
