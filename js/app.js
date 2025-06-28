@@ -10,10 +10,11 @@ Overall, this script provides a robust solution for handling translations, token
 */
 
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 import { Translation } from './modules/translation/translation.js';
+import { getFreddyStatus } from './config.js';
 
 // Global variables
 let user = null;
@@ -62,6 +63,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Initialize maps
   waitForGoogleMaps(initializeMaps);
+
+  try {
+    const mode = await getFreddyStatus();
+    if (mode === 'MISSING') {
+      document.getElementById('freddy-warning').style.display = '';
+    }
+  } catch (e) {
+    console.warn('Could not fetch Freddy status:', e);
+  }
 });
 
 // Call the function to log the token
@@ -309,4 +319,13 @@ function updateMap(latitude, longitude) {
   }
   map.setCenter(position);
   map.setZoom(15);
+}
+
+export async function getFreddyStatus() {
+  const statusDoc = await getDoc(doc(db, "status", "freddy"));
+  return statusDoc.exists() ? statusDoc.data().mode : "OK";
+}
+
+export async function setFreddyStatus(mode) {
+  await setDoc(doc(db, "status", "freddy"), { mode });
 }

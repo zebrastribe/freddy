@@ -1,6 +1,9 @@
 // Configuration file for API keys and settings
 // This file should be updated with your actual API keys
 
+import { db } from './firebase-setup.js';
+import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
 export const config = {
   // Google Maps API Configuration
   googleMaps: {
@@ -59,4 +62,13 @@ export const getConfig = () => {
       environment: 'production'
     };
   }
-}; 
+};
+
+export async function getFreddyStatus() {
+  const statusDoc = await getDoc(doc(db, "status", "freddy"));
+  return statusDoc.exists() ? statusDoc.data().mode : "OK";
+}
+
+export async function setFreddyStatus(mode) {
+  await setDoc(doc(db, "status", "freddy"), { mode });
+} 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Freddy Admin</title>
+  <script type="module">
+    import { setFreddyStatus, getFreddyStatus } from './js/config.js';
+
+    async function updateStatus(mode) {
+      await setFreddyStatus(mode);
+      document.getElementById('current-status').innerText = mode;
+      alert('Status updated to: ' + mode);
+    }
+
+    window.onload = async () => {
+      // Password protection
+      let pw = prompt('Enter admin password:');
+      if (pw !== 'AngryLion') {
+        document.body.innerHTML = '<h2>Access denied.</h2>';
+        return;
+      }
+      const mode = await getFreddyStatus();
+      document.getElementById('current-status').innerText = mode;
+    };
+
+    window.setMissing = () => updateStatus('MISSING');
+    window.setOk = () => updateStatus('OK');
+  </script>
+</head>
+<body>
+  <h1>Freddy Admin</h1>
+  <p>Current status: <span id="current-status">...</span></p>
+  <button onclick="setMissing()">Set MISSING</button>
+  <button onclick="setOk()">Set FOUND/OK</button>
+</body>
+</html> 
