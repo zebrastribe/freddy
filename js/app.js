@@ -126,7 +126,14 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
     const name = nameInput.value;
     if (navigator.geolocation) {
       console.log('Requesting geolocation...');
-      navigator.geolocation.getCurrentPosition(async (position) => {
+      try {
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 60000
+          });
+        });
         const { latitude, longitude } = position.coords;
         console.log('Geolocation:', latitude, longitude);
         try {
@@ -167,12 +174,12 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
         } finally {
           spinner.classList.add('hidden');
         }
-      }, (error) => {
+      } catch (error) {
         console.error("Error getting geolocation: ", error);
         errorMessage.innerText = "Error getting location: " + (error.message || error);
         errorMessage.classList.remove('hidden');
         spinner.classList.add('hidden');
-      });
+      }
     } else {
       console.error("Geolocation is not supported by this browser.");
       errorMessage.innerText = "Geolocation is not supported by this browser.";
