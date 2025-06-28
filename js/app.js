@@ -46,11 +46,11 @@ function initializeMaps() {
 }
 
 // Wait for Google Maps API to load
-function waitForGoogleMaps() {
-  if (typeof google !== 'undefined' && google.maps) {
-    initializeMaps();
+function waitForGoogleMaps(callback) {
+  if (window.google && google.maps && typeof google.maps.Map === 'function') {
+    callback();
   } else {
-    setTimeout(waitForGoogleMaps, 100);
+    setTimeout(() => waitForGoogleMaps(callback), 100);
   }
 }
 
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   translation.applyTranslations();
   
   // Initialize maps
-  waitForGoogleMaps();
+  waitForGoogleMaps(initializeMaps);
 });
 
 // Call the function to log the token
