@@ -320,12 +320,3 @@ function updateMap(latitude, longitude) {
   map.setCenter(position);
   map.setZoom(15);
 }
-
-export async function getFreddyStatus() {
-  const statusDoc = await getDoc(doc(db, "status", "freddy"));
-  return statusDoc.exists() ? statusDoc.data().mode : "OK";
-}
-
-export async function setFreddyStatus(mode) {
-  await setDoc(doc(db, "status", "freddy"), { mode });
-}
