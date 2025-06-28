@@ -93,7 +93,8 @@ onAuthStateChanged(auth, (currentUser) => {
   }
 });
 
-document.getElementById('clickButton').addEventListener('click', async () => {
+document.getElementById('clickButton').addEventListener('click', async (event) => {
+  event.preventDefault();
   const nameInput = document.getElementById('nameInput');
   const errorMessage = document.getElementById('error-message');
   const spinner = document.getElementById('spinner');
