@@ -114,19 +114,21 @@ document.getElementById('clickButton').addEventListener('click', async () => {
     if (typeof grecaptcha === 'undefined') {
       throw new Error('reCAPTCHA not loaded. Please refresh the page.');
     }
-
+    console.log('Requesting reCAPTCHA token...');
     const recaptchaToken = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'checkin'});
-    
+    console.log('reCAPTCHA token:', recaptchaToken);
     if (!recaptchaToken) {
       throw new Error('reCAPTCHA verification failed. Please try again.');
     }
 
     const name = nameInput.value;
     if (navigator.geolocation) {
+      console.log('Requesting geolocation...');
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
+        console.log('Geolocation:', latitude, longitude);
         try {
-          await addDoc(collection(db, "clicks"), {
+          const docRef = await addDoc(collection(db, "clicks"), {
             timestamp: serverTimestamp(),
             userId: (typeof user !== 'undefined' && user && user.uid) ? user.uid : null,
             name: name,
@@ -134,7 +136,7 @@ document.getElementById('clickButton').addEventListener('click', async () => {
             longitude: longitude,
             recaptchaToken: recaptchaToken // Include reCAPTCHA token
           });
-          console.log("Document successfully written with GPS coordinates, name, and reCAPTCHA token!");
+          console.log("Document successfully written! ID:", docRef.id);
           updateMap(latitude, longitude);
           successMessage.classList.remove('hidden');
           nameInput.value = "";
@@ -146,14 +148,14 @@ document.getElementById('clickButton').addEventListener('click', async () => {
           fetchCheckIns();
         } catch (error) {
           console.error("Error writing document: ", error);
-          errorMessage.innerText = "Error saving check-in. Please try again.";
+          errorMessage.innerText = "Error saving check-in: " + (error.message || error);
           errorMessage.classList.remove('hidden');
         } finally {
           spinner.classList.add('hidden');
         }
       }, (error) => {
         console.error("Error getting geolocation: ", error);
-        errorMessage.innerText = "Error getting location. Please check your browser permissions.";
+        errorMessage.innerText = "Error getting location: " + (error.message || error);
         errorMessage.classList.remove('hidden');
         spinner.classList.add('hidden');
       });
