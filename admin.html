@@ -9,46 +9,75 @@
     .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
     button { padding: 10px 20px; margin: 5px; cursor: pointer; }
     .instructions { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
-    #admin-controls { display: none; }
+    #admin-section { display: none; }
   </style>
   <script type="module">
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
 
-    async function updateStatus(mode) {
-      try {
-        await setFreddyStatus(mode);
+    function showAdminSection() {
+      document.getElementById('login-section').style.display = 'none';
+      const adminSection = document.getElementById('admin-section');
+      adminSection.style.display = '';
+      adminSection.innerHTML = `
+        <div id="status-message"></div>
+        <div>Current status: <span id="current-status">...</span></div>
+        <div style="margin-top: 10px;">
+          <button id="set-missing">Set MISSING</button>
+          <button id="set-ok">Set FOUND/OK</button>
+        </div>
+      `;
+      // Fetch and show status
+      getFreddyStatus().then(mode => {
         document.getElementById('current-status').innerText = mode;
-        document.getElementById('status-message').innerHTML = '<span class="success">Status updated to: ' + mode + '</span>';
-      } catch (e) {
-        document.getElementById('status-message').innerHTML = '<span class="error">Error updating status: ' + e.message + '</span>';
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      let pw = prompt('Enter admin password:');
-      if (pw !== 'AngryLion') {
-        document.body.innerHTML = '<h2>Access denied.</h2>';
-        return;
-      }
-      document.getElementById('admin-controls').style.display = '';
-      try {
-        const mode = await getFreddyStatus();
-        document.getElementById('current-status').innerText = mode;
-      } catch (e) {
+      }).catch(e => {
         document.getElementById('current-status').innerText = 'Unknown';
         document.getElementById('status-message').innerHTML = '<span class="error">Could not fetch status: ' + e.message + '</span>';
-      }
+      });
+      // Button handlers
+      document.getElementById('set-missing').onclick = async () => {
+        try {
+          await setFreddyStatus('MISSING');
+          document.getElementById('current-status').innerText = 'MISSING';
+          document.getElementById('status-message').innerHTML = '<span class="success">Status updated to: MISSING</span>';
+        } catch (e) {
+          document.getElementById('status-message').innerHTML = '<span class="error">Error updating status: ' + e.message + '</span>';
+        }
+      };
+      document.getElementById('set-ok').onclick = async () => {
+        try {
+          await setFreddyStatus('OK');
+          document.getElementById('current-status').innerText = 'OK';
+          document.getElementById('status-message').innerHTML = '<span class="success">Status updated to: OK</span>';
+        } catch (e) {
+          document.getElementById('status-message').innerHTML = '<span class="error">Error updating status: ' + e.message + '</span>';
+        }
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('login-btn').onclick = function() {
+        const pw = document.getElementById('admin-password').value;
+        if (pw === 'AngryLion') {
+          showAdminSection();
+        } else {
+          document.getElementById('login-error').innerText = 'Wrong password';
+        }
+      };
+      document.getElementById('admin-password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('login-btn').click();
+        }
+      });
     });
-    window.updateStatus = updateStatus;
   </script>
 </head>
 <body>
   <h1>Freddy Admin</h1>
-  <div>Current status: <span id="current-status">...</span></div>
-  <div id="status-message"></div>
-  <div id="admin-controls">
-    <button onclick="updateStatus('MISSING')">Set MISSING</button>
-    <button onclick="updateStatus('OK')">Set FOUND/OK</button>
+  <div id="login-section">
+    <input type="password" id="admin-password" placeholder="Enter admin password" autofocus />
+    <button id="login-btn">Login</button>
+    <div id="login-error" style="color:red;"></div>
   </div>
+  <div id="admin-section"></div>
 </body>
 </html> 
