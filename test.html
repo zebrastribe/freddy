@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freddy - API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        #map { height: 300px; width: 100%; margin: 10px 0; }
+        .test-button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .test-button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Freddy - API Test Page</h1>
+    
+    <div class="test-section">
+        <h2>Google Maps API Test</h2>
+        <div id="map"></div>
+        <div id="maps-status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>reCAPTCHA v3 Test</h2>
+        <button class="test-button" onclick="testRecaptcha()">Test reCAPTCHA v3</button>
+        <div id="recaptcha-status">Click button to test</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Firebase Test</h2>
+        <div id="firebase-status">Testing...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Geolocation Test</h2>
+        <button class="test-button" onclick="testGeolocation()">Test Geolocation</button>
+        <div id="geolocation-status">Click button to test</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Complete Check-in Test</h2>
+        <input type="text" id="testName" placeholder="Enter test name" style="padding: 5px; margin: 5px;">
+        <button class="test-button" onclick="testCompleteCheckin()">Test Complete Check-in</button>
+        <div id="complete-checkin-status">Click button to test</div>
+    </div>
+    
+    <!-- Google Maps JavaScript API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&libraries=places" async defer></script>
+    <!-- reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ"></script>
+    
+    <script type="module">
+        import { db, auth } from './js/firebase-setup.js';
+        
+        // Test Google Maps
+        function testGoogleMaps() {
+            const statusDiv = document.getElementById('maps-status');
+            try {
+                if (typeof google !== 'undefined' && google.maps) {
+                    const map = new google.maps.Map(document.getElementById('map'), {
+                        center: { lat: 55.6606758, lng: 12.5226001 },
+                        zoom: 15
+                    });
+                    statusDiv.innerHTML = '<span style="color: green;">✅ Google Maps API working</span>';
+                    statusDiv.parentElement.className = 'test-section success';
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">❌ Google Maps API not loaded</span>';
+                    statusDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: red;">❌ Google Maps API error: ${error.message}</span>`;
+                statusDiv.parentElement.className = 'test-section error';
+            }
+        }
+        
+        // Test reCAPTCHA v3
+        window.testRecaptcha = async function() {
+            const statusDiv = document.getElementById('recaptcha-status');
+            try {
+                if (typeof grecaptcha === 'undefined') {
+                    statusDiv.innerHTML = '<span style="color: red;">❌ reCAPTCHA not loaded</span>';
+                    statusDiv.parentElement.className = 'test-section error';
+                    return;
+                }
+                
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Testing reCAPTCHA...</span>';
+                
+                const token = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'test'});
+                
+                if (token) {
+                    statusDiv.innerHTML = `<span style="color: green;">✅ reCAPTCHA v3 working! Token: ${token.substring(0, 20)}...</span>`;
+                    statusDiv.parentElement.className = 'test-section success';
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">❌ reCAPTCHA verification failed</span>';
+                    statusDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: red;">❌ reCAPTCHA error: ${error.message}</span>`;
+                statusDiv.parentElement.className = 'test-section error';
+            }
+        };
+        
+        // Test Firebase
+        async function testFirebase() {
+            const statusDiv = document.getElementById('firebase-status');
+            try {
+                if (db && auth) {
+                    statusDiv.innerHTML = '<span style="color: green;">✅ Firebase initialized</span>';
+                    statusDiv.parentElement.className = 'test-section success';
+                } else {
+                    statusDiv.innerHTML = '<span style="color: red;">❌ Firebase not initialized</span>';
+                    statusDiv.parentElement.className = 'test-section error';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: red;">❌ Firebase error: ${error.message}</span>`;
+                statusDiv.parentElement.className = 'test-section error';
+            }
+        }
+        
+        // Test Geolocation
+        window.testGeolocation = function() {
+            const statusDiv = document.getElementById('geolocation-status');
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        statusDiv.innerHTML = `<span style="color: green;">✅ Geolocation working: ${position.coords.latitude}, ${position.coords.longitude}</span>`;
+                        statusDiv.parentElement.className = 'test-section success';
+                    },
+                    (error) => {
+                        statusDiv.innerHTML = `<span style="color: red;">❌ Geolocation error: ${error.message}</span>`;
+                        statusDiv.parentElement.className = 'test-section error';
+                    }
+                );
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;">❌ Geolocation not supported</span>';
+                statusDiv.parentElement.className = 'test-section error';
+            }
+        };
+        
+        // Test complete check-in process
+        window.testCompleteCheckin = async function() {
+            const statusDiv = document.getElementById('complete-checkin-status');
+            const name = document.getElementById('testName').value;
+            
+            if (!name.trim()) {
+                statusDiv.innerHTML = '<span style="color: red;">❌ Please enter a test name</span>';
+                statusDiv.parentElement.className = 'test-section error';
+                return;
+            }
+            
+            try {
+                statusDiv.innerHTML = '<span style="color: orange;">⏳ Testing complete check-in process...</span>';
+                
+                // Test reCAPTCHA
+                if (typeof grecaptcha === 'undefined') {
+                    throw new Error('reCAPTCHA not loaded');
+                }
+                
+                const recaptchaToken = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'checkin'});
+                
+                if (!recaptchaToken) {
+                    throw new Error('reCAPTCHA verification failed');
+                }
+                
+                // Test geolocation
+                const position = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject);
+                });
+                
+                // Test Firebase (just check if we can access it)
+                if (!db) {
+                    throw new Error('Firebase not initialized');
+                }
+                
+                console.log("Attempting to write document...");
+                await addDoc(collection(db, "clicks"), {
+                    timestamp: serverTimestamp(),
+                    userId: (typeof user !== 'undefined' && user && user.uid) ? user.uid : null,
+                    name: name,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    recaptchaToken: recaptchaToken
+                });
+                console.log("Document write attempted!");
+                
+                statusDiv.innerHTML = `<span style="color: green;">✅ All systems working! Name: ${name}, Location: ${position.coords.latitude}, ${position.coords.longitude}, reCAPTCHA: ✅</span>`;
+                statusDiv.parentElement.className = 'test-section success';
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span style="color: red;">❌ Check-in test failed: ${error.message}</span>`;
+                statusDiv.parentElement.className = 'test-section error';
+            }
+        };
+        
+        // Run tests after page loads
+        window.addEventListener('load', () => {
+            setTimeout(testGoogleMaps, 1000);
+            setTimeout(testFirebase, 1000);
+        });
+    </script>
+</body>
+</html> 

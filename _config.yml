@@ -1,0 +1,53 @@
+# Jekyll configuration for GitHub Pages
+# This ensures proper MIME types for ES6 modules
+
+# Site settings
+title: Freddy - Where are you?
+description: Track Freddy the cat's adventures around the world
+url: "https://yourusername.github.io/freddy"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Include files
+include:
+  - _config.yml
+  - css/
+  - img/
+  - js/
+  - index.html
+  - LICENSE
+  - README.md
+
+# Exclude files
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - .git/
+  - .gitignore
+
+# Collections
+collections:
+  posts:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# MIME types for ES6 modules
+mime_types:
+  .js: application/javascript
+  .mjs: application/javascript 

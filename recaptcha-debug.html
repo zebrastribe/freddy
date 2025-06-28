@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>reCAPTCHA Debug Information</h1>
+    
+    <div class="debug-section info">
+        <h2>Configuration</h2>
+        <p><strong>Site Key:</strong> 6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ</p>
+        <p><strong>Version:</strong> reCAPTCHA v3</p>
+        <p><strong>Domain:</strong> <span id="current-domain"></span></p>
+    </div>
+    
+    <div class="debug-section">
+        <h2>reCAPTCHA Loading Status</h2>
+        <div id="loading-status">Checking...</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>reCAPTCHA Test</h2>
+        <button onclick="testRecaptcha()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Test reCAPTCHA</button>
+        <div id="test-result">Click button to test</div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Console Log</h2>
+        <div id="console-log"></div>
+    </div>
+    
+    <!-- reCAPTCHA v3 -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ"></script>
+    
+    <script>
+        // Show current domain
+        document.getElementById('current-domain').textContent = window.location.hostname;
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logDiv = document.getElementById('console-log');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            logDiv.innerHTML += '<div style="color: green;">LOG: ' + args.join(' ') + '</div>';
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            logDiv.innerHTML += '<div style="color: red;">ERROR: ' + args.join(' ') + '</div>';
+        };
+        
+        // Check reCAPTCHA loading
+        function checkRecaptchaLoading() {
+            const statusDiv = document.getElementById('loading-status');
+            
+            if (typeof grecaptcha !== 'undefined') {
+                statusDiv.innerHTML = '<span style="color: green;">✅ reCAPTCHA loaded successfully</span>';
+                statusDiv.parentElement.className = 'debug-section success';
+                
+                // Log reCAPTCHA object info
+                console.log('reCAPTCHA object:', grecaptcha);
+                console.log('reCAPTCHA ready function:', typeof grecaptcha.ready);
+                console.log('reCAPTCHA execute function:', typeof grecaptcha.execute);
+            } else {
+                statusDiv.innerHTML = '<span style="color: red;">❌ reCAPTCHA not loaded</span>';
+                statusDiv.parentElement.className = 'debug-section error';
+                console.error('reCAPTCHA object is undefined');
+            }
+        }
+        
+        // Test reCAPTCHA
+        window.testRecaptcha = async function() {
+            const resultDiv = document.getElementById('test-result');
+            
+            try {
+                console.log('Starting reCAPTCHA test...');
+                
+                if (typeof grecaptcha === 'undefined') {
+                    throw new Error('reCAPTCHA not loaded');
+                }
+                
+                console.log('reCAPTCHA is available, executing...');
+                
+                const token = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'debug'});
+                
+                console.log('reCAPTCHA token received:', token ? 'YES' : 'NO');
+                
+                if (token) {
+                    resultDiv.innerHTML = `<span style="color: green;">✅ reCAPTCHA working! Token: ${token.substring(0, 50)}...</span>`;
+                    resultDiv.parentElement.className = 'debug-section success';
+                } else {
+                    resultDiv.innerHTML = '<span style="color: red;">❌ reCAPTCHA returned no token</span>';
+                    resultDiv.parentElement.className = 'debug-section error';
+                }
+            } catch (error) {
+                console.error('reCAPTCHA test error:', error);
+                resultDiv.innerHTML = `<span style="color: red;">❌ reCAPTCHA error: ${error.message}</span>`;
+                resultDiv.parentElement.className = 'debug-section error';
+            }
+        };
+        
+        // Check loading after a delay
+        setTimeout(checkRecaptchaLoading, 2000);
+        
+        // Also check when window loads
+        window.addEventListener('load', () => {
+            setTimeout(checkRecaptchaLoading, 1000);
+        });
+    </script>
+</body>
+</html> 

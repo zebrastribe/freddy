@@ -14,16 +14,54 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 import { Translation } from './modules/translation/translation.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const translation = new Translation();
-  await translation.loadTranslations();
-  translation.applyTranslations();
-});
+// Global variables
 let user = null;
 let marker;
 let currentPage = 1;
 const entriesPerPage = 10;
+let map = null;
+let recordedMap = null;
 
+// Initialize maps when Google Maps API is loaded
+function initializeMaps() {
+  try {
+    // Initialize main map
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: 55.6606758, lng: 12.5226001 },
+      zoom: 15,
+      mapId: '8bac4e61a05fc3c2'
+    });
+
+    // Initialize recorded check-ins map
+    recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+      center: { lat: 55.6606758, lng: 12.5226001 },
+      zoom: 15,
+      mapId: '8bac4e61a05fc3c2'
+    });
+
+    console.log('Maps initialized successfully');
+  } catch (error) {
+    console.error('Error initializing maps:', error);
+  }
+}
+
+// Wait for Google Maps API to load
+function waitForGoogleMaps() {
+  if (typeof google !== 'undefined' && google.maps) {
+    initializeMaps();
+  } else {
+    setTimeout(waitForGoogleMaps, 100);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const translation = new Translation();
+  await translation.loadTranslations();
+  translation.applyTranslations();
+  
+  // Initialize maps
+  waitForGoogleMaps();
+});
 
 // Call the function to log the token
 logTokenFromUrl();
@@ -42,7 +80,6 @@ async function processToken() {
 // Call the function to process the token
 processToken();
 
-
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
@@ -50,7 +87,8 @@ onAuthStateChanged(auth, (currentUser) => {
     fetchLastCoordinates(); // Fetch last coordinates when user is authenticated
     fetchCheckIns(); // Fetch and display all check-ins
   } else {
-    console.error("User is not authenticated");
+    user = null;
+    console.info("No Firebase user authenticated (this is OK for public check-in).");
   }
 });
 
@@ -62,86 +100,122 @@ document.getElementById('clickButton').addEventListener('click', async () => {
 
   if (nameInput.value.trim() === "") {
     errorMessage.classList.remove('hidden');
+    errorMessage.innerText = "Please enter your name.";
     return;
   } else {
     errorMessage.classList.add('hidden');
   }
 
-  if (user) {
-    const name = nameInput.value; // Get the value from the input field
+  // Show spinner
+  spinner.classList.remove('hidden');
+
+  try {
+    // Verify reCAPTCHA first
+    if (typeof grecaptcha === 'undefined') {
+      throw new Error('reCAPTCHA not loaded. Please refresh the page.');
+    }
+
+    const recaptchaToken = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'checkin'});
+    
+    if (!recaptchaToken) {
+      throw new Error('reCAPTCHA verification failed. Please try again.');
+    }
+
+    const name = nameInput.value;
     if (navigator.geolocation) {
-      spinner.classList.remove('hidden'); // Show spinner
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude, longitude } = position.coords;
         try {
           await addDoc(collection(db, "clicks"), {
             timestamp: serverTimestamp(),
-            userId: user.uid,
-            name: name, // Include the name in the document
+            userId: (typeof user !== 'undefined' && user && user.uid) ? user.uid : null,
+            name: name,
             latitude: latitude,
-            longitude: longitude
+            longitude: longitude,
+            recaptchaToken: recaptchaToken // Include reCAPTCHA token
           });
-          console.log("Document successfully written with GPS coordinates and name!");
+          console.log("Document successfully written with GPS coordinates, name, and reCAPTCHA token!");
           updateMap(latitude, longitude);
-          successMessage.classList.remove('hidden'); // Show success message
-          nameInput.value = ""; // Clear the input field
-          nameInput.disabled = true; // Disable the input field
+          successMessage.classList.remove('hidden');
+          nameInput.value = "";
+          nameInput.disabled = true;
           setTimeout(() => {
-            nameInput.disabled = false; // Re-enable the input field after 15 seconds
-            successMessage.classList.add('hidden'); // Hide success message
+            nameInput.disabled = false;
+            successMessage.classList.add('hidden');
           }, 15000);
-          fetchCheckIns(); // Refresh the check-ins list
+          fetchCheckIns();
         } catch (error) {
           console.error("Error writing document: ", error);
+          errorMessage.innerText = "Error saving check-in. Please try again.";
+          errorMessage.classList.remove('hidden');
         } finally {
-          spinner.classList.add('hidden'); // Hide spinner
+          spinner.classList.add('hidden');
         }
       }, (error) => {
         console.error("Error getting geolocation: ", error);
-        spinner.classList.add('hidden'); // Hide spinner
+        errorMessage.innerText = "Error getting location. Please check your browser permissions.";
+        errorMessage.classList.remove('hidden');
+        spinner.classList.add('hidden');
       });
     } else {
       console.error("Geolocation is not supported by this browser.");
+      errorMessage.innerText = "Geolocation is not supported by this browser.";
+      errorMessage.classList.remove('hidden');
+      spinner.classList.add('hidden');
     }
-  } else {
-    console.error("User is not authenticated, cannot add document");
+  } catch (error) {
+    console.error("reCAPTCHA or general error:", error);
+    errorMessage.innerText = error.message || "An error occurred. Please try again.";
+    errorMessage.classList.remove('hidden');
+    spinner.classList.add('hidden');
   }
 });
 
 async function fetchLastCoordinates() {
   if (user) {
-    const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      const lastDoc = querySnapshot.docs[0];
-      const { latitude, longitude } = lastDoc.data();
-      updateMap(latitude, longitude);
-    } else {
-      console.log("No previous coordinates found.");
+    try {
+      const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
+      const querySnapshot = await getDocs(q);
+      if (!querySnapshot.empty) {
+        const lastDoc = querySnapshot.docs[0];
+        const { latitude, longitude } = lastDoc.data();
+        updateMap(latitude, longitude);
+      } else {
+        console.log("No previous coordinates found.");
+      }
+    } catch (error) {
+      console.error("Error fetching last coordinates:", error);
     }
   }
 }
 
 async function fetchCheckIns() {
-  if (user) {
-    const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
-    const querySnapshot = await getDocs(q);
-    const checkInsList = document.getElementById('checkInsList');
-    checkInsList.innerHTML = ''; // Clear the table body
+  if (typeof user === 'undefined') user = null; // Defensive: ensure user is defined
+  const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
+  const querySnapshot = await getDocs(q);
+  const checkInsList = document.getElementById('checkInsList');
+  checkInsList.innerHTML = ''; // Clear the table body
 
-    const docs = querySnapshot.docs;
-    const totalPages = Math.ceil(docs.length / entriesPerPage);
-    const start = (currentPage - 1) * entriesPerPage;
-    const end = start + entriesPerPage;
-    const currentDocs = docs.slice(start, end);
+  const docs = querySnapshot.docs;
+  const totalPages = Math.ceil(docs.length / entriesPerPage);
+  const start = (currentPage - 1) * entriesPerPage;
+  const end = start + entriesPerPage;
+  const currentDocs = docs.slice(start, end);
 
-    currentDocs.forEach((doc) => {
-      const { name, latitude, longitude, timestamp } = doc.data();
-      const date = timestamp.toDate();
-      const day = date.toLocaleString('en-US', { weekday: 'long' });
-      const formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-      const time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
+  currentDocs.forEach((doc) => {
+    const data = doc.data();
+    const name = data.name || '-';
+    const latitude = typeof data.latitude === 'number' ? data.latitude : '-';
+    const longitude = typeof data.longitude === 'number' ? data.longitude : '-';
+    let formattedDate = '-';
+    let time = '-';
+    if (data.timestamp && typeof data.timestamp.toDate === 'function') {
+      const date = data.timestamp.toDate();
+      formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
+      time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
+    // Only render rows with at least name, latitude, longitude, and timestamp
+    if (name !== '-' && latitude !== '-' && longitude !== '-' && formattedDate !== '-') {
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="py-2 px-4 border-b border-gray-200">${name}</td>
@@ -151,43 +225,19 @@ async function fetchCheckIns() {
         <td class="py-2 px-4 border-b border-gray-200">${time}</td>
       `;
       checkInsList.appendChild(row);
-
-      // Add marker to the map
-      new google.maps.Marker({
-        position: { lat: latitude, lng: longitude },
-        map: window.recordedMap,
-        title: name
-      });
-    });
-
-    document.getElementById('prevPage').disabled = currentPage === 1;
-    document.getElementById('nextPage').disabled = currentPage === totalPages;
-  }
-}
-
-const MAP_ID = '8bac4e61a05fc3c2'; // Replace with your valid Map ID
-
-function initMaps() {
-  const map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 55.6606892, lng: 12.5225537 },
-    zoom: 10,
-    mapId: MAP_ID
+      // Add marker to the recorded map
+      if (recordedMap && typeof latitude === 'number' && typeof longitude === 'number') {
+        new google.maps.marker.AdvancedMarkerElement({
+          position: { lat: latitude, lng: longitude },
+          map: recordedMap,
+          title: name
+        });
+      }
+    }
   });
 
-  const marker = new google.maps.Marker({
-    position: { lat: 55.6606892, lng: 12.5225537 },
-    map: map
-  });
-}
-
-window.initMaps = initMaps; // Expose initMaps to the global scope
-
-// Initialize the map for recorded check-ins
-function initRecordedMap() {
-  window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-    center: { lat: 0, lng: 0 },
-    zoom: 2
-  });
+  document.getElementById('prevPage').disabled = currentPage === 1;
+  document.getElementById('nextPage').disabled = currentPage === totalPages;
 }
 
 // Call initRecordedMap when the Recorded Check-Ins tab is clicked
@@ -195,14 +245,9 @@ document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
   document.getElementById('checkInContent').classList.add('hidden');
   document.getElementById('recordedCheckInsContent').classList.remove('hidden');
   document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600');
-  document.getElementById('checkInTab').classList.add('text-gray-600');
+  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
+  document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
   document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-
-  // Initialize the map if it hasn't been initialized yet
-  if (!window.recordedMap) {
-    initRecordedMap();
-  }
 
   // Fetch and display check-ins
   fetchCheckIns();
@@ -221,15 +266,20 @@ document.getElementById('nextPage').addEventListener('click', () => {
 });
 
 function updateMap(latitude, longitude) {
+  if (!map) {
+    console.error('Map not initialized');
+    return;
+  }
+  
   const position = { lat: latitude, lng: longitude };
   if (marker) {
-    marker.setPosition(position);
+    marker.position = position;
   } else {
-    marker = new google.maps.Marker({
+    marker = new google.maps.marker.AdvancedMarkerElement({
       position: position,
-      map: window.map
+      map: map
     });
   }
-  window.map.setCenter(position);
-  window.map.setZoom(15);
+  map.setCenter(position);
+  map.setZoom(15);
 }

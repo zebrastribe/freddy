@@ -7,7 +7,7 @@ This is the HTML code for the Freddy website. It includes the following features
 - Link to the Tailwind CSS library
 - Link to the main CSS file
 - Favicon
-- Google Maps JavaScript API with an API key
+- Google Maps JavaScript API
 - Body onload event to initialize the map
 - Container div for the content
 - Root div for the main content
@@ -32,14 +32,20 @@ Please note that the file path is provided for reference.
   <!-- Favicon -->
   <link rel="icon" href="img/favicon.ico">
   <!-- Google Maps JavaScript API -->
+<<<<<<< HEAD
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&callback=initMap" async defer></script>
 <<<<<<< HEAD
 =======
   <!-- reCAPTCHA -->
 >>>>>>> b2c71d2 (bh)
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+=======
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY&libraries=places,marker&loading=async" async defer></script>
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ"></script>
+>>>>>>> 0aca064 (Ready for GitHub Pages: geolocation and check-in fixes, deployment ready)
 </head>
-<body onload="initMap()">
+<body>
   <div class="container mx-auto p-4">
     <div id="content"></div>
     <div id="root" class="flex flex-col items-center my-4 min-h-screen">
@@ -72,7 +78,6 @@ Please note that the file path is provided for reference.
         <form id="checkin-form">
           <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
           <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4"></div>
-          <div class="g-recaptcha" data-sitekey="6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ"></div>
           <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"></button>
           <div data-translate="checkin_loading" id="spinner" class="hidden mt-4"></div>
           <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4"></div>
@@ -112,18 +117,6 @@ Please note that the file path is provided for reference.
   </div>
   <script type="module" src="js/app.js"></script>
   <script>
-    function initMap() {
-      window.map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 55.6606758, lng: 12.5226001 },
-        zoom: 15
-      });
-      window.recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-        center: { lat: 55.6606758, lng: 12.5226001 },
-        zoom: 15
-      });
-    }
-    window.initMap = initMap; // Expose initMap to the global scope
-
     // Tab switching logic
     document.getElementById('checkInTab').addEventListener('click', () => {
       document.getElementById('checkInContent').classList.remove('hidden');
@@ -141,29 +134,6 @@ Please note that the file path is provided for reference.
       document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
       document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
       document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-    });
-
-    // reCAPTCHA handling
-    document.getElementById('checkin-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-      grecaptcha.ready(function() {
-        grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'submit'}).then(function(token) {
-          const name = document.getElementById('nameInput').value;
-          const recaptchaResponse = token;
-
-          // Send data to Firebase
-          firebase.firestore().collection('checkins').add({
-            name: name,
-            recaptchaResponse: recaptchaResponse,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          }).then(() => {
-            document.getElementById('success-message').classList.remove('hidden');
-          }).catch((error) => {
-            document.getElementById('error-message').innerText = error.message;
-            document.getElementById('error-message').classList.remove('hidden');
-          });
-        });
-      });
     });
   </script>
 </body>
