@@ -71,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (e) {
     console.warn('Could not fetch Freddy status:', e);
+    // Don't show error to users, just log it - the warning banner will remain hidden
   }
 });
 

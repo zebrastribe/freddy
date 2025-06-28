@@ -3,13 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>Freddy Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .instructions { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
+  </style>
   <script type="module">
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
 
     async function updateStatus(mode) {
-      await setFreddyStatus(mode);
-      document.getElementById('current-status').innerText = mode;
-      alert('Status updated to: ' + mode);
+      try {
+        await setFreddyStatus(mode);
+        document.getElementById('current-status').innerText = mode;
+        document.getElementById('status-message').innerHTML = `<div class="success">Status updated to: ${mode}</div>`;
+      } catch (error) {
+        console.error('Error updating status:', error);
+        document.getElementById('status-message').innerHTML = `<div class="error">Error updating status: ${error.message}</div>`;
+      }
     }
 
     window.onload = async () => {
@@ -19,8 +31,33 @@
         document.body.innerHTML = '<h2>Access denied.</h2>';
         return;
       }
-      const mode = await getFreddyStatus();
-      document.getElementById('current-status').innerText = mode;
+      
+      try {
+        const mode = await getFreddyStatus();
+        document.getElementById('current-status').innerText = mode;
+      } catch (error) {
+        console.error('Error getting status:', error);
+        if (error.message.includes('permissions')) {
+          document.getElementById('status-message').innerHTML = `
+            <div class="error">
+              <strong>Firestore Permission Error:</strong><br>
+              The admin page cannot access the status collection due to Firestore security rules.<br><br>
+              <strong>To fix this, update your Firestore security rules to allow access to the status collection:</strong><br>
+              <div class="instructions">
+                Go to Firebase Console → Firestore Database → Rules<br>
+                Add this rule to allow read/write access to the status collection:<br><br>
+                <code>
+                match /status/{document} {<br>
+                &nbsp;&nbsp;allow read, write: if true;<br>
+                }
+                </code>
+              </div>
+            </div>
+          `;
+        } else {
+          document.getElementById('status-message').innerHTML = `<div class="error">Error getting status: ${error.message}</div>`;
+        }
+      }
     };
 
     window.setMissing = () => updateStatus('MISSING');
@@ -30,6 +67,7 @@
 <body>
   <h1>Freddy Admin</h1>
   <p>Current status: <span id="current-status">...</span></p>
+  <div id="status-message"></div>
   <button onclick="setMissing()">Set MISSING</button>
   <button onclick="setOk()">Set FOUND/OK</button>
 </body>
