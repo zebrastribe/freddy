@@ -11,6 +11,7 @@ Overall, this script provides a robust solution for handling translations, token
 
 import { db, auth, onAuthStateChanged } from './firebase-setup.js';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 import { Translation } from './modules/translation/translation.js';
 
@@ -128,9 +129,21 @@ document.getElementById('clickButton').addEventListener('click', async () => {
         const { latitude, longitude } = position.coords;
         console.log('Geolocation:', latitude, longitude);
         try {
+          // Ensure anonymous authentication for unauthenticated users
+          if (!auth.currentUser) {
+            console.log('No authenticated user, attempting anonymous sign-in...');
+            try {
+              await signInAnonymously(auth);
+              console.log('Anonymous authentication successful');
+            } catch (authError) {
+              console.log('Anonymous authentication error:', authError.message);
+              // Continue anyway, as Firestore rules might allow unauthenticated writes
+            }
+          }
+          
           const docRef = await addDoc(collection(db, "clicks"), {
             timestamp: serverTimestamp(),
-            userId: (typeof user !== 'undefined' && user && user.uid) ? user.uid : null,
+            userId: auth.currentUser?.uid || null,
             name: name,
             latitude: latitude,
             longitude: longitude,
