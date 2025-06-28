@@ -36,6 +36,11 @@
     </div>
     
     <div class="test-section">
+        <h2>Protocol & Environment Test</h2>
+        <div id="protocol-status">Checking...</div>
+    </div>
+    
+    <div class="test-section">
         <h2>Geolocation Test</h2>
         <button class="test-button" onclick="testGeolocation()">Test Geolocation</button>
         <div id="geolocation-status">Click button to test</div>
@@ -123,24 +128,74 @@
             }
         }
         
+        // Test Protocol & Environment
+        function testProtocol() {
+            const statusDiv = document.getElementById('protocol-status');
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+            const isHttps = protocol === 'https:';
+            
+            let status = '';
+            if (isLocalhost) {
+                status = `<span style="color: green;">✅ Running on localhost (${protocol}) - Geolocation should work</span>`;
+                statusDiv.parentElement.className = 'test-section success';
+            } else if (isHttps) {
+                status = `<span style="color: green;">✅ Running on HTTPS - Geolocation should work</span>`;
+                statusDiv.parentElement.className = 'test-section success';
+            } else {
+                status = `<span style="color: red;">❌ Running on HTTP (${protocol}) - Geolocation requires HTTPS on GitHub Pages</span>`;
+                statusDiv.parentElement.className = 'test-section error';
+            }
+            
+            status += `<br><small>URL: ${window.location.href}</small>`;
+            statusDiv.innerHTML = status;
+        }
+        
         // Test Geolocation
         window.testGeolocation = function() {
             const statusDiv = document.getElementById('geolocation-status');
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        statusDiv.innerHTML = `<span style="color: green;">✅ Geolocation working: ${position.coords.latitude}, ${position.coords.longitude}</span>`;
-                        statusDiv.parentElement.className = 'test-section success';
-                    },
-                    (error) => {
-                        statusDiv.innerHTML = `<span style="color: red;">❌ Geolocation error: ${error.message}</span>`;
-                        statusDiv.parentElement.className = 'test-section error';
-                    }
-                );
-            } else {
-                statusDiv.innerHTML = '<span style="color: red;">❌ Geolocation not supported</span>';
+            statusDiv.innerHTML = '<span style="color: orange;">⏳ Requesting geolocation...</span>';
+            
+            if (!navigator.geolocation) {
+                statusDiv.innerHTML = '<span style="color: red;">❌ Geolocation not supported by this browser</span>';
                 statusDiv.parentElement.className = 'test-section error';
+                return;
             }
+            
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            };
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude, accuracy } = position.coords;
+                    statusDiv.innerHTML = `<span style="color: green;">✅ Geolocation working!<br>Lat: ${latitude.toFixed(6)}, Lng: ${longitude.toFixed(6)}<br>Accuracy: ${accuracy}m</span>`;
+                    statusDiv.parentElement.className = 'test-section success';
+                },
+                (error) => {
+                    let errorMessage = '';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Permission denied. Please allow location access in your browser settings.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'Location request timed out.';
+                            break;
+                        default:
+                            errorMessage = `Unknown error: ${error.message}`;
+                    }
+                    statusDiv.innerHTML = `<span style="color: red;">❌ Geolocation error (${error.code}): ${errorMessage}</span>`;
+                    statusDiv.parentElement.className = 'test-section error';
+                    console.error('Geolocation error:', error);
+                },
+                options
+            );
         };
         
         // Test complete check-in process
@@ -210,6 +265,7 @@
         window.addEventListener('load', () => {
             setTimeout(testGoogleMaps, 1000);
             setTimeout(testFirebase, 1000);
+            setTimeout(testProtocol, 1000);
         });
     </script>
 </body>
