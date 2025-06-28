@@ -227,11 +227,15 @@ async function fetchCheckIns() {
       checkInsList.appendChild(row);
       // Add marker to the recorded map
       if (recordedMap && typeof latitude === 'number' && typeof longitude === 'number') {
-        new google.maps.marker.AdvancedMarkerElement({
-          position: { lat: latitude, lng: longitude },
-          map: recordedMap,
-          title: name
-        });
+        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+          new google.maps.marker.AdvancedMarkerElement({
+            position: { lat: latitude, lng: longitude },
+            map: recordedMap,
+            title: name
+          });
+        } else {
+          console.error('AdvancedMarkerElement is not available. Make sure the marker library is loaded.');
+        }
       }
     }
   });
