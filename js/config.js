@@ -75,15 +75,4 @@ export async function setFreddyStatus(mode) {
 
 window.onload = async () => {
   // ...fetch and show status...
-};
-
-document.getElementById('login-btn').onclick = function() {
-  const pw = document.getElementById('admin-password').value;
-  if (pw === 'AngryLion') {
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('admin-section').style.display = '';
-    // Dynamically render admin controls/status here
-  } else {
-    document.getElementById('login-error').innerText = 'Wrong password';
-  }
 }; 

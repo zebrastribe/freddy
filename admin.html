@@ -3,64 +3,161 @@
 <head>
   <meta charset="UTF-8">
   <title>Freddy Admin</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .error { color: red; background: #ffe6e6; padding: 10px; border-radius: 5px; margin: 10px 0; }
-    .success { color: green; background: #e6ffe6; padding: 10px; border-radius: 5px; margin: 10px 0; }
-    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
-    .instructions { background: #f0f0f0; padding: 15px; border-radius: 5px; margin: 20px 0; }
-    #admin-section { display: none; }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script type="module">
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
+    import { collection, getDocs, query, orderBy, limit, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { db } from './js/firebase-setup.js';
 
-    function showAdminSection() {
-      document.getElementById('login-section').style.display = 'none';
-      const adminSection = document.getElementById('admin-section');
-      adminSection.style.display = '';
-      adminSection.innerHTML = `
-        <div id="status-message"></div>
-        <div>Current status: <span id="current-status">...</span></div>
-        <div style="margin-top: 10px;">
-          <button id="set-missing">Set MISSING</button>
-          <button id="set-ok">Set FOUND/OK</button>
+    async function fetchCheckIns(limitCount = 50) {
+      const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(limitCount));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    }
+
+    function formatTimestamp(ts) {
+      if (!ts) return '';
+      const d = ts.toDate ? ts.toDate() : new Date(ts.seconds * 1000);
+      return d.toLocaleString('da-DK');
+    }
+
+    async function renderCheckInTable() {
+      const checkIns = await fetchCheckIns();
+      let rows = checkIns.map(entry => `
+        <tr class="hover:bg-gray-100 transition">
+          <td class="px-4 py-2 text-center">
+            <input type="checkbox" class="checkin-checkbox form-checkbox h-4 w-4 text-blue-600" value="${entry.id}">
+          </td>
+          <td class="px-4 py-2">${entry.name || ''}</td>
+          <td class="px-4 py-2">${formatTimestamp(entry.timestamp)}</td>
+          <td class="px-4 py-2">${entry.latitude ? entry.latitude.toFixed(5) : ''}, ${entry.longitude ? entry.longitude.toFixed(5) : ''}</td>
+        </tr>
+      `).join('');
+      return `
+        <div class="mt-8">
+          <h2 class="text-lg font-bold mb-4">Seneste check-ins</h2>
+          <div class="overflow-x-auto rounded-lg shadow bg-white">
+            <form id="delete-form">
+              <button type="submit" class="mb-4 px-5 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow transition disabled:opacity-50 disabled:cursor-not-allowed" id="delete-selected" disabled>Slet valgte</button>
+              <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left border-separate border-spacing-y-1">
+                  <thead class="sticky top-0 bg-gray-100 z-10">
+                    <tr>
+                      <th class="px-4 py-2 text-center"><input type="checkbox" id="check-all"></th>
+                      <th class="px-4 py-2">Navn</th>
+                      <th class="px-4 py-2">Tidspunkt</th>
+                      <th class="px-4 py-2">Koordinater</th>
+                    </tr>
+                  </thead>
+                  <tbody id="checkin-table-body">
+                    ${rows}
+                  </tbody>
+                </table>
+              </div>
+            </form>
+          </div>
         </div>
+      `;
+    }
+
+    async function showAdminSection() {
+      document.getElementById('login-section').classList.add('hidden');
+      const adminSection = document.getElementById('admin-section');
+      adminSection.classList.remove('hidden');
+      adminSection.innerHTML = `
+        <div id="status-message" class="mb-4"></div>
+        <div class="mb-4">Nuværende status: <span id="current-status" class="font-bold">...</span></div>
+        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+          <button id="set-missing" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded">Sæt som EFTERLYST</button>
+          <button id="set-ok" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Sæt som FUNDET/OK</button>
+        </div>
+        <button id="logout-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded w-full mb-8">Log ud</button>
+        <div id="checkin-table"></div>
       `;
       // Fetch and show status
       getFreddyStatus().then(mode => {
         document.getElementById('current-status').innerText = mode;
       }).catch(e => {
-        document.getElementById('current-status').innerText = 'Unknown';
-        document.getElementById('status-message').innerHTML = '<span class="error">Could not fetch status: ' + e.message + '</span>';
+        document.getElementById('current-status').innerText = 'Ukendt';
+        document.getElementById('status-message').innerHTML = '<span class="bg-red-100 text-red-700 px-3 py-2 rounded">Kunne ikke hente status: ' + e.message + '</span>';
       });
       // Button handlers
       document.getElementById('set-missing').onclick = async () => {
         try {
           await setFreddyStatus('MISSING');
           document.getElementById('current-status').innerText = 'MISSING';
-          document.getElementById('status-message').innerHTML = '<span class="success">Status updated to: MISSING</span>';
+          document.getElementById('status-message').innerHTML = '<span class="bg-green-100 text-green-700 px-3 py-2 rounded">Status opdateret til: EFTERLYST</span>';
         } catch (e) {
-          document.getElementById('status-message').innerHTML = '<span class="error">Error updating status: ' + e.message + '</span>';
+          document.getElementById('status-message').innerHTML = '<span class="bg-red-100 text-red-700 px-3 py-2 rounded">Fejl ved opdatering: ' + e.message + '</span>';
         }
       };
       document.getElementById('set-ok').onclick = async () => {
         try {
           await setFreddyStatus('OK');
           document.getElementById('current-status').innerText = 'OK';
-          document.getElementById('status-message').innerHTML = '<span class="success">Status updated to: OK</span>';
+          document.getElementById('status-message').innerHTML = '<span class="bg-green-100 text-green-700 px-3 py-2 rounded">Status opdateret til: OK</span>';
         } catch (e) {
-          document.getElementById('status-message').innerHTML = '<span class="error">Error updating status: ' + e.message + '</span>';
+          document.getElementById('status-message').innerHTML = '<span class="bg-red-100 text-red-700 px-3 py-2 rounded">Fejl ved opdatering: ' + e.message + '</span>';
         }
       };
+      document.getElementById('logout-btn').onclick = () => {
+        localStorage.removeItem('freddyAdmin');
+        location.reload();
+      };
+      // Render check-in table
+      const tableHtml = await renderCheckInTable();
+      document.getElementById('checkin-table').innerHTML = tableHtml;
+      // Helper to update delete button state
+      function updateDeleteButton() {
+        const checked = document.querySelectorAll('.checkin-checkbox:checked').length;
+        document.getElementById('delete-selected').disabled = checked === 0;
+      }
+      // Select all logic
+      document.getElementById('check-all').addEventListener('change', function() {
+        document.querySelectorAll('.checkin-checkbox').forEach(cb => cb.checked = this.checked);
+        updateDeleteButton();
+      });
+      // Enable/disable delete button on checkbox change
+      document.querySelectorAll('.checkin-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateDeleteButton);
+      });
+      // Delete selected
+      document.getElementById('delete-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const checked = Array.from(document.querySelectorAll('.checkin-checkbox:checked')).map(cb => cb.value);
+        if (checked.length === 0) return;
+        if (!confirm('Slet valgte check-ins?')) return;
+        for (const id of checked) {
+          await deleteDoc(doc(db, 'clicks', id));
+        }
+        // Refresh table
+        document.getElementById('checkin-table').innerHTML = await renderCheckInTable();
+        // Re-attach listeners after refresh
+        document.getElementById('check-all').addEventListener('change', function() {
+          document.querySelectorAll('.checkin-checkbox').forEach(cb => cb.checked = this.checked);
+          updateDeleteButton();
+        });
+        document.querySelectorAll('.checkin-checkbox').forEach(cb => {
+          cb.addEventListener('change', updateDeleteButton);
+        });
+        updateDeleteButton();
+      });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // Auto-login if flag is set
+      if (localStorage.getItem('freddyAdmin') === 'true') {
+        showAdminSection();
+        return;
+      }
+
       document.getElementById('login-btn').onclick = function() {
         const pw = document.getElementById('admin-password').value;
         if (pw === 'AngryLion') {
+          localStorage.setItem('freddyAdmin', 'true'); // Save login
           showAdminSection();
         } else {
-          document.getElementById('login-error').innerText = 'Wrong password';
+          document.getElementById('login-error').innerText = 'Forkert kodeord';
         }
       };
       document.getElementById('admin-password').addEventListener('keydown', function(e) {
@@ -71,13 +168,17 @@
     });
   </script>
 </head>
-<body>
-  <h1>Freddy Admin</h1>
-  <div id="login-section">
-    <input type="password" id="admin-password" placeholder="Enter admin password" autofocus />
-    <button id="login-btn">Login</button>
-    <div id="login-error" style="color:red;"></div>
+<body class="bg-gray-100 min-h-screen">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-4xl w-full">
+      <h1 class="text-2xl font-bold mb-6 text-center">Freddy Admin</h1>
+      <div id="login-section">
+        <input id="admin-password" type="password" placeholder="Adgangskode" class="border rounded px-4 py-2 w-full mb-2" autocomplete="current-password">
+        <button id="login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full mb-2">Log ind</button>
+        <div id="login-error" class="text-red-600 text-sm"></div>
+      </div>
+      <div id="admin-section" class="hidden mt-6"></div>
+    </div>
   </div>
-  <div id="admin-section"></div>
 </body>
 </html> 
