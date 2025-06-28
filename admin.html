@@ -24,7 +24,7 @@
       }
     }
 
-    window.onload = async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       let pw = prompt('Enter admin password:');
       if (pw !== 'AngryLion') {
         document.body.innerHTML = '<h2>Access denied.</h2>';
@@ -38,7 +38,7 @@
         document.getElementById('current-status').innerText = 'Unknown';
         document.getElementById('status-message').innerHTML = '<span class="error">Could not fetch status: ' + e.message + '</span>';
       }
-    };
+    });
     window.updateStatus = updateStatus;
   </script>
 </head>
