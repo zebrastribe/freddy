@@ -46,7 +46,7 @@ input.peer:checked ~ .block {
 }
 
 input.peer:checked ~ .dot {
-  transform: translateX(28px); /* Move dot to the right */
+  transform: translateX(23px); /* Move dot to the right */
   background-color: white;
 }
 
