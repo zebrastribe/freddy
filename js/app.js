@@ -596,14 +596,21 @@ function setupNotificationToggle() {
     return;
   }
 
+  // Debug: Log initial state
+  console.log('[DEBUG] setupNotificationToggle called');
+  console.log('[DEBUG] Notification.permission:', Notification.permission);
+  console.log('[DEBUG] localStorage.notificationPreference:', localStorage.getItem('notificationPreference'));
+
   // Always use localStorage as source of truth
   syncNotificationState();
   const userPreference = localStorage.getItem('notificationPreference') === 'true';
+  console.log('[DEBUG] Setting toggle.checked to', userPreference);
   toggle.checked = userPreference;
   updateToggleVisualState(userPreference);
 
   // Only disable the toggle if browser permission is denied
   if (Notification.permission === 'denied') {
+    console.log('[DEBUG] Browser permission denied, disabling toggle');
     toggle.checked = false;
     toggle.disabled = true;
     if (message) {
@@ -626,10 +633,12 @@ function setupNotificationToggle() {
   }
 
   toggle.addEventListener('change', async (e) => {
+    console.log('[DEBUG] Toggle changed. Checked:', toggle.checked);
     if (toggle.checked) {
       // Only request permission if not already granted
       if (Notification.permission !== 'granted') {
         const permission = await Notification.requestPermission();
+        console.log('[DEBUG] Notification.requestPermission() result:', permission);
         if (permission !== 'granted') {
           toggle.checked = false;
           updateToggleVisualState(false);
@@ -652,6 +661,7 @@ function setupNotificationToggle() {
       if (message) message.classList.add('hidden');
       try {
         await requestFCMPermission();
+        console.log('[DEBUG] Device linked for notifications');
       } catch (error) {
         console.error('Failed to link device for notifications:', error);
         toggle.checked = false;
@@ -667,11 +677,12 @@ function setupNotificationToggle() {
       if (message) message.classList.add('hidden');
       try {
         // You can add logic here to remove the FCM token from your backend
-        console.log('Device unlinked from notifications');
+        console.log('[DEBUG] Device unlinked from notifications');
       } catch (error) {
         console.error('Failed to unlink device:', error);
       }
     }
+    console.log('[DEBUG] localStorage.notificationPreference after change:', localStorage.getItem('notificationPreference'));
   });
 }
 
