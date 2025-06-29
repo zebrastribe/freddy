@@ -63,36 +63,35 @@ function checkAuthState() {
 // Request FCM permission and get token
 async function requestFCMPermission() {
   try {
+    console.log('[DEBUG] Requesting notification permission...');
     const permission = await Notification.requestPermission();
+    console.log('[DEBUG] Notification permission result:', permission);
     if (permission === 'granted') {
-      console.log('Notification permission granted');
-      
+      console.log('[DEBUG] Notification permission granted');
       // Get FCM token (VAPID key will be needed for production)
       try {
+        console.log('[DEBUG] Requesting FCM token...');
         const token = await getToken(messaging, {
           vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
         });
-        
+        console.log('[DEBUG] FCM token result:', token);
         if (token) {
           fcmToken = token;
-          console.log('FCM Token:', token);
-          
+          console.log('[DEBUG] FCM Token:', token);
           // Save token to Firestore for server-side notifications
           await saveFCMToken(token);
-          
           return token;
         } else {
-          console.log('No registration token available');
+          console.log('[DEBUG] No registration token available');
         }
       } catch (tokenError) {
-        console.log('FCM token error (likely missing VAPID key):', tokenError);
-        // Continue without FCM for now
+        console.log('[DEBUG] FCM token error (likely missing VAPID key):', tokenError);
       }
     } else {
-      console.log('Notification permission denied');
+      console.log('[DEBUG] Notification permission denied');
     }
   } catch (error) {
-    console.error('Error getting FCM permission:', error);
+    console.error('[DEBUG] Error getting FCM permission:', error);
   }
   return null;
 }
@@ -100,15 +99,16 @@ async function requestFCMPermission() {
 // Save FCM token to Firestore
 async function saveFCMToken(token) {
   try {
+    console.log('[DEBUG] Saving FCM token to Firestore...');
     const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
     await setDoc(doc(db, "fcm_tokens", "admin"), {
       token: token,
       timestamp: new Date(),
       userAgent: navigator.userAgent
     });
-    console.log('FCM token saved to Firestore');
+    console.log('[DEBUG] FCM token saved to Firestore');
   } catch (error) {
-    console.error('Error saving FCM token:', error);
+    console.error('[DEBUG] Error saving FCM token:', error);
   }
 }
 
