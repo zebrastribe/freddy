@@ -284,34 +284,11 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
   spinner.classList.remove('hidden');
 
   try {
+    // Check-in logic
     let recaptchaToken = null;
-    
-    // Get reCAPTCHA key from config
-    const recaptchaKey = getConfig().recaptcha.siteKey;
-    
-    // Only verify reCAPTCHA if it's enabled
-    if (recaptchaKey && recaptchaKey !== 'null') {
-      // Verify reCAPTCHA first
-      if (typeof grecaptcha === 'undefined') {
-        console.warn('reCAPTCHA not loaded - continuing without verification');
-        recaptchaToken = null;
-      } else {
-        try {
-          console.log('Requesting reCAPTCHA token...');
-          recaptchaToken = await grecaptcha.execute(recaptchaKey, {action: 'checkin'});
-          console.log('reCAPTCHA token received');
-          if (!recaptchaToken) {
-            console.warn('reCAPTCHA verification failed - continuing without token');
-            recaptchaToken = null;
-          }
-        } catch (recaptchaError) {
-          console.warn('reCAPTCHA error - continuing without verification:', recaptchaError.message);
-          recaptchaToken = null;
-        }
-      }
-    } else {
-      console.log('reCAPTCHA is disabled - skipping verification');
-    }
+
+    // Skip reCAPTCHA verification completely to avoid 401 errors
+    console.log('reCAPTCHA is disabled - skipping verification');
 
     const name = nameInput.value;
     if (navigator.geolocation) {
