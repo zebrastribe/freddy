@@ -484,30 +484,47 @@
         if (loginBtn) {
           console.log('Setting up login button event handler');
           loginBtn.onclick = async function() {
-            console.log('Login button clicked - handler executed');
-            const password = document.getElementById('admin-password').value;
-            const errorElement = document.getElementById('login-error');
-            
-            if (!password) {
-              errorElement.innerText = 'Indtast venligst adgangskode';
-              return;
-            }
+            try {
+              console.log('[DEBUG] Login button clicked - handler executed');
+              console.log('[DEBUG] authenticateAdmin function available:', typeof authenticateAdmin);
+              
+              const password = document.getElementById('admin-password').value;
+              console.log('[DEBUG] Password field value length:', password ? password.length : 0);
+              
+              const errorElement = document.getElementById('login-error');
+              console.log('[DEBUG] Error element found:', !!errorElement);
+              
+              if (!password) {
+                console.log('[DEBUG] No password entered');
+                errorElement.innerText = 'Indtast venligst adgangskode';
+                return;
+              }
 
-            errorElement.innerText = 'Logger ind...';
-            console.log('Attempting authentication...');
-            
-            const success = await authenticateAdmin(password);
-            console.log('Authentication result:', success);
-            
-            if (success) {
-              // Save session
-              localStorage.setItem('freddyAdminSession', JSON.stringify({
-                token: sessionToken,
-                timestamp: Date.now()
-              }));
-              showAdminSection();
-            } else {
-              errorElement.innerText = 'Forkert adgangskode';
+              console.log('[DEBUG] About to call authenticateAdmin...');
+              errorElement.innerText = 'Logger ind...';
+              
+              const success = await authenticateAdmin(password);
+              console.log('[DEBUG] Authentication result:', success);
+              
+              if (success) {
+                console.log('[DEBUG] Authentication successful, saving session...');
+                // Save session
+                localStorage.setItem('freddyAdminSession', JSON.stringify({
+                  token: sessionToken,
+                  timestamp: Date.now()
+                }));
+                console.log('[DEBUG] Session saved, showing admin section...');
+                showAdminSection();
+              } else {
+                console.log('[DEBUG] Authentication failed');
+                errorElement.innerText = 'Forkert adgangskode';
+              }
+            } catch (error) {
+              console.error('[DEBUG] Error in login button handler:', error);
+              const errorElement = document.getElementById('login-error');
+              if (errorElement) {
+                errorElement.innerText = 'Fejl ved login: ' + error.message;
+              }
             }
           };
           console.log('Login button event handler attached successfully');
