@@ -41,21 +41,21 @@ to {
 }
 
 /* When toggle is checked (enabled) */
-input:checked + .block {
+input.peer:checked ~ .block {
   background-color: #3b82f6; /* Tailwind blue-500 */
 }
 
-input:checked + .block + .dot {
+input.peer:checked ~ .dot {
   transform: translateX(24px);
   background-color: white;
 }
 
 /* When toggle is unchecked (disabled) */
-input:not(:checked) + .block {
+input.peer:not(:checked) ~ .block {
   background-color: #d1d5db; /* Tailwind gray-300 */
 }
 
-input:not(:checked) + .block + .dot {
+input.peer:not(:checked) ~ .dot {
   transform: translateX(0);
   background-color: white;
 }
