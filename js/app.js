@@ -674,12 +674,22 @@ function setupNotificationToggle() {
 // Sync localStorage with browser permission
 function syncNotificationState() {
   const browserPermission = Notification.permission === 'granted';
-  const storedPreference = localStorage.getItem('notificationPreference') === 'true';
+  const storedPreference = localStorage.getItem('notificationPreference');
   
-  // If browser permission doesn't match localStorage, update localStorage
-  if (browserPermission !== storedPreference) {
+  // Only sync if localStorage is empty/null (first time user)
+  if (storedPreference === null) {
     localStorage.setItem('notificationPreference', browserPermission.toString());
-    console.log('Synced localStorage with browser permission:', browserPermission);
+    console.log('First time user - synced localStorage with browser permission:', browserPermission);
+  } else {
+    // User has a preference, respect it
+    const userWantsNotifications = storedPreference === 'true';
+    console.log('User has existing preference:', userWantsNotifications);
+    
+    // Only update localStorage if browser permission is denied and user wants notifications
+    if (Notification.permission === 'denied' && userWantsNotifications) {
+      localStorage.setItem('notificationPreference', 'false');
+      console.log('Browser permission denied, updated localStorage to false');
+    }
   }
 }
 
