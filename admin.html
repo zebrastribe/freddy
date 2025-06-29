@@ -193,7 +193,14 @@
         const data = await response.json();
         
         if (!data.linked) {
-          statusDiv.innerHTML = `<span class="text-red-600">${data.message}</span>`;
+          // Update checkbox state
+          const linkCheckbox = document.getElementById('link-this-device');
+          if (linkCheckbox) {
+            linkCheckbox.checked = false;
+          }
+          
+          statusDiv.innerHTML = `<span class="text-red-600">${data.message}</span>
+            <div class="text-sm text-blue-600 mt-2">Brug afkrydsningsboksen ovenfor for at linke denne enhed til notifikationer.</div>`;
           return;
         }
 
@@ -225,6 +232,12 @@
         const linkedDevice = data.linkedDevice;
         const isThisDeviceLinked = currentToken && linkedDevice.token && currentToken === linkedDevice.token;
         
+        // Update checkbox state
+        const linkCheckbox = document.getElementById('link-this-device');
+        if (linkCheckbox) {
+          linkCheckbox.checked = isThisDeviceLinked;
+        }
+        
         statusDiv.innerHTML = `
           <div class="mb-2 ${isThisDeviceLinked ? 'text-green-700' : 'text-red-700'}">
             <strong>${isThisDeviceLinked ? '✅ Denne enhed er linket til notifikationer' : '❌ Denne enhed er IKKE linket til notifikationer'}</strong>
@@ -234,7 +247,7 @@
             <span class="font-mono text-xs">${linkedDevice.userAgent}</span><br>
             <strong>Linket den:</strong> ${linkedDevice.timestamp}
           </div>
-          ${!isThisDeviceLinked ? '<div class="text-sm text-blue-600">Klik på 🔔 for at linke denne enhed til notifikationer.</div>' : ''}
+          ${!isThisDeviceLinked ? '<div class="text-sm text-blue-600">Brug afkrydsningsboksen ovenfor for at linke denne enhed til notifikationer.</div>' : ''}
         `;
       } catch (error) {
         console.error('Error fetching notification status:', error);
@@ -259,6 +272,10 @@
           </button>
           <span class="text-sm text-gray-600">Få besked når nogen checker ind</span>
         </div>
+        <div class="flex items-center gap-2 mb-4">
+          <input type="checkbox" id="link-this-device" class="form-checkbox h-5 w-5 text-blue-600">
+          <label for="link-this-device" class="text-sm text-gray-700">Link denne enhed til admin-notifikationer</label>
+        </div>
         <div id="notification-status" class="mb-4"></div>
         <button id="logout-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded w-full mb-8">Log ud</button>
         <div id="checkin-table"></div>
@@ -272,6 +289,43 @@
       });
       // Show notification link status
       updateNotificationStatus();
+      
+      // Handle link this device checkbox
+      document.getElementById('link-this-device').addEventListener('change', async function() {
+        if (this.checked) {
+          // User wants to link this device
+          const granted = await requestNotificationPermission();
+          if (granted) {
+            // The FCM token will be saved automatically by the firebase-setup.js
+            // Update status after a moment to allow Firestore write
+            setTimeout(() => {
+              updateNotificationStatus();
+              this.checked = true; // Keep checkbox checked
+            }, 1000);
+          } else {
+            // Permission denied, uncheck the checkbox
+            this.checked = false;
+            alert('Notifikationsadgang blev nægtet. Dette enhed kan ikke linkes til notifikationer.');
+          }
+        } else {
+          // User wants to unlink this device
+          if (confirm('Er du sikker på, at du vil fjerne linket til denne enhed?')) {
+            // Clear the FCM token from Firestore
+            try {
+              const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
+              await deleteDoc(doc(db, 'fcm_tokens', 'admin'));
+              updateNotificationStatus();
+            } catch (error) {
+              console.error('Error unlinking device:', error);
+              alert('Fejl ved fjernelse af link: ' + error.message);
+              this.checked = true; // Re-check if failed
+            }
+          } else {
+            // User cancelled, re-check the checkbox
+            this.checked = true;
+          }
+        }
+      });
       // Button handlers
       document.getElementById('set-missing').onclick = async () => {
         try {
