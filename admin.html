@@ -418,63 +418,115 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // Register the Firebase messaging service worker at the root
       try {
-        const { registerFirebaseMessagingServiceWorker } = await import('./js/firebase-setup.js');
-        await registerFirebaseMessagingServiceWorker();
-      } catch (e) {
-        console.error('Failed to register Firebase messaging service worker:', e);
-      }
-      // Request notification permission and set up listeners
-      await requestNotificationPermission();
-      setupCheckInListener();
-
-      // Check for existing session
-      const savedSession = localStorage.getItem('freddyAdminSession');
-      if (savedSession) {
+        // Register the Firebase messaging service worker at the root
         try {
-          const sessionData = JSON.parse(savedSession);
-          // Check if session is still valid (24 hours)
-          if (Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
-            sessionToken = sessionData.token;
-            showAdminSection();
-            return;
-          }
+          const { registerFirebaseMessagingServiceWorker } = await import('./js/firebase-setup.js');
+          await registerFirebaseMessagingServiceWorker();
         } catch (e) {
-          console.log('Invalid saved session');
+          console.error('Failed to register Firebase messaging service worker:', e);
+        }
+        
+        // Request notification permission and set up listeners
+        try {
+          await requestNotificationPermission();
+          setupCheckInListener();
+        } catch (e) {
+          console.error('Failed to setup notifications:', e);
+        }
+
+        // Check for existing session
+        const savedSession = localStorage.getItem('freddyAdminSession');
+        if (savedSession) {
+          try {
+            const sessionData = JSON.parse(savedSession);
+            // Check if session is still valid (24 hours)
+            if (Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+              sessionToken = sessionData.token;
+              showAdminSection();
+              return;
+            }
+          } catch (e) {
+            console.log('Invalid saved session');
+          }
+        }
+
+        // Set up login button event handler
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) {
+          console.log('Setting up login button event handler');
+          loginBtn.onclick = async function() {
+            console.log('Login button clicked - handler executed');
+            const password = document.getElementById('admin-password').value;
+            const errorElement = document.getElementById('login-error');
+            
+            if (!password) {
+              errorElement.innerText = 'Indtast venligst adgangskode';
+              return;
+            }
+
+            errorElement.innerText = 'Logger ind...';
+            console.log('Attempting authentication...');
+            
+            const success = await authenticateAdmin(password);
+            console.log('Authentication result:', success);
+            
+            if (success) {
+              // Save session
+              localStorage.setItem('freddyAdminSession', JSON.stringify({
+                token: sessionToken,
+                timestamp: Date.now()
+              }));
+              showAdminSection();
+            } else {
+              errorElement.innerText = 'Forkert adgangskode';
+            }
+          };
+          console.log('Login button event handler attached successfully');
+        } else {
+          console.error('Login button not found!');
+        }
+        
+        // Set up password field enter key handler
+        const passwordField = document.getElementById('admin-password');
+        if (passwordField) {
+          passwordField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+              document.getElementById('login-btn').click();
+            }
+          });
+        }
+        
+      } catch (error) {
+        console.error('Error in DOMContentLoaded:', error);
+        // Still try to set up login button even if other things fail
+        const loginBtn = document.getElementById('login-btn');
+        if (loginBtn) {
+          loginBtn.onclick = async function() {
+            console.log('Fallback login button clicked');
+            const password = document.getElementById('admin-password').value;
+            const errorElement = document.getElementById('login-error');
+            
+            if (!password) {
+              errorElement.innerText = 'Indtast venligst adgangskode';
+              return;
+            }
+
+            errorElement.innerText = 'Logger ind...';
+            const success = await authenticateAdmin(password);
+            
+            if (success) {
+              localStorage.setItem('freddyAdminSession', JSON.stringify({
+                token: sessionToken,
+                timestamp: Date.now()
+              }));
+              showAdminSection();
+            } else {
+              errorElement.innerText = 'Forkert adgangskode';
+            }
+          };
         }
       }
-
-      document.getElementById('login-btn').onclick = async function() {
-        const password = document.getElementById('admin-password').value;
-        const errorElement = document.getElementById('login-error');
-        
-        if (!password) {
-          errorElement.innerText = 'Indtast venligst adgangskode';
-          return;
-        }
-
-        errorElement.innerText = 'Logger ind...';
-        
-        const success = await authenticateAdmin(password);
-        
-        if (success) {
-          // Save session
-          localStorage.setItem('freddyAdminSession', JSON.stringify({
-            token: sessionToken,
-            timestamp: Date.now()
-          }));
-          showAdminSection();
-        } else {
-          errorElement.innerText = 'Forkert adgangskode';
-        }
-      };
-      
-      document.getElementById('admin-password').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-          document.getElementById('login-btn').click();
-        }
-      });
     });
   </script>
 </head>
