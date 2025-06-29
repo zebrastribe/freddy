@@ -138,5 +138,21 @@ onMessage(messaging, (payload) => {
   }
 });
 
+// Register Firebase messaging service worker (for FCM push notifications)
+export async function registerFirebaseMessagingServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      // Use absolute path for root scope (works for both local and GitHub Pages)
+      const swPath = '/firebase-messaging-sw.js';
+      const registration = await navigator.serviceWorker.register(swPath);
+      console.log('Firebase messaging service worker registered:', registration);
+      return registration;
+    } catch (error) {
+      console.error('Service worker registration failed:', error);
+    }
+  }
+  return null;
+}
+
 // Export necessary functions and variables
 export { db, auth, checkAuthState, onAuthStateChanged, requestFCMPermission, fcmToken };

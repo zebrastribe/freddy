@@ -418,6 +418,13 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Register the Firebase messaging service worker at the root
+      try {
+        const { registerFirebaseMessagingServiceWorker } = await import('./js/firebase-setup.js');
+        await registerFirebaseMessagingServiceWorker();
+      } catch (e) {
+        console.error('Failed to register Firebase messaging service worker:', e);
+      }
       // Request notification permission and set up listeners
       await requestNotificationPermission();
       setupCheckInListener();
