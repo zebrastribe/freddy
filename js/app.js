@@ -583,71 +583,60 @@ function updateNotificationButton() {
 function setupNotificationToggle() {
   console.log('setupNotificationToggle called');
   const toggle = document.getElementById('notification-toggle');
-  console.log('Toggle element found:', toggle);
-  console.log('Toggle element type:', toggle?.tagName);
-  console.log('Toggle element classes:', toggle?.className);
-  console.log('Toggle element style:', toggle?.style?.display);
-  console.log('Toggle parent element:', toggle?.parentElement);
-  console.log('Toggle parent classes:', toggle?.parentElement?.className);
-  
+  const message = document.getElementById('notification-permission-message');
   if (!toggle) {
     console.error('Notification toggle element not found!');
-    console.log('Available elements with "notification" in ID:', 
-      Array.from(document.querySelectorAll('[id*="notification"]')).map(el => el.id));
     return;
   }
 
-  // Check if the toggle is visible
-  const toggleRect = toggle.getBoundingClientRect();
-  console.log('Toggle bounding rect:', toggleRect);
-  console.log('Toggle is visible:', toggleRect.width > 0 && toggleRect.height > 0);
-
   // Check browser permission and sync with localStorage
-  console.log('Current browser permission:', Notification.permission);
   syncNotificationState();
 
   // Set initial state based on localStorage (which should now be synced with browser)
   const userPreference = localStorage.getItem('notificationPreference') === 'true';
-  console.log('User preference from localStorage:', userPreference);
   toggle.checked = userPreference;
   updateToggleVisualState(userPreference);
 
   // Disable toggle if browser permission is denied
   if (Notification.permission === 'denied') {
     toggle.disabled = true;
-    console.log('Toggle disabled due to denied permission');
+    if (message) {
+      message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
+      message.classList.remove('hidden');
+    }
   } else {
     toggle.disabled = false;
-    console.log('Toggle enabled');
+    if (message) message.classList.add('hidden');
   }
 
   toggle.addEventListener('change', async (e) => {
-    console.log('Toggle changed to:', toggle.checked);
     if (toggle.checked) {
-      // Request permission
+      // Always request permission when enabling
       const permission = await Notification.requestPermission();
-      console.log('Permission result:', permission);
       if (permission === 'granted') {
         toggle.checked = true;
         updateToggleVisualState(true);
         localStorage.setItem('notificationPreference', 'true');
         notificationPermission = true;
+        if (message) message.classList.add('hidden');
         // Link device for notifications
         try {
           await requestFCMPermission();
-          console.log('FCM permission granted successfully');
         } catch (error) {
           console.error('Failed to link device for notifications:', error);
-          // Revert toggle if FCM fails
           toggle.checked = false;
           updateToggleVisualState(false);
           localStorage.setItem('notificationPreference', 'false');
         }
       } else {
-        // Permission denied, revert toggle
+        // Permission denied, revert toggle and show message
         toggle.checked = false;
         updateToggleVisualState(false);
         localStorage.setItem('notificationPreference', 'false');
+        if (message) {
+          message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
+          message.classList.remove('hidden');
+        }
         if (permission === 'denied') {
           toggle.disabled = true;
         }
@@ -658,6 +647,7 @@ function setupNotificationToggle() {
       updateToggleVisualState(false);
       localStorage.setItem('notificationPreference', 'false');
       notificationPermission = false;
+      if (message) message.classList.add('hidden');
       // Unlink device from notifications (remove FCM token)
       try {
         // You can add logic here to remove the FCM token from your backend
@@ -667,8 +657,6 @@ function setupNotificationToggle() {
       }
     }
   });
-  
-  console.log('Toggle event listener added successfully');
 }
 
 // Sync localStorage with browser permission
