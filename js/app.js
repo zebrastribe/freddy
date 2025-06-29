@@ -579,7 +579,19 @@ function updateNotificationButton() {
   }
 }
 
-// Notification toggle logic for Tailwind switch
+// Sync localStorage with browser permission
+function syncNotificationState() {
+  const browserPermission = Notification.permission === 'granted';
+  const storedPreference = localStorage.getItem('notificationPreference');
+
+  // Only sync if localStorage is empty/null (first time user)
+  if (storedPreference === null) {
+    localStorage.setItem('notificationPreference', browserPermission.toString());
+    console.log('First time user - synced localStorage with browser permission:', browserPermission);
+  }
+  // Otherwise, always respect the user's stored preference
+}
+
 function setupNotificationToggle() {
   const toggle = document.getElementById('notification-toggle');
   const message = document.getElementById('notification-permission-message');
@@ -592,20 +604,25 @@ function setupNotificationToggle() {
   // Check browser permission and sync with localStorage
   syncNotificationState();
 
-  // Set initial state based on localStorage (which should now be synced with browser)
-  const userPreference = localStorage.getItem('notificationPreference') === 'true';
-  toggle.checked = userPreference;
-  updateToggleVisualState(userPreference);
-
-  // Disable toggle if browser permission is denied
-  if (Notification.permission === 'denied') {
+  // Always restore the toggle state from localStorage if permission is granted
+  if (Notification.permission === 'granted') {
+    const userPreference = localStorage.getItem('notificationPreference') === 'true';
+    toggle.checked = userPreference;
+    updateToggleVisualState(userPreference);
+    toggle.disabled = false;
+    if (message) message.classList.add('hidden');
+  } else if (Notification.permission === 'denied') {
+    toggle.checked = false;
     toggle.disabled = true;
     if (message) {
       message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
       message.classList.remove('hidden');
     }
   } else {
+    // default
+    toggle.checked = false;
     toggle.disabled = false;
+    updateToggleVisualState(false);
     if (message) message.classList.add('hidden');
   }
 
@@ -667,31 +684,6 @@ function setupNotificationToggle() {
       }
     }
   });
-}
-
-// Sync localStorage with browser permission
-function syncNotificationState() {
-  // TEMPORARY: Clear localStorage for testing
-  localStorage.removeItem('notificationPreference');
-  
-  const browserPermission = Notification.permission === 'granted';
-  const storedPreference = localStorage.getItem('notificationPreference');
-  
-  // Only sync if localStorage is empty/null (first time user)
-  if (storedPreference === null) {
-    localStorage.setItem('notificationPreference', browserPermission.toString());
-    console.log('First time user - synced localStorage with browser permission:', browserPermission);
-  } else {
-    // User has a preference, respect it
-    const userWantsNotifications = storedPreference === 'true';
-    console.log('User has existing preference:', userWantsNotifications);
-    
-    // Only update localStorage if browser permission is denied and user wants notifications
-    if (Notification.permission === 'denied' && userWantsNotifications) {
-      localStorage.setItem('notificationPreference', 'false');
-      console.log('Browser permission denied, updated localStorage to false');
-    }
-  }
 }
 
 // Update toggle visual state
