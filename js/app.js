@@ -581,9 +581,9 @@ function updateNotificationButton() {
 
 // Notification toggle logic for Tailwind switch
 function setupNotificationToggle() {
-  console.log('setupNotificationToggle called');
   const toggle = document.getElementById('notification-toggle');
   const message = document.getElementById('notification-permission-message');
+  const toggleLabel = toggle.closest('label');
   if (!toggle) {
     console.error('Notification toggle element not found!');
     return;
@@ -607,6 +607,16 @@ function setupNotificationToggle() {
   } else {
     toggle.disabled = false;
     if (message) message.classList.add('hidden');
+  }
+
+  // Add click handler to label for disabled toggle
+  if (toggleLabel) {
+    toggleLabel.addEventListener('click', (e) => {
+      if (toggle.disabled) {
+        e.preventDefault();
+        alert('Du har blokeret notifikationer for denne side. Gå til browserens indstillinger for at tillade dem igen.');
+      }
+    });
   }
 
   toggle.addEventListener('change', async (e) => {
