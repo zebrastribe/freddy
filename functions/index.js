@@ -57,104 +57,96 @@ exports.sendCheckInNotification = onDocumentCreated(
 );
 
 // Admin authentication endpoint
-exports.verifyAdminPassword = onRequest(async (req, res) => {
-  // Enable CORS
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+exports.verifyAdminPassword = onRequest(
+    {
+      cors: true,
+      maxInstances: 10,
+    },
+    async (req, res) => {
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
 
-  if (req.method === "OPTIONS") {
-    res.status(204).send("");
-    return;
-  }
+      try {
+        const {password} = req.body;
 
-  if (req.method !== "POST") {
-    res.status(405).send("Method Not Allowed");
-    return;
-  }
+        if (!password) {
+          res.status(400).json({error: "Password is required"});
+          return;
+        }
 
-  try {
-    const {password} = req.body;
+        // Get admin password from Remote Config
+        const template = await remoteConfig.getTemplate();
+        const adminPasswordParam = template.parameters && template.parameters.admin_password;
+        const adminPassword = adminPasswordParam &&
+          adminPasswordParam.defaultValue &&
+          adminPasswordParam.defaultValue.value ||
+          "AngryLion";
 
-    if (!password) {
-      res.status(400).json({error: "Password is required"});
-      return;
-    }
+        if (password === adminPassword) {
+          // Generate a session token
+          const sessionToken = admin.auth().createCustomToken(
+              "admin", {
+                role: "admin",
+                timestamp: Date.now(),
+              },
+          );
 
-    // Get admin password from Remote Config
-    const template = await remoteConfig.getTemplate();
-    const adminPasswordParam = template.parameters && template.parameters.admin_password;
-    const adminPassword = adminPasswordParam &&
-      adminPasswordParam.defaultValue &&
-      adminPasswordParam.defaultValue.value ||
-      "AngryLion";
-
-    if (password === adminPassword) {
-      // Generate a session token
-      const sessionToken = admin.auth().createCustomToken(
-          "admin", {
-            role: "admin",
-            timestamp: Date.now(),
-          },
-      );
-
-      res.json({
-        success: true,
-        message: "Authentication successful",
-        sessionToken: await sessionToken,
-      });
-    } else {
-      res.status(401).json({error: "Invalid password"});
-    }
-  } catch (error) {
-    console.error("Admin authentication error:", error);
-    res.status(500).json({error: "Internal server error"});
-  }
-});
+          res.json({
+            success: true,
+            message: "Authentication successful",
+            sessionToken: await sessionToken,
+          });
+        } else {
+          res.status(401).json({error: "Invalid password"});
+        }
+      } catch (error) {
+        console.error("Admin authentication error:", error);
+        res.status(500).json({error: "Internal server error"});
+      }
+    },
+);
 
 // Get API keys endpoint (for client-side use)
-exports.getApiKeys = onRequest(async (req, res) => {
-  // Enable CORS
-  res.set("Access-Control-Allow-Origin", "*");
-  res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type");
+exports.getApiKeys = onRequest(
+    {
+      cors: true,
+      maxInstances: 10,
+    },
+    async (req, res) => {
+      if (req.method !== "GET") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
 
-  if (req.method === "OPTIONS") {
-    res.status(204).send("");
-    return;
-  }
+      try {
+        // Get API keys from Remote Config
+        const template = await remoteConfig.getTemplate();
 
-  if (req.method !== "GET") {
-    res.status(405).send("Method Not Allowed");
-    return;
-  }
+        const googleMapsParam = template.parameters && template.parameters.google_maps_api_key;
+        const firebaseParam = template.parameters && template.parameters.firebase_api_key;
+        const recaptchaParam = template.parameters && template.parameters.recaptcha_site_key;
 
-  try {
-    // Get API keys from Remote Config
-    const template = await remoteConfig.getTemplate();
+        const apiKeys = {
+          googleMaps: googleMapsParam &&
+            googleMapsParam.defaultValue &&
+            googleMapsParam.defaultValue.value ||
+            "AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY",
+          firebase: firebaseParam &&
+            firebaseParam.defaultValue &&
+            firebaseParam.defaultValue.value ||
+            "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+          recaptcha: recaptchaParam &&
+            recaptchaParam.defaultValue &&
+            recaptchaParam.defaultValue.value ||
+            "6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ",
+        };
 
-    const googleMapsParam = template.parameters && template.parameters.google_maps_api_key;
-    const firebaseParam = template.parameters && template.parameters.firebase_api_key;
-    const recaptchaParam = template.parameters && template.parameters.recaptcha_site_key;
-
-    const apiKeys = {
-      googleMaps: googleMapsParam &&
-        googleMapsParam.defaultValue &&
-        googleMapsParam.defaultValue.value ||
-        "AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY",
-      firebase: firebaseParam &&
-        firebaseParam.defaultValue &&
-        firebaseParam.defaultValue.value ||
-        "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
-      recaptcha: recaptchaParam &&
-        recaptchaParam.defaultValue &&
-        recaptchaParam.defaultValue.value ||
-        "6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ",
-    };
-
-    res.json(apiKeys);
-  } catch (error) {
-    console.error("Get API keys error:", error);
-    res.status(500).json({error: "Internal server error"});
-  }
-});
+        res.json(apiKeys);
+      } catch (error) {
+        console.error("Get API keys error:", error);
+        res.status(500).json({error: "Internal server error"});
+      }
+    },
+);
