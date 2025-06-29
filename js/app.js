@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await registerServiceWorker();
   await requestNotificationPermission();
   setupCheckInListener();
-  setupNotificationToggle();
 
   try {
     const mode = await getFreddyStatus();
@@ -73,6 +72,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Await token processing after DOM is ready
   await processToken();
+  
+  // Set up notification toggle last, after everything else is ready
+  console.log('Setting up notification toggle...');
+  setupNotificationToggle();
 });
 
 // Dynamic Google Maps API loader
@@ -578,28 +581,39 @@ function updateNotificationButton() {
 
 // Notification toggle logic for Tailwind switch
 function setupNotificationToggle() {
+  console.log('setupNotificationToggle called');
   const toggle = document.getElementById('notification-toggle');
-  if (!toggle) return;
+  console.log('Toggle element found:', toggle);
+  if (!toggle) {
+    console.error('Notification toggle element not found!');
+    return;
+  }
 
   // Check browser permission and sync with localStorage
+  console.log('Current browser permission:', Notification.permission);
   syncNotificationState();
 
   // Set initial state based on localStorage (which should now be synced with browser)
   const userPreference = localStorage.getItem('notificationPreference') === 'true';
+  console.log('User preference from localStorage:', userPreference);
   toggle.checked = userPreference;
   updateToggleVisualState(userPreference);
 
   // Disable toggle if browser permission is denied
   if (Notification.permission === 'denied') {
     toggle.disabled = true;
+    console.log('Toggle disabled due to denied permission');
   } else {
     toggle.disabled = false;
+    console.log('Toggle enabled');
   }
 
   toggle.addEventListener('change', async (e) => {
+    console.log('Toggle changed to:', toggle.checked);
     if (toggle.checked) {
       // Request permission
       const permission = await Notification.requestPermission();
+      console.log('Permission result:', permission);
       if (permission === 'granted') {
         toggle.checked = true;
         updateToggleVisualState(true);
@@ -608,6 +622,7 @@ function setupNotificationToggle() {
         // Link device for notifications
         try {
           await requestFCMPermission();
+          console.log('FCM permission granted successfully');
         } catch (error) {
           console.error('Failed to link device for notifications:', error);
           // Revert toggle if FCM fails
@@ -639,6 +654,8 @@ function setupNotificationToggle() {
       }
     }
   });
+  
+  console.log('Toggle event listener added successfully');
 }
 
 // Sync localStorage with browser permission
@@ -656,20 +673,14 @@ function syncNotificationState() {
 // Update toggle visual state
 function updateToggleVisualState(isEnabled) {
   const toggle = document.getElementById('notification-toggle');
-  const toggleBlock = toggle.nextElementSibling;
-  const toggleDot = toggleBlock.nextElementSibling;
+  if (!toggle) return;
   
-  if (isEnabled) {
-    toggleBlock.classList.remove('bg-gray-300');
-    toggleBlock.classList.add('bg-blue-500');
-    toggleDot.classList.remove('left-1');
-    toggleDot.classList.add('left-7');
-  } else {
-    toggleBlock.classList.remove('bg-blue-500');
-    toggleBlock.classList.add('bg-gray-300');
-    toggleDot.classList.remove('left-7');
-    toggleDot.classList.add('left-1');
-  }
+  // The toggle is a checkbox, so we just need to update its checked state
+  // The CSS will handle the visual appearance based on the checked state
+  toggle.checked = isEnabled;
+  
+  // Also update the notificationPermission variable
+  notificationPermission = isEnabled;
 }
 
 // Show notification for new check-in
