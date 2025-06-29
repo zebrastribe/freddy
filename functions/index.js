@@ -147,3 +147,55 @@ exports.getApiKeys = onRequest(
       }
     },
 );
+
+// Get admin notification status endpoint
+exports.getNotificationStatus = onRequest(
+    {
+      cors: true,
+      maxInstances: 10,
+    },
+    async (req, res) => {
+      if (req.method !== "GET") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+
+      try {
+        // Get the admin FCM token from Firestore
+        const tokenDoc = await admin
+            .firestore()
+            .collection("fcm_tokens")
+            .doc("admin")
+            .get();
+
+        if (!tokenDoc.exists) {
+          res.json({
+            linked: false,
+            message: "Ingen admin-enhed er linket til notifikationer.",
+            linkedDevice: null,
+          });
+          return;
+        }
+
+        const data = tokenDoc.data();
+        const linkedToken = data.token;
+        const linkedUserAgent = data.userAgent || "Ukendt";
+        const linkedTimestamp = data.timestamp ?
+          new Date(data.timestamp.seconds ? data.timestamp.seconds * 1000 : data.timestamp).toLocaleString("da-DK") :
+          "Ukendt";
+
+        res.json({
+          linked: true,
+          message: "Admin-enhed er linket til notifikationer.",
+          linkedDevice: {
+            userAgent: linkedUserAgent,
+            timestamp: linkedTimestamp,
+            token: linkedToken, // Include token for client-side comparison
+          },
+        });
+      } catch (error) {
+        console.error("Get notification status error:", error);
+        res.status(500).json({error: "Internal server error"});
+      }
+    },
+);

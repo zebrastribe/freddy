@@ -178,23 +178,28 @@
     async function updateNotificationStatus() {
       const statusDiv = document.getElementById('notification-status');
       try {
-        const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
-        const tokenDoc = await getDoc(doc(db, 'fcm_tokens', 'admin'));
+        // Call the Cloud Function to get notification status securely
+        const response = await fetch('https://us-central1-tracker-6a648.cloudfunctions.net/getNotificationStatus', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
         
-        if (!tokenDoc.exists()) {
-          statusDiv.innerHTML = '<span class="text-red-600">Ingen admin-enhed er linket til notifikationer.</span>';
+        if (!data.linked) {
+          statusDiv.innerHTML = `<span class="text-red-600">${data.message}</span>`;
           return;
         }
-        
-        const data = tokenDoc.data();
-        const linkedToken = data.token;
-        const linkedUserAgent = data.userAgent || 'Ukendt';
-        const linkedTimestamp = data.timestamp ? new Date(data.timestamp.seconds ? data.timestamp.seconds * 1000 : data.timestamp).toLocaleString('da-DK') : 'Ukendt';
-        
-        // Get current device's token - we need to request it if not available
+
+        // Get current device's token for comparison
         let currentToken = null;
         try {
-          // Try to get the current FCM token
           const { getToken } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
           const { getMessaging } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
           const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
@@ -217,7 +222,8 @@
           console.log('Could not get current FCM token:', tokenError);
         }
         
-        const isThisDeviceLinked = currentToken && linkedToken && currentToken === linkedToken;
+        const linkedDevice = data.linkedDevice;
+        const isThisDeviceLinked = currentToken && linkedDevice.token && currentToken === linkedDevice.token;
         
         statusDiv.innerHTML = `
           <div class="mb-2 ${isThisDeviceLinked ? 'text-green-700' : 'text-red-700'}">
@@ -225,8 +231,8 @@
           </div>
           <div class="text-sm text-gray-600 mb-2">
             <strong>Linket enhed:</strong><br>
-            <span class="font-mono text-xs">${linkedUserAgent}</span><br>
-            <strong>Linket den:</strong> ${linkedTimestamp}
+            <span class="font-mono text-xs">${linkedDevice.userAgent}</span><br>
+            <strong>Linket den:</strong> ${linkedDevice.timestamp}
           </div>
           ${!isThisDeviceLinked ? '<div class="text-sm text-blue-600">Klik på 🔔 for at linke denne enhed til notifikationer.</div>' : ''}
         `;
