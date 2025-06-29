@@ -223,14 +223,11 @@ function updateTokenStatus() {
   const checkInForm = document.getElementById('check-in-form');
   const tokenStatusContainer = document.getElementById('token-status');
   
-  // Hide all status indicators
-  tokenValid.classList.add('hidden');
-  tokenInvalid.classList.add('hidden');
-  tokenLoading.classList.add('hidden');
+  // Always hide the token status indicators - no need to inform users
+  tokenStatusContainer.classList.add('hidden');
   
   // Show the appropriate status and update button state
   if (hasValidToken) {
-    tokenValid.classList.remove('hidden');
     clickButton.disabled = false;
     clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
@@ -239,8 +236,6 @@ function updateTokenStatus() {
       checkInForm.classList.remove('hidden');
     }
   } else {
-    // Hide token status indicators when token is invalid
-    tokenStatusContainer.classList.add('hidden');
     clickButton.disabled = true;
     clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
