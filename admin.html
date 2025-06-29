@@ -246,9 +246,6 @@
         }
         
         statusDiv.innerHTML = `
-          <div class="mb-2 ${isThisDeviceLinked ? 'text-green-700' : 'text-red-700'}">
-            <strong>${isThisDeviceLinked ? '✅ Denne enhed er linket til notifikationer' : '❌ Denne enhed er IKKE linket til notifikationer'}</strong>
-          </div>
           <div class="text-sm text-gray-600 mb-2">
             <strong>Linket enhed:</strong><br>
             <span class="font-mono text-xs">${linkedDevice.userAgent}</span><br>
