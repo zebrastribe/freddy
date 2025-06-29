@@ -70,6 +70,11 @@
       }
     }
     window.authenticateAdmin = authenticateAdmin;
+    window.authenticateAdmin('test').then(result => {
+      console.log('[DEBUG] Direct call to window.authenticateAdmin("test") result:', result);
+    }).catch(e => {
+      console.error('[DEBUG] Direct call to window.authenticateAdmin("test") error:', e);
+    });
 
     // Request notification permission
     async function requestNotificationPermission() {
