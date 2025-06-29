@@ -69,11 +69,22 @@ async function requestFCMPermission() {
     console.log('[DEBUG] Notification permission result:', permission);
     if (permission === 'granted') {
       console.log('[DEBUG] Notification permission granted');
-      // Get FCM token (VAPID key will be needed for production)
+      
+      // Get the existing service worker registration
+      const registration = await navigator.serviceWorker.getRegistration();
+      console.log('[DEBUG] Existing service worker registration:', registration);
+      
+      if (!registration) {
+        console.log('[DEBUG] No service worker registration found, registering now...');
+        await registerFirebaseMessagingServiceWorker();
+      }
+      
+      // Get FCM token using the existing service worker
       try {
         console.log('[DEBUG] Requesting FCM token...');
         const token = await getToken(messaging, {
-          vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
+          vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY',
+          serviceWorkerRegistration: registration || await navigator.serviceWorker.getRegistration()
         });
         console.log('[DEBUG] FCM token result:', token);
         if (token) {
@@ -86,7 +97,7 @@ async function requestFCMPermission() {
           console.log('[DEBUG] No registration token available');
         }
       } catch (tokenError) {
-        console.log('[DEBUG] FCM token error (likely missing VAPID key):', tokenError);
+        console.log('[DEBUG] FCM token error:', tokenError);
       }
     } else {
       console.log('[DEBUG] Notification permission denied');
