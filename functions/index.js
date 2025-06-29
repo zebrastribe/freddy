@@ -30,22 +30,25 @@ exports.sendCheckInNotification = onDocumentCreated(
         return null;
       }
 
-      // Compose the notification
-      const payload = {
-        notification: {
-          title: "Ny check-in!",
-          body:
-          checkIn && checkIn.name ?
-            `${checkIn.name} har lige checket ind` :
-            "Der er kommet en ny check-in!",
-          icon: "/img/emoji-cat-192x192.png",
-          click_action: "https://zebrastribe.github.io/freddy/admin.html",
-        },
-      };
-
       // Send the notification
       try {
-        await admin.messaging().sendToDevice(fcmToken, payload);
+        // Use send() for web push tokens instead of sendToDevice()
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Ny check-in!",
+            body:
+            checkIn && checkIn.name ?
+              `${checkIn.name} har lige checket ind` :
+              "Der er kommet en ny check-in!",
+            icon: "/freddy/img/emoji-cat-192x192.png",
+          },
+          webpush: {
+            notification: {
+              click_action: "https://zebrastribe.github.io/freddy/admin.html",
+            },
+          },
+        });
         console.log("Push notification sent to admin successfully");
       } catch (error) {
         console.error("Error sending push notification:", error);
@@ -195,6 +198,37 @@ exports.getNotificationStatus = onRequest(
         });
       } catch (error) {
         console.error("Get notification status error:", error);
+        res.status(500).json({error: "Internal server error"});
+      }
+    },
+);
+
+// Clear FCM token endpoint (for testing)
+exports.clearFCMToken = onRequest(
+    {
+      cors: true,
+      maxInstances: 10,
+    },
+    async (req, res) => {
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+
+      try {
+        // Delete the admin FCM token from Firestore
+        await admin
+            .firestore()
+            .collection("fcm_tokens")
+            .doc("admin")
+            .delete();
+
+        res.json({
+          success: true,
+          message: "FCM token cleared successfully",
+        });
+      } catch (error) {
+        console.error("Clear FCM token error:", error);
         res.status(500).json({error: "Internal server error"});
       }
     },
