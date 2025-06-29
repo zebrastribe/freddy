@@ -1,0 +1,20 @@
+{
+  "name": "Freddy Admin",
+  "short_name": "Freddy",
+  "start_url": "admin.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffcc00",
+  "icons": [
+    {
+      "src": "img/emojis.com cat-cat.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/emojis.com cat-cat.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 
