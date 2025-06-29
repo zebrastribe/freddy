@@ -220,6 +220,8 @@ function updateTokenStatus() {
   const tokenInvalid = document.getElementById('token-invalid');
   const tokenLoading = document.getElementById('token-loading');
   const clickButton = document.getElementById('clickButton');
+  const checkInForm = document.getElementById('check-in-form');
+  const tokenStatusContainer = document.getElementById('token-status');
   
   // Hide all status indicators
   tokenValid.classList.add('hidden');
@@ -232,11 +234,20 @@ function updateTokenStatus() {
     clickButton.disabled = false;
     clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
+    // Show the check-in form when token is valid
+    if (checkInForm) {
+      checkInForm.classList.remove('hidden');
+    }
   } else {
-    tokenInvalid.classList.remove('hidden');
+    // Hide token status indicators when token is invalid
+    tokenStatusContainer.classList.add('hidden');
     clickButton.disabled = true;
     clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+    // Hide the check-in form when token is invalid
+    if (checkInForm) {
+      checkInForm.classList.add('hidden');
+    }
   }
 }
 
