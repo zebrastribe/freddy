@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   translation.applyTranslations();
   
   // Initialize maps
-  initializeMaps();
+  await initializeApp();
 
   // Register service worker and request notification permissions
   await registerServiceWorker();
@@ -61,6 +61,68 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Don't show error to users, just log it - the warning banner will remain hidden
   }
 });
+
+// Dynamic Google Maps API loader
+function loadGoogleMapsAPI() {
+  return new Promise((resolve, reject) => {
+    // Check if already loaded
+    if (window.google && window.google.maps) {
+      resolve();
+      return;
+    }
+
+    const config = getConfig();
+    const apiKey = config.googleMaps.apiKey;
+    
+    if (!apiKey) {
+      reject(new Error('Google Maps API key not available'));
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
+    script.async = true;
+    script.defer = true;
+    
+    script.onload = () => {
+      console.log('Google Maps API script loaded');
+      resolve();
+    };
+    
+    script.onerror = () => {
+      reject(new Error('Failed to load Google Maps API'));
+    };
+    
+    document.head.appendChild(script);
+  });
+}
+
+// Initialize the app
+async function initializeApp() {
+  try {
+    // Wait for config to be initialized
+    await new Promise(resolve => {
+      const checkConfig = () => {
+        const config = getConfig();
+        if (config.googleMaps.apiKey) {
+          resolve();
+        } else {
+          setTimeout(checkConfig, 100);
+        }
+      };
+      checkConfig();
+    });
+
+    // Load Google Maps API
+    await loadGoogleMapsAPI();
+    
+    // Initialize maps
+    initializeMaps();
+    
+  } catch (error) {
+    console.error('Failed to initialize app:', error);
+  }
+}
 
 function initializeMaps() {
   waitForGoogleMaps(() => {
@@ -94,12 +156,28 @@ function initializeMaps() {
   });
 }
 
-function waitForGoogleMaps(callback) {
-  if (window.google && window.google.maps) {
-    callback();
-  } else {
-    setTimeout(() => waitForGoogleMaps(callback), 100);
+function waitForGoogleMaps(callback, maxAttempts = 100) {
+  let attempts = 0;
+  
+  function checkGoogleMaps() {
+    attempts++;
+    
+    if (window.google && window.google.maps && window.google.maps.Map) {
+      console.log('Google Maps API loaded successfully');
+      callback();
+    } else if (attempts >= maxAttempts) {
+      console.error('Google Maps API failed to load after', maxAttempts, 'attempts');
+      // Continue without maps - show error message to user
+      const mapElements = document.querySelectorAll('#map, #recordedMap');
+      mapElements.forEach(element => {
+        element.innerHTML = '<div class="flex items-center justify-center h-full bg-gray-100 text-gray-600">Map could not be loaded. Please refresh the page.</div>';
+      });
+    } else {
+      setTimeout(checkGoogleMaps, 100);
+    }
   }
+  
+  checkGoogleMaps();
 }
 
 // Make token validation optional - only process if token exists
@@ -344,21 +422,38 @@ document.getElementById('nextPage').addEventListener('click', () => {
 
 function updateMap(latitude, longitude) {
   if (!map) {
-    console.error('Map not initialized');
+    console.warn('Map not initialized - skipping update');
     return;
   }
   
-  const position = { lat: latitude, lng: longitude };
-  if (marker) {
-    marker.position = position;
-  } else {
-    marker = new google.maps.marker.AdvancedMarkerElement({
-      position: position,
-      map: map
-    });
+  if (!window.google || !window.google.maps) {
+    console.warn('Google Maps API not available - skipping update');
+    return;
   }
-  map.setCenter(position);
-  map.setZoom(15);
+  
+  try {
+    const position = { lat: latitude, lng: longitude };
+    if (marker) {
+      marker.position = position;
+    } else {
+      if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+        marker = new google.maps.marker.AdvancedMarkerElement({
+          position: position,
+          map: map
+        });
+      } else {
+        console.warn('AdvancedMarkerElement not available - using regular marker');
+        marker = new google.maps.Marker({
+          position: position,
+          map: map
+        });
+      }
+    }
+    map.setCenter(position);
+    map.setZoom(15);
+  } catch (error) {
+    console.error('Error updating map:', error);
+  }
 }
 
 // Register Firebase messaging service worker
