@@ -602,7 +602,7 @@ function setupNotificationToggle() {
   toggle.checked = userPreference;
   updateToggleVisualState(userPreference);
 
-  // Handle browser permission denied
+  // Only disable the toggle if browser permission is denied
   if (Notification.permission === 'denied') {
     toggle.checked = false;
     toggle.disabled = true;
