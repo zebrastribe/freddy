@@ -54,6 +54,19 @@ Please note that the file path is provided for reference.
         <span class="text-sm text-gray-600">Få besked når nogen checker ind</span>
       </div>
       
+      <!-- Token Status Indicator -->
+      <div id="token-status" class="mb-4 p-3 rounded-lg text-center">
+        <div id="token-valid" class="hidden bg-green-100 text-green-700">
+          ✅ Valid token - Check-ins allowed
+        </div>
+        <div id="token-invalid" class="hidden bg-red-100 text-red-700">
+          ❌ No valid token - Check-ins blocked
+        </div>
+        <div id="token-loading" class="bg-yellow-100 text-yellow-700">
+          ⏳ Checking token...
+        </div>
+      </div>
+      
       <!-- Tabs -->
       <div class="w-full max-w-lg">
         <div class="flex border-b border-gray-200">

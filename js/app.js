@@ -32,6 +32,7 @@ let map = null;
 let recordedMap = null;
 let notificationPermission = false;
 let lastCheckInTime = null;
+let hasValidToken = false; // Track if user has a valid token
 
 // Suppress reCAPTCHA 401 errors from cluttering the console
 window.addEventListener('error', (event) => {
@@ -188,7 +189,7 @@ function waitForGoogleMaps(callback, maxAttempts = 100) {
   checkGoogleMaps();
 }
 
-// Make token validation optional - only process if token exists
+// Make token validation mandatory for check-ins
 async function processToken() {
   const token = getToken();
   if (token) {
@@ -196,11 +197,43 @@ async function processToken() {
     if (valid) {
       console.log('Token is valid.');
       await useToken();
+      hasValidToken = true;
     } else {
       console.log('Token is not valid.');
+      hasValidToken = false;
     }
   } else {
-    console.log('No token provided - continuing without token validation.');
+    console.log('No token provided - check-ins will be blocked.');
+    hasValidToken = false;
+  }
+  
+  // Update the UI to show token status
+  updateTokenStatus();
+}
+
+// Function to update token status indicator
+function updateTokenStatus() {
+  const tokenValid = document.getElementById('token-valid');
+  const tokenInvalid = document.getElementById('token-invalid');
+  const tokenLoading = document.getElementById('token-loading');
+  const clickButton = document.getElementById('clickButton');
+  
+  // Hide all status indicators
+  tokenValid.classList.add('hidden');
+  tokenInvalid.classList.add('hidden');
+  tokenLoading.classList.add('hidden');
+  
+  // Show the appropriate status and update button state
+  if (hasValidToken) {
+    tokenValid.classList.remove('hidden');
+    clickButton.disabled = false;
+    clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
+  } else {
+    tokenInvalid.classList.remove('hidden');
+    clickButton.disabled = true;
+    clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+    clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
   }
 }
 
@@ -225,6 +258,13 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
   const errorMessage = document.getElementById('error-message');
   const spinner = document.getElementById('spinner');
   const successMessage = document.getElementById('success-message');
+
+  // Check if user has a valid token
+  if (!hasValidToken) {
+    errorMessage.classList.remove('hidden');
+    errorMessage.innerText = "Access denied. A valid token is required to check in.";
+    return;
+  }
 
   if (nameInput.value.trim() === "") {
     errorMessage.classList.remove('hidden');
