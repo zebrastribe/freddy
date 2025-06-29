@@ -126,7 +126,6 @@ exports.getApiKeys = onRequest(
 
         const googleMapsParam = template.parameters && template.parameters.google_maps_api_key;
         const firebaseParam = template.parameters && template.parameters.firebase_api_key;
-        const recaptchaParam = template.parameters && template.parameters.recaptcha_site_key;
 
         const apiKeys = {
           googleMaps: googleMapsParam &&
@@ -137,10 +136,8 @@ exports.getApiKeys = onRequest(
             firebaseParam.defaultValue &&
             firebaseParam.defaultValue.value ||
             "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
-          recaptcha: recaptchaParam &&
-            recaptchaParam.defaultValue &&
-            recaptchaParam.defaultValue.value ||
-            "6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ",
+          // For now, return null for reCAPTCHA to disable it until properly configured
+          recaptcha: null,
         };
 
         res.json(apiKeys);

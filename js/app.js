@@ -9,62 +9,41 @@ The initMaps and initRecordedMap functions initialize Google Maps for displaying
 Overall, this script provides a robust solution for handling translations, token validation, user authentication, and map interactions, leveraging Firebase Firestore and Google Maps APIs.
 */
 
-import { db, auth, onAuthStateChanged, requestFCMPermission } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
+import { config, getConfig } from './config.js';
 import { Translation } from './modules/translation/translation.js';
 import { getFreddyStatus } from './config.js';
+
+// Initialize Firebase
+const firebaseConfig = getConfig().firebase;
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
 // Global variables
 let user = null;
 let marker;
 let currentPage = 1;
-const entriesPerPage = 10;
+const entriesPerPage = getConfig().app.entriesPerPage;
 let map = null;
 let recordedMap = null;
 let notificationPermission = false;
 let lastCheckInTime = null;
 
-// Initialize maps when Google Maps API is loaded
-function initializeMaps() {
-  try {
-    // Initialize main map
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: { lat: 55.6606758, lng: 12.5226001 },
-      zoom: 15,
-      mapId: '8bac4e61a05fc3c2'
-    });
+// Call the function to log the token from URL
+logTokenFromUrl();
 
-    // Initialize recorded check-ins map
-    recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-      center: { lat: 55.6606758, lng: 12.5226001 },
-      zoom: 15,
-      mapId: '8bac4e61a05fc3c2'
-    });
-
-    console.log('Maps initialized successfully');
-  } catch (error) {
-    console.error('Error initializing maps:', error);
-  }
-}
-
-// Wait for Google Maps API to load
-function waitForGoogleMaps(callback) {
-  if (window.google && google.maps && typeof google.maps.Map === 'function') {
-    callback();
-  } else {
-    setTimeout(() => waitForGoogleMaps(callback), 100);
-  }
-}
-
+// Initialize maps when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
   const translation = new Translation();
   await translation.loadTranslations();
   translation.applyTranslations();
   
   // Initialize maps
-  waitForGoogleMaps(initializeMaps);
+  initializeMaps();
 
   // Register service worker and request notification permissions
   await registerServiceWorker();
@@ -83,18 +62,60 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// Call the function to log the token
-logTokenFromUrl();
+function initializeMaps() {
+  waitForGoogleMaps(() => {
+    const mapConfig = getConfig().googleMaps;
+    
+    // Initialize the main map
+    const map = new google.maps.Map(document.getElementById('map'), {
+      center: mapConfig.defaultCenter,
+      zoom: mapConfig.defaultZoom,
+      mapId: mapConfig.mapId,
+      disableDefaultUI: true,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false
+    });
 
-// Check if the token is valid and use it
+    // Initialize the recorded check-ins map
+    recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
+      center: mapConfig.defaultCenter,
+      zoom: mapConfig.defaultZoom,
+      mapId: mapConfig.mapId,
+      disableDefaultUI: true,
+      zoomControl: true,
+      streetViewControl: false,
+      mapTypeControl: false,
+      fullscreenControl: false
+    });
+
+    console.log('Maps initialized successfully');
+  });
+}
+
+function waitForGoogleMaps(callback) {
+  if (window.google && window.google.maps) {
+    callback();
+  } else {
+    setTimeout(() => waitForGoogleMaps(callback), 100);
+  }
+}
+
+// Make token validation optional - only process if token exists
 async function processToken() {
+  const token = getToken();
+  if (token) {
     const valid = await isTokenValid();
     if (valid) {
-        console.log('Token is valid.');
-        await useToken();
+      console.log('Token is valid.');
+      await useToken();
     } else {
-        console.log('Token is not valid.');
+      console.log('Token is not valid.');
     }
+  } else {
+    console.log('No token provided - continuing without token validation.');
+  }
 }
 
 // Call the function to process the token
@@ -131,15 +152,25 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
   spinner.classList.remove('hidden');
 
   try {
-    // Verify reCAPTCHA first
-    if (typeof grecaptcha === 'undefined') {
-      throw new Error('reCAPTCHA not loaded. Please refresh the page.');
-    }
-    console.log('Requesting reCAPTCHA token...');
-    const recaptchaToken = await grecaptcha.execute('6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ', {action: 'checkin'});
-    console.log('reCAPTCHA token:', recaptchaToken);
-    if (!recaptchaToken) {
-      throw new Error('reCAPTCHA verification failed. Please try again.');
+    let recaptchaToken = null;
+    
+    // Get reCAPTCHA key from config
+    const recaptchaKey = getConfig().recaptcha.siteKey;
+    
+    // Only verify reCAPTCHA if it's enabled
+    if (recaptchaKey && recaptchaKey !== 'null') {
+      // Verify reCAPTCHA first
+      if (typeof grecaptcha === 'undefined') {
+        throw new Error('reCAPTCHA not loaded. Please refresh the page.');
+      }
+      console.log('Requesting reCAPTCHA token...');
+      recaptchaToken = await grecaptcha.execute(recaptchaKey, {action: 'checkin'});
+      console.log('reCAPTCHA token:', recaptchaToken);
+      if (!recaptchaToken) {
+        throw new Error('reCAPTCHA verification failed. Please try again.');
+      }
+    } else {
+      console.log('reCAPTCHA is disabled - skipping verification');
     }
 
     const name = nameInput.value;
@@ -174,7 +205,7 @@ document.getElementById('clickButton').addEventListener('click', async (event) =
             name: name,
             latitude: latitude,
             longitude: longitude,
-            recaptchaToken: recaptchaToken // Include reCAPTCHA token
+            recaptchaToken: recaptchaToken // Include reCAPTCHA token (null if disabled)
           });
           console.log("Document successfully written! ID:", docRef.id);
           updateMap(latitude, longitude);
