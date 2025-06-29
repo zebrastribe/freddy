@@ -13,6 +13,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/fireba
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
 
 // Your web app's Firebase configuration 
 const firebaseConfig = {
@@ -30,6 +31,10 @@ const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const messaging = getMessaging(app);
+
+// FCM Token management
+let fcmToken = null;
 
 // Function to handle user authentication
 function authenticateUser() {
@@ -55,5 +60,82 @@ function checkAuthState() {
   });
 }
 
+// Request FCM permission and get token
+async function requestFCMPermission() {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      console.log('Notification permission granted');
+      
+      // Get FCM token (VAPID key will be needed for production)
+      try {
+        const token = await getToken(messaging, {
+          vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
+        });
+        
+        if (token) {
+          fcmToken = token;
+          console.log('FCM Token:', token);
+          
+          // Save token to Firestore for server-side notifications
+          await saveFCMToken(token);
+          
+          return token;
+        } else {
+          console.log('No registration token available');
+        }
+      } catch (tokenError) {
+        console.log('FCM token error (likely missing VAPID key):', tokenError);
+        // Continue without FCM for now
+      }
+    } else {
+      console.log('Notification permission denied');
+    }
+  } catch (error) {
+    console.error('Error getting FCM permission:', error);
+  }
+  return null;
+}
+
+// Save FCM token to Firestore
+async function saveFCMToken(token) {
+  try {
+    const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
+    await setDoc(doc(db, "fcm_tokens", "admin"), {
+      token: token,
+      timestamp: new Date(),
+      userAgent: navigator.userAgent
+    });
+    console.log('FCM token saved to Firestore');
+  } catch (error) {
+    console.error('Error saving FCM token:', error);
+  }
+}
+
+// Handle foreground messages
+onMessage(messaging, (payload) => {
+  console.log('Message received in foreground:', payload);
+  
+  // Show notification even when app is in foreground
+  const notificationTitle = payload.notification?.title || 'Ny Freddy Check-in! 🐱';
+  const notificationOptions = {
+    body: payload.notification?.body || 'Nogen har lige checket ind!',
+    icon: '/img/emoji-cat-192x192.png',
+    badge: '/img/emoji-cat-192x192.png',
+    tag: 'freddy-checkin-fcm',
+    requireInteraction: false,
+    silent: false
+  };
+
+  if ('serviceWorker' in navigator && 'showNotification' in ServiceWorkerRegistration.prototype) {
+    navigator.serviceWorker.ready.then(registration => {
+      registration.showNotification(notificationTitle, notificationOptions);
+    });
+  } else {
+    // Fallback to browser notifications
+    new Notification(notificationTitle, notificationOptions);
+  }
+});
+
 // Export necessary functions and variables
-export { db, auth, checkAuthState, onAuthStateChanged };
+export { db, auth, checkAuthState, onAuthStateChanged, requestFCMPermission, fcmToken };

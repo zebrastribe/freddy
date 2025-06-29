@@ -10,8 +10,92 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script type="module">
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
-    import { collection, getDocs, query, orderBy, limit, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-    import { db } from './js/firebase-setup.js';
+    import { collection, getDocs, query, orderBy, limit, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    import { db, requestFCMPermission } from './js/firebase-setup.js';
+
+    let notificationPermission = false;
+    let lastCheckInTime = null;
+
+    // Request notification permission
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) {
+        console.log('This browser does not support notifications');
+        return false;
+      }
+
+      if (Notification.permission === 'granted') {
+        notificationPermission = true;
+        return true;
+      }
+
+      if (Notification.permission === 'denied') {
+        console.log('Notification permission denied');
+        return false;
+      }
+
+      try {
+        const permission = await Notification.requestPermission();
+        notificationPermission = permission === 'granted';
+        
+        // If permission granted, also request FCM permission for push notifications
+        if (notificationPermission) {
+          await requestFCMPermission();
+        }
+        
+        return notificationPermission;
+      } catch (error) {
+        console.error('Error requesting notification permission:', error);
+        return false;
+      }
+    }
+
+    // Show notification for new check-in
+    function showCheckInNotification(checkIn) {
+      if (!notificationPermission) return;
+
+      const notification = new Notification('Ny Freddy Check-in! 🐱', {
+        body: `${checkIn.name} har lige checket ind!`,
+        icon: '/img/emoji-cat-192x192.png',
+        badge: '/img/emoji-cat-192x192.png',
+        tag: 'freddy-checkin-admin',
+        requireInteraction: false,
+        silent: false
+      });
+
+      // Auto-close after 5 seconds
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+
+      // Handle click on notification
+      notification.onclick = function() {
+        window.focus();
+        notification.close();
+      };
+    }
+
+    // Set up real-time listener for new check-ins
+    function setupCheckInListener() {
+      const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
+      
+      onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added") {
+            const checkIn = change.doc.data();
+            const checkInTime = checkIn.timestamp?.toDate?.() || new Date();
+            
+            // Only show notification if this is a new check-in (not from page load)
+            if (lastCheckInTime && checkInTime > lastCheckInTime) {
+              showCheckInNotification(checkIn);
+            }
+            
+            lastCheckInTime = checkInTime;
+          }
+        });
+      }, (error) => {
+        console.error("Error listening to check-ins:", error);
+      });
+    }
 
     async function fetchCheckIns(limitCount = 50) {
       const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(limitCount));
@@ -75,6 +159,12 @@
           <button id="set-missing" class="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-2 px-4 rounded">Sæt som EFTERLYST</button>
           <button id="set-ok" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Sæt som FUNDET/OK</button>
         </div>
+        <div class="flex items-center gap-2 mb-4">
+          <button id="notification-toggle" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            ${notificationPermission ? '🔔 Notifikationer: TIL' : '🔕 Notifikationer: FRA'}
+          </button>
+          <span class="text-sm text-gray-600">Få besked når nogen checker ind</span>
+        </div>
         <button id="logout-btn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded w-full mb-8">Log ud</button>
         <div id="checkin-table"></div>
       `;
@@ -102,6 +192,17 @@
           document.getElementById('status-message').innerHTML = '<span class="bg-green-100 text-green-700 px-3 py-2 rounded">Status opdateret til: OK</span>';
         } catch (e) {
           document.getElementById('status-message').innerHTML = '<span class="bg-red-100 text-red-700 px-3 py-2 rounded">Fejl ved opdatering: ' + e.message + '</span>';
+        }
+      };
+      document.getElementById('notification-toggle').onclick = async () => {
+        if (notificationPermission) {
+          notificationPermission = false;
+          document.getElementById('notification-toggle').innerHTML = '🔕 Notifikationer: FRA';
+        } else {
+          const granted = await requestNotificationPermission();
+          if (granted) {
+            document.getElementById('notification-toggle').innerHTML = '🔔 Notifikationer: TIL';
+          }
         }
       };
       document.getElementById('logout-btn').onclick = () => {
@@ -148,7 +249,11 @@
       });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Request notification permission and set up listeners
+      await requestNotificationPermission();
+      setupCheckInListener();
+
       // Auto-login if flag is set
       if (localStorage.getItem('freddyAdmin') === 'true') {
         showAdminSection();

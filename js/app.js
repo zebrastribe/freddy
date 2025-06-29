@@ -9,8 +9,8 @@ The initMaps and initRecordedMap functions initialize Google Maps for displaying
 Overall, this script provides a robust solution for handling translations, token validation, user authentication, and map interactions, leveraging Firebase Firestore and Google Maps APIs.
 */
 
-import { db, auth, onAuthStateChanged } from './firebase-setup.js';
-import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { db, auth, onAuthStateChanged, requestFCMPermission } from './firebase-setup.js';
+import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 import { Translation } from './modules/translation/translation.js';
@@ -23,6 +23,8 @@ let currentPage = 1;
 const entriesPerPage = 10;
 let map = null;
 let recordedMap = null;
+let notificationPermission = false;
+let lastCheckInTime = null;
 
 // Initialize maps when Google Maps API is loaded
 function initializeMaps() {
@@ -63,6 +65,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Initialize maps
   waitForGoogleMaps(initializeMaps);
+
+  // Register service worker and request notification permissions
+  await registerServiceWorker();
+  await requestNotificationPermission();
+  setupCheckInListener();
+  setupNotificationToggle();
 
   try {
     const mode = await getFreddyStatus();
@@ -320,4 +328,129 @@ function updateMap(latitude, longitude) {
   }
   map.setCenter(position);
   map.setZoom(15);
+}
+
+// Register Firebase messaging service worker
+async function registerServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+      console.log('Firebase messaging service worker registered:', registration);
+      return registration;
+    } catch (error) {
+      console.error('Service worker registration failed:', error);
+    }
+  }
+  return null;
+}
+
+// Request notification permission
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    console.log('This browser does not support notifications');
+    return false;
+  }
+
+  if (Notification.permission === 'granted') {
+    notificationPermission = true;
+    updateNotificationButton();
+    return true;
+  }
+
+  if (Notification.permission === 'denied') {
+    console.log('Notification permission denied');
+    updateNotificationButton();
+    return false;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    notificationPermission = permission === 'granted';
+    updateNotificationButton();
+    
+    // If permission granted, also request FCM permission
+    if (notificationPermission) {
+      await requestFCMPermission();
+    }
+    
+    return notificationPermission;
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
+    updateNotificationButton();
+    return false;
+  }
+}
+
+// Update notification button text
+function updateNotificationButton() {
+  const button = document.getElementById('notification-toggle');
+  if (button) {
+    button.innerHTML = notificationPermission ? '🔔 Notifikationer: TIL' : '🔕 Notifikationer: FRA';
+  }
+}
+
+// Handle notification toggle button click
+function setupNotificationToggle() {
+  const button = document.getElementById('notification-toggle');
+  if (button) {
+    button.addEventListener('click', async () => {
+      if (notificationPermission) {
+        notificationPermission = false;
+        updateNotificationButton();
+      } else {
+        const granted = await requestNotificationPermission();
+        if (granted) {
+          updateNotificationButton();
+        }
+      }
+    });
+  }
+}
+
+// Show notification for new check-in
+function showCheckInNotification(checkIn) {
+  if (!notificationPermission) return;
+
+  const notification = new Notification('Ny Freddy Check-in! 🐱', {
+    body: `${checkIn.name} har lige checket ind!`,
+    icon: '/img/emoji-cat-192x192.png',
+    badge: '/img/emoji-cat-192x192.png',
+    tag: 'freddy-checkin',
+    requireInteraction: false,
+    silent: false
+  });
+
+  // Auto-close after 5 seconds
+  setTimeout(() => {
+    notification.close();
+  }, 5000);
+
+  // Handle click on notification
+  notification.onclick = function() {
+    window.focus();
+    notification.close();
+  };
+}
+
+// Set up real-time listener for new check-ins
+function setupCheckInListener() {
+  const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
+  
+  onSnapshot(q, (snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+      if (change.type === "added") {
+        const checkIn = change.doc.data();
+        const checkInTime = checkIn.timestamp?.toDate?.() || new Date();
+        
+        // Only show notification if this is a new check-in (not from page load)
+        if (lastCheckInTime && checkInTime > lastCheckInTime) {
+          showCheckInNotification(checkIn);
+        }
+        
+        lastCheckInTime = checkInTime;
+      }
+    });
+  }, (error) => {
+    console.error("Error listening to check-ins:", error);
+  });
 }
