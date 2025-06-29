@@ -41,10 +41,10 @@ exports.sendCheckInNotification = onDocumentCreated(
             checkIn && checkIn.name ?
               `${checkIn.name} har lige checket ind` :
               "Der er kommet en ny check-in!",
-            icon: "/freddy/img/emoji-cat-192x192.png",
           },
           webpush: {
             notification: {
+              icon: "/freddy/img/emoji-cat-192x192.png",
               click_action: "https://zebrastribe.github.io/freddy/admin.html",
             },
           },
