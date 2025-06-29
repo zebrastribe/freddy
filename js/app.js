@@ -67,7 +67,7 @@ function initializeMaps() {
     const mapConfig = getConfig().googleMaps;
     
     // Initialize the main map
-    const map = new google.maps.Map(document.getElementById('map'), {
+    map = new google.maps.Map(document.getElementById('map'), {
       center: mapConfig.defaultCenter,
       zoom: mapConfig.defaultZoom,
       mapId: mapConfig.mapId,
