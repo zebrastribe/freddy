@@ -235,7 +235,10 @@
         // Update checkbox state
         const linkCheckbox = document.getElementById('link-this-device');
         if (linkCheckbox) {
-          linkCheckbox.checked = isThisDeviceLinked;
+          // Only update checkbox if it's not currently being changed by user
+          if (!linkCheckbox.dataset.userChanging) {
+            linkCheckbox.checked = isThisDeviceLinked;
+          }
         }
         
         statusDiv.innerHTML = `
@@ -292,18 +295,24 @@
       
       // Handle link this device checkbox
       document.getElementById('link-this-device').addEventListener('change', async function() {
+        // Mark that user is changing the checkbox
+        this.dataset.userChanging = 'true';
+        
         if (this.checked) {
           // User wants to link this device
+          console.log('Linking this device...');
           const granted = await requestNotificationPermission();
           if (granted) {
             // The FCM token will be saved automatically by the firebase-setup.js
-            // Update status after a moment to allow Firestore write
+            // Wait longer for Firestore write to complete before updating status
             setTimeout(() => {
+              // Clear the user changing flag and update status
+              this.dataset.userChanging = 'false';
               updateNotificationStatus();
-              this.checked = true; // Keep checkbox checked
-            }, 1000);
+            }, 2000); // Wait 2 seconds for Firestore write
           } else {
             // Permission denied, uncheck the checkbox
+            this.dataset.userChanging = 'false';
             this.checked = false;
             alert('Notifikationsadgang blev nægtet. Dette enhed kan ikke linkes til notifikationer.');
           }
@@ -314,15 +323,18 @@
             try {
               const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
               await deleteDoc(doc(db, 'fcm_tokens', 'admin'));
+              this.dataset.userChanging = 'false';
               updateNotificationStatus();
             } catch (error) {
               console.error('Error unlinking device:', error);
               alert('Fejl ved fjernelse af link: ' + error.message);
               this.checked = true; // Re-check if failed
+              this.dataset.userChanging = 'false';
             }
           } else {
             // User cancelled, re-check the checkbox
             this.checked = true;
+            this.dataset.userChanging = 'false';
           }
         }
       });
