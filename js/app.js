@@ -528,26 +528,18 @@ async function requestNotificationPermission() {
 
   if (Notification.permission === 'granted') {
     notificationPermission = true;
-    localStorage.setItem('notificationPreference', 'true');
-    updateNotificationButton();
-    updateToggleVisualState(true);
     return true;
   }
 
   if (Notification.permission === 'denied') {
     console.log('Notification permission denied');
-    localStorage.setItem('notificationPreference', 'false');
-    updateNotificationButton();
-    updateToggleVisualState(false);
+    notificationPermission = false;
     return false;
   }
 
   try {
     const permission = await Notification.requestPermission();
     notificationPermission = permission === 'granted';
-    localStorage.setItem('notificationPreference', notificationPermission.toString());
-    updateNotificationButton();
-    updateToggleVisualState(notificationPermission);
     
     // If permission granted, link device for notifications
     if (notificationPermission) {
@@ -556,8 +548,6 @@ async function requestNotificationPermission() {
       } catch (error) {
         console.error('Failed to link device for notifications:', error);
         notificationPermission = false;
-        localStorage.setItem('notificationPreference', 'false');
-        updateToggleVisualState(false);
       }
     }
     
@@ -565,8 +555,6 @@ async function requestNotificationPermission() {
   } catch (error) {
     console.error('Error requesting notification permission:', error);
     notificationPermission = false;
-    localStorage.setItem('notificationPreference', 'false');
-    updateToggleVisualState(false);
     return false;
   }
 }
@@ -576,14 +564,6 @@ function updateNotificationButton() {
   const button = document.getElementById('notification-toggle');
   if (button) {
     button.innerHTML = notificationPermission ? '🔔 Notifikationer: TIL' : '🔕 Notifikationer: FRA';
-  }
-}
-
-// Sync localStorage with browser permission
-function syncNotificationState() {
-  // Only set localStorage if it's the first visit
-  if (localStorage.getItem('notificationPreference') === null) {
-    localStorage.setItem('notificationPreference', 'false'); // Default to off
   }
 }
 
@@ -598,20 +578,25 @@ function setupNotificationToggle() {
 
   // Debug: Log initial state
   console.log('[DEBUG] setupNotificationToggle called');
-  console.log('[DEBUG] Notification.permission:', Notification.permission);
   console.log('[DEBUG] localStorage.notificationPreference:', localStorage.getItem('notificationPreference'));
 
-  // Always use localStorage as source of truth
-  syncNotificationState();
+  // Initialize localStorage if this is the first visit
+  if (localStorage.getItem('notificationPreference') === null) {
+    localStorage.setItem('notificationPreference', 'false');
+    console.log('[DEBUG] First visit - set localStorage to false');
+  }
+
+  // Set toggle state from localStorage ONLY
   const userPreference = localStorage.getItem('notificationPreference') === 'true';
-  console.log('[DEBUG] Setting toggle.checked to', userPreference);
+  console.log('[DEBUG] Setting toggle.checked to', userPreference, 'from localStorage');
   toggle.checked = userPreference;
-  updateToggleVisualState(userPreference);
+  
+  // Update the global notificationPermission variable to match localStorage
+  notificationPermission = userPreference;
 
   // Only disable the toggle if browser permission is denied
   if (Notification.permission === 'denied') {
     console.log('[DEBUG] Browser permission denied, disabling toggle');
-    toggle.checked = false;
     toggle.disabled = true;
     if (message) {
       message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
@@ -634,15 +619,24 @@ function setupNotificationToggle() {
 
   toggle.addEventListener('change', async (e) => {
     console.log('[DEBUG] Toggle changed. Checked:', toggle.checked);
+    
     if (toggle.checked) {
-      // Only request permission if not already granted
+      // User wants to enable notifications
+      // First, update localStorage immediately
+      localStorage.setItem('notificationPreference', 'true');
+      notificationPermission = true;
+      console.log('[DEBUG] localStorage set to true');
+      
+      // Then request permission if not already granted
       if (Notification.permission !== 'granted') {
         const permission = await Notification.requestPermission();
         console.log('[DEBUG] Notification.requestPermission() result:', permission);
         if (permission !== 'granted') {
+          // Permission denied - revert toggle and localStorage
           toggle.checked = false;
-          updateToggleVisualState(false);
           localStorage.setItem('notificationPreference', 'false');
+          notificationPermission = false;
+          console.log('[DEBUG] Permission denied - reverted to false');
           if (message) {
             message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
             message.classList.remove('hidden');
@@ -653,27 +647,24 @@ function setupNotificationToggle() {
           return;
         }
       }
+      
       // Permission granted, enable notifications
-      toggle.checked = true;
-      updateToggleVisualState(true);
-      localStorage.setItem('notificationPreference', 'true');
-      notificationPermission = true;
       if (message) message.classList.add('hidden');
       try {
         await requestFCMPermission();
         console.log('[DEBUG] Device linked for notifications');
       } catch (error) {
         console.error('Failed to link device for notifications:', error);
-        toggle.checked = false;
-        updateToggleVisualState(false);
-        localStorage.setItem('notificationPreference', 'false');
+        // Don't revert the toggle - user preference is still true
+        // Just log the error
       }
     } else {
       // User wants to disable notifications
-      toggle.checked = false;
-      updateToggleVisualState(false);
+      // Update localStorage immediately
       localStorage.setItem('notificationPreference', 'false');
       notificationPermission = false;
+      console.log('[DEBUG] localStorage set to false');
+      
       if (message) message.classList.add('hidden');
       try {
         // You can add logic here to remove the FCM token from your backend
@@ -684,19 +675,6 @@ function setupNotificationToggle() {
     }
     console.log('[DEBUG] localStorage.notificationPreference after change:', localStorage.getItem('notificationPreference'));
   });
-}
-
-// Update toggle visual state
-function updateToggleVisualState(isEnabled) {
-  const toggle = document.getElementById('notification-toggle');
-  if (!toggle) return;
-  
-  // The toggle is a checkbox, so we just need to update its checked state
-  // The CSS will handle the visual appearance based on the checked state
-  toggle.checked = isEnabled;
-  
-  // Also update the notificationPermission variable
-  notificationPermission = isEnabled;
 }
 
 // Show notification for new check-in
