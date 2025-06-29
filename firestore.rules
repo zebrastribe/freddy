@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read and write check-ins
+    match /clicks/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow FCM token storage for push notifications
+    match /fcm_tokens/{document} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow reading Freddy status
+    match /freddy_status/{document} {
+      allow read: if true;  // Anyone can read status
+      allow write: if request.auth != null;  // Only authenticated users can write
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+} 
