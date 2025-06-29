@@ -673,6 +673,9 @@ function setupNotificationToggle() {
 
 // Sync localStorage with browser permission
 function syncNotificationState() {
+  // TEMPORARY: Clear localStorage for testing
+  localStorage.removeItem('notificationPreference');
+  
   const browserPermission = Notification.permission === 'granted';
   const storedPreference = localStorage.getItem('notificationPreference');
   
