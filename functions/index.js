@@ -86,7 +86,7 @@ exports.verifyAdminPassword = onRequest(
 
         if (password === adminPassword) {
           // Generate a session token
-          const sessionToken = admin.auth().createCustomToken(
+          const sessionToken = await admin.auth().createCustomToken(
               "admin", {
                 role: "admin",
                 timestamp: Date.now(),
@@ -96,7 +96,7 @@ exports.verifyAdminPassword = onRequest(
           res.json({
             success: true,
             message: "Authentication successful",
-            sessionToken: await sessionToken,
+            sessionToken: sessionToken,
           });
         } else {
           res.status(401).json({error: "Invalid password"});
