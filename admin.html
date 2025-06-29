@@ -201,16 +201,16 @@
           
           statusDiv.innerHTML = `<span class="text-red-600">${data.message}</span>
             <div class="text-sm text-blue-600 mt-2">Brug afkrydsningsboksen ovenfor for at linke denne enhed til notifikationer.</div>`;
+          console.log('[DEBUG] No device linked in Firestore.');
           return;
         }
 
-        // Get current device's token for comparison
+        // Always fetch the latest FCM token for this device
         let currentToken = null;
         try {
           const { getToken } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
           const { getMessaging } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
           const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
-          
           const app = initializeApp({
             apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
             authDomain: "tracker-6a648.firebaseapp.com",
@@ -220,22 +220,23 @@
             appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
             measurementId: "G-XMHHKFJ9QW"
           });
-          
           const messaging = getMessaging(app);
           currentToken = await getToken(messaging, {
             vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
           });
+          console.log('[DEBUG] Current device FCM token:', currentToken);
         } catch (tokenError) {
-          console.log('Could not get current FCM token:', tokenError);
+          console.log('[DEBUG] Could not get current FCM token:', tokenError);
         }
         
         const linkedDevice = data.linkedDevice;
+        console.log('[DEBUG] Firestore linked token:', linkedDevice.token);
         const isThisDeviceLinked = currentToken && linkedDevice.token && currentToken === linkedDevice.token;
+        console.log('[DEBUG] isThisDeviceLinked:', isThisDeviceLinked);
         
-        // Update checkbox state
+        // Update checkbox state only after confirming match
         const linkCheckbox = document.getElementById('link-this-device');
         if (linkCheckbox) {
-          // Only update checkbox if it's not currently being changed by user
           if (!linkCheckbox.dataset.userChanging) {
             linkCheckbox.checked = isThisDeviceLinked;
           }
@@ -253,7 +254,7 @@
           ${!isThisDeviceLinked ? '<div class="text-sm text-blue-600">Brug afkrydsningsboksen ovenfor for at linke denne enhed til notifikationer.</div>' : ''}
         `;
       } catch (error) {
-        console.error('Error fetching notification status:', error);
+        console.error('[DEBUG] Error fetching notification status:', error);
         statusDiv.innerHTML = '<span class="text-red-600">Fejl ved hentning af notifikationsstatus: ' + error.message + '</span>';
       }
     }
