@@ -45,10 +45,15 @@ Please note that the file path is provided for reference.
       <p data-translate="description_part2" class="mb-4 text-lg text-gray-900 font-black text-center max-w-lg"></p>
       
       <!-- Notification Toggle -->
-      <div class="flex items-center gap-2 mb-4">
-        <button id="notification-toggle" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          🔕 Notifikationer: FRA
-        </button>
+      <div class="flex items-center gap-2 mb-4 justify-center">
+        <label class="flex items-center cursor-pointer">
+          <div class="relative">
+            <input type="checkbox" id="notification-toggle" class="sr-only" />
+            <div class="block bg-gray-300 w-14 h-8 rounded-full"></div>
+            <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+          </div>
+          <span class="ml-3 text-gray-700 font-medium">Notifikationer</span>
+        </label>
         <span class="text-sm text-gray-600">Få besked når nogen checker ind</span>
       </div>
       

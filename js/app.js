@@ -560,22 +560,33 @@ function updateNotificationButton() {
   }
 }
 
-// Handle notification toggle button click
+// Notification toggle logic for Tailwind switch
 function setupNotificationToggle() {
-  const button = document.getElementById('notification-toggle');
-  if (button) {
-    button.addEventListener('click', async () => {
-      if (notificationPermission) {
-        notificationPermission = false;
-        updateNotificationButton();
-      } else {
-        const granted = await requestNotificationPermission();
-        if (granted) {
-          updateNotificationButton();
-        }
-      }
-    });
+  const toggle = document.getElementById('notification-toggle');
+  if (!toggle) return;
+
+  // Set initial state based on permission
+  if (Notification.permission === 'granted') {
+    toggle.checked = true;
+  } else {
+    toggle.checked = false;
   }
+
+  toggle.addEventListener('change', async (e) => {
+    if (toggle.checked) {
+      // Request permission
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        toggle.checked = true;
+        // Optionally, link device for notifications here
+      } else {
+        toggle.checked = false;
+      }
+    } else {
+      // Optionally, unlink device for notifications here
+      toggle.checked = false;
+    }
+  });
 }
 
 // Show notification for new check-in

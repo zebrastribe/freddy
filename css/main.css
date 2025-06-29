@@ -29,3 +29,14 @@ to {
             height: 400px;
             width: 100%;
 }
+
+.dot {
+  transition: transform 0.2s;
+}
+input:checked + .block {
+  background-color: #2563eb; /* Tailwind blue-600 */
+}
+input:checked + .block + .dot {
+  transform: translateX(24px);
+  background-color: #2563eb;
+}
