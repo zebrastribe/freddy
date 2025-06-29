@@ -1,7 +1,11 @@
 const {onDocumentCreated} = require("firebase-functions/v2/firestore");
+const {onRequest} = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 admin.initializeApp();
+
+// Remote Config for admin password
+const remoteConfig = admin.remoteConfig();
 
 exports.sendCheckInNotification = onDocumentCreated(
     "clicks/{checkInId}",
@@ -51,3 +55,106 @@ exports.sendCheckInNotification = onDocumentCreated(
       return null;
     },
 );
+
+// Admin authentication endpoint
+exports.verifyAdminPassword = onRequest(async (req, res) => {
+  // Enable CORS
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+
+  if (req.method !== "POST") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    const {password} = req.body;
+
+    if (!password) {
+      res.status(400).json({error: "Password is required"});
+      return;
+    }
+
+    // Get admin password from Remote Config
+    const template = await remoteConfig.getTemplate();
+    const adminPasswordParam = template.parameters && template.parameters.admin_password;
+    const adminPassword = adminPasswordParam &&
+      adminPasswordParam.defaultValue &&
+      adminPasswordParam.defaultValue.value ||
+      "AngryLion";
+
+    if (password === adminPassword) {
+      // Generate a session token
+      const sessionToken = admin.auth().createCustomToken(
+          "admin", {
+            role: "admin",
+            timestamp: Date.now(),
+          },
+      );
+
+      res.json({
+        success: true,
+        message: "Authentication successful",
+        sessionToken: await sessionToken,
+      });
+    } else {
+      res.status(401).json({error: "Invalid password"});
+    }
+  } catch (error) {
+    console.error("Admin authentication error:", error);
+    res.status(500).json({error: "Internal server error"});
+  }
+});
+
+// Get API keys endpoint (for client-side use)
+exports.getApiKeys = onRequest(async (req, res) => {
+  // Enable CORS
+  res.set("Access-Control-Allow-Origin", "*");
+  res.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.set("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    res.status(204).send("");
+    return;
+  }
+
+  if (req.method !== "GET") {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+
+  try {
+    // Get API keys from Remote Config
+    const template = await remoteConfig.getTemplate();
+
+    const googleMapsParam = template.parameters && template.parameters.google_maps_api_key;
+    const firebaseParam = template.parameters && template.parameters.firebase_api_key;
+    const recaptchaParam = template.parameters && template.parameters.recaptcha_site_key;
+
+    const apiKeys = {
+      googleMaps: googleMapsParam &&
+        googleMapsParam.defaultValue &&
+        googleMapsParam.defaultValue.value ||
+        "AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY",
+      firebase: firebaseParam &&
+        firebaseParam.defaultValue &&
+        firebaseParam.defaultValue.value ||
+        "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+      recaptcha: recaptchaParam &&
+        recaptchaParam.defaultValue &&
+        recaptchaParam.defaultValue.value ||
+        "6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ",
+    };
+
+    res.json(apiKeys);
+  } catch (error) {
+    console.error("Get API keys error:", error);
+    res.status(500).json({error: "Internal server error"});
+  }
+});

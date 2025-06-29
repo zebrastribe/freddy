@@ -15,6 +15,32 @@
 
     let notificationPermission = false;
     let lastCheckInTime = null;
+    let sessionToken = null;
+
+    // Admin authentication function
+    async function authenticateAdmin(password) {
+      try {
+        const response = await fetch('https://us-central1-tracker-6a648.cloudfunctions.net/verifyAdminPassword', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ password })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Authentication failed');
+        }
+
+        const data = await response.json();
+        sessionToken = data.sessionToken;
+        return true;
+      } catch (error) {
+        console.error('Authentication error:', error);
+        return false;
+      }
+    }
 
     // Request notification permission
     async function requestNotificationPermission() {
@@ -206,7 +232,8 @@
         }
       };
       document.getElementById('logout-btn').onclick = () => {
-        localStorage.removeItem('freddyAdmin');
+        sessionToken = null;
+        localStorage.removeItem('freddyAdminSession');
         location.reload();
       };
       // Render check-in table
@@ -254,21 +281,47 @@
       await requestNotificationPermission();
       setupCheckInListener();
 
-      // Auto-login if flag is set
-      if (localStorage.getItem('freddyAdmin') === 'true') {
-        showAdminSection();
-        return;
+      // Check for existing session
+      const savedSession = localStorage.getItem('freddyAdminSession');
+      if (savedSession) {
+        try {
+          const sessionData = JSON.parse(savedSession);
+          // Check if session is still valid (24 hours)
+          if (Date.now() - sessionData.timestamp < 24 * 60 * 60 * 1000) {
+            sessionToken = sessionData.token;
+            showAdminSection();
+            return;
+          }
+        } catch (e) {
+          console.log('Invalid saved session');
+        }
       }
 
-      document.getElementById('login-btn').onclick = function() {
-        const pw = document.getElementById('admin-password').value;
-        if (pw === 'AngryLion') {
-          localStorage.setItem('freddyAdmin', 'true'); // Save login
+      document.getElementById('login-btn').onclick = async function() {
+        const password = document.getElementById('admin-password').value;
+        const errorElement = document.getElementById('login-error');
+        
+        if (!password) {
+          errorElement.innerText = 'Indtast venligst adgangskode';
+          return;
+        }
+
+        errorElement.innerText = 'Logger ind...';
+        
+        const success = await authenticateAdmin(password);
+        
+        if (success) {
+          // Save session
+          localStorage.setItem('freddyAdminSession', JSON.stringify({
+            token: sessionToken,
+            timestamp: Date.now()
+          }));
           showAdminSection();
         } else {
-          document.getElementById('login-error').innerText = 'Forkert kodeord';
+          errorElement.innerText = 'Forkert adgangskode';
         }
       };
+      
       document.getElementById('admin-password').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
           document.getElementById('login-btn').click();

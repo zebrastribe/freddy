@@ -1,10 +1,11 @@
 // Configuration file for API keys and settings
-// This file should be updated with your actual API keys
+// This file fetches API keys from Firebase Cloud Functions for security
 
 import { db } from './firebase-setup.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-export const config = {
+// Default configuration (fallback)
+const defaultConfig = {
   // Google Maps API Configuration
   googleMaps: {
     apiKey: 'AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY',
@@ -37,6 +38,75 @@ export const config = {
     checkInCooldown: 15000 // 15 seconds
   }
 };
+
+// Cache for API keys
+let apiKeysCache = null;
+let apiKeysCacheTime = 0;
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Fetch API keys from Firebase Cloud Functions
+async function fetchApiKeys() {
+  try {
+    // Check cache first
+    const now = Date.now();
+    if (apiKeysCache && (now - apiKeysCacheTime) < CACHE_DURATION) {
+      return apiKeysCache;
+    }
+
+    // Fetch from Cloud Function
+    const response = await fetch('https://us-central1-tracker-6a648.cloudfunctions.net/getApiKeys');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const apiKeys = await response.json();
+    
+    // Update cache
+    apiKeysCache = apiKeys;
+    apiKeysCacheTime = now;
+    
+    return apiKeys;
+  } catch (error) {
+    console.warn('Failed to fetch API keys from Firebase, using defaults:', error);
+    return {
+      googleMaps: defaultConfig.googleMaps.apiKey,
+      firebase: defaultConfig.firebase.apiKey,
+      recaptcha: defaultConfig.recaptcha.siteKey
+    };
+  }
+}
+
+// Dynamic configuration that fetches API keys
+export const config = {
+  ...defaultConfig,
+  // These will be updated when fetchApiKeys() is called
+  googleMaps: {
+    ...defaultConfig.googleMaps
+  },
+  recaptcha: {
+    ...defaultConfig.recaptcha
+  },
+  firebase: {
+    ...defaultConfig.firebase
+  }
+};
+
+// Initialize API keys
+export async function initializeConfig() {
+  try {
+    const apiKeys = await fetchApiKeys();
+    
+    // Update config with fetched keys
+    config.googleMaps.apiKey = apiKeys.googleMaps;
+    config.firebase.apiKey = apiKeys.firebase;
+    config.recaptcha.siteKey = apiKeys.recaptcha;
+    
+    console.log('Configuration initialized with Firebase API keys');
+  } catch (error) {
+    console.error('Failed to initialize configuration:', error);
+    // Continue with default keys
+  }
+}
 
 // Environment-specific configurations
 export const getConfig = () => {
@@ -72,6 +142,9 @@ export async function getFreddyStatus() {
 export async function setFreddyStatus(mode) {
   await setDoc(doc(db, "status", "freddy"), { mode });
 }
+
+// Initialize config when module loads
+initializeConfig();
 
 window.onload = async () => {
   // ...fetch and show status...
