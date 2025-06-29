@@ -221,8 +221,11 @@
             measurementId: "G-XMHHKFJ9QW"
           });
           const messaging = getMessaging(app);
+          // Always use the correct service worker registration for GitHub Pages
+          const registration = await navigator.serviceWorker.getRegistration('/freddy/firebase-messaging-sw.js');
           currentToken = await getToken(messaging, {
-            vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
+            vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY',
+            serviceWorkerRegistration: registration
           });
           console.log('[DEBUG] Current device FCM token:', currentToken);
         } catch (tokenError) {
