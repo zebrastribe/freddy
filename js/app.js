@@ -16,6 +16,7 @@ import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js
 import { config, getConfig } from './config.js';
 import { Translation } from './modules/translation/translation.js';
 import { getFreddyStatus } from './config.js';
+import { requestFCMPermission } from './firebase-setup.js';
 
 // Initialize Firebase
 const firebaseConfig = getConfig().firebase;
@@ -525,12 +526,14 @@ async function requestNotificationPermission() {
   if (Notification.permission === 'granted') {
     notificationPermission = true;
     updateNotificationButton();
+    updateToggleVisualState(true);
     return true;
   }
 
   if (Notification.permission === 'denied') {
     console.log('Notification permission denied');
     updateNotificationButton();
+    updateToggleVisualState(false);
     return false;
   }
 
@@ -538,6 +541,7 @@ async function requestNotificationPermission() {
     const permission = await Notification.requestPermission();
     notificationPermission = permission === 'granted';
     updateNotificationButton();
+    updateToggleVisualState(notificationPermission);
     
     // If permission granted, also request FCM permission
     if (notificationPermission) {
@@ -548,6 +552,7 @@ async function requestNotificationPermission() {
   } catch (error) {
     console.error('Error requesting notification permission:', error);
     updateNotificationButton();
+    updateToggleVisualState(false);
     return false;
   }
 }
@@ -568,8 +573,10 @@ function setupNotificationToggle() {
   // Set initial state based on permission
   if (Notification.permission === 'granted') {
     toggle.checked = true;
+    updateToggleVisualState(true);
   } else {
     toggle.checked = false;
+    updateToggleVisualState(false);
   }
 
   toggle.addEventListener('change', async (e) => {
@@ -578,15 +585,55 @@ function setupNotificationToggle() {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         toggle.checked = true;
-        // Optionally, link device for notifications here
+        updateToggleVisualState(true);
+        notificationPermission = true;
+        // Link device for notifications
+        await requestFCMPermission();
       } else {
         toggle.checked = false;
+        updateToggleVisualState(false);
+        notificationPermission = false;
       }
     } else {
-      // Optionally, unlink device for notifications here
+      // Unlink device for notifications
       toggle.checked = false;
+      updateToggleVisualState(false);
+      notificationPermission = false;
+      // Optionally remove FCM token from Firestore
+      await removeFCMToken();
     }
   });
+}
+
+// Update toggle visual state
+function updateToggleVisualState(isEnabled) {
+  const toggle = document.getElementById('notification-toggle');
+  const toggleBlock = toggle.nextElementSibling;
+  const toggleDot = toggleBlock.nextElementSibling;
+  
+  if (isEnabled) {
+    toggleBlock.classList.remove('bg-gray-300');
+    toggleBlock.classList.add('bg-blue-500');
+    toggleDot.classList.remove('left-1');
+    toggleDot.classList.add('left-7');
+  } else {
+    toggleBlock.classList.remove('bg-blue-500');
+    toggleBlock.classList.add('bg-gray-300');
+    toggleDot.classList.remove('left-7');
+    toggleDot.classList.add('left-1');
+  }
+}
+
+// Remove FCM token from Firestore
+async function removeFCMToken() {
+  try {
+    console.log('[DEBUG] Removing FCM token from Firestore...');
+    const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
+    await deleteDoc(doc(db, "fcm_tokens", "admin"));
+    console.log('[DEBUG] FCM token removed from Firestore');
+  } catch (error) {
+    console.error('[DEBUG] Error removing FCM token:', error);
+  }
 }
 
 // Show notification for new check-in
