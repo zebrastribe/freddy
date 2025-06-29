@@ -9,6 +9,8 @@
   <title>Freddy Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script type="module">
+    console.log('Admin JS loaded');
+    document.getElementById('js-status').innerText = 'Admin JS loaded';
     import { setFreddyStatus, getFreddyStatus } from './js/config.js';
     import { collection, getDocs, query, orderBy, limit, deleteDoc, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
     import { db, requestFCMPermission, fcmToken } from './js/firebase-setup.js';
@@ -541,6 +543,7 @@
           <button id="login-btn" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded w-full mb-4 text-lg">Log ind</button>
         </form>
         <div id="login-error" class="text-red-600 text-base mb-2"></div>
+        <div id="js-status" class="text-xs text-gray-500 mb-2"></div>
       </div>
       <div id="admin-section" class="hidden mt-8"></div>
     </div>
