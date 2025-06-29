@@ -24,8 +24,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || 'Ny Freddy Check-in! 🐱';
   const notificationOptions = {
     body: payload.notification?.body || 'Nogen har lige checket ind!',
-    icon: '/img/emoji-cat-192x192.png',
-    badge: '/img/emoji-cat-192x192.png',
+    icon: '/freddy/img/emoji-cat-192x192.png',
+    badge: '/freddy/img/emoji-cat-192x192.png',
     tag: 'freddy-checkin-background',
     requireInteraction: false,
     silent: false,
