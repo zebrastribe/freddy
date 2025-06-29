@@ -216,33 +216,39 @@ async function processToken() {
 
 // Function to update token status indicator
 function updateTokenStatus() {
-  const tokenValid = document.getElementById('token-valid');
-  const tokenInvalid = document.getElementById('token-invalid');
-  const tokenLoading = document.getElementById('token-loading');
   const clickButton = document.getElementById('clickButton');
   const checkInForm = document.getElementById('check-in-form');
   const tokenStatusContainer = document.getElementById('token-status');
-  
+  const checkInTab = document.getElementById('checkInTab');
+  const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
+  const checkInContent = document.getElementById('checkInContent');
+  const recordedCheckInsContent = document.getElementById('recordedCheckInsContent');
+
   // Always hide the token status indicators - no need to inform users
   tokenStatusContainer.classList.add('hidden');
-  
-  // Show the appropriate status and update button state
+
   if (hasValidToken) {
     clickButton.disabled = false;
     clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
-    // Show the check-in form when token is valid
-    if (checkInForm) {
-      checkInForm.classList.remove('hidden');
-    }
+    if (checkInForm) checkInForm.classList.remove('hidden');
+    // Enable the check-in tab
+    checkInTab.disabled = false;
+    checkInTab.classList.remove('opacity-50', 'pointer-events-none');
   } else {
     clickButton.disabled = true;
     clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
     clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
-    // Hide the check-in form when token is invalid
-    if (checkInForm) {
-      checkInForm.classList.add('hidden');
-    }
+    if (checkInForm) checkInForm.classList.add('hidden');
+    // Switch to the recorded check-ins tab and disable the check-in tab
+    checkInContent.classList.add('hidden');
+    recordedCheckInsContent.classList.remove('hidden');
+    checkInTab.disabled = true;
+    checkInTab.classList.add('opacity-50', 'pointer-events-none');
+    recordedCheckInsTab.classList.add('text-blue-600', 'border-blue-600');
+    recordedCheckInsTab.classList.remove('text-gray-600', 'border-gray-200');
+    checkInTab.classList.add('text-gray-600', 'border-gray-200');
+    checkInTab.classList.remove('text-blue-600', 'border-blue-600');
   }
 }
 
