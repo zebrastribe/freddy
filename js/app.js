@@ -584,10 +584,23 @@ function setupNotificationToggle() {
   console.log('setupNotificationToggle called');
   const toggle = document.getElementById('notification-toggle');
   console.log('Toggle element found:', toggle);
+  console.log('Toggle element type:', toggle?.tagName);
+  console.log('Toggle element classes:', toggle?.className);
+  console.log('Toggle element style:', toggle?.style?.display);
+  console.log('Toggle parent element:', toggle?.parentElement);
+  console.log('Toggle parent classes:', toggle?.parentElement?.className);
+  
   if (!toggle) {
     console.error('Notification toggle element not found!');
+    console.log('Available elements with "notification" in ID:', 
+      Array.from(document.querySelectorAll('[id*="notification"]')).map(el => el.id));
     return;
   }
+
+  // Check if the toggle is visible
+  const toggleRect = toggle.getBoundingClientRect();
+  console.log('Toggle bounding rect:', toggleRect);
+  console.log('Toggle is visible:', toggleRect.width > 0 && toggleRect.height > 0);
 
   // Check browser permission and sync with localStorage
   console.log('Current browser permission:', Notification.permission);
