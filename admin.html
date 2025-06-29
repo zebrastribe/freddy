@@ -69,6 +69,7 @@
         return false;
       }
     }
+    window.authenticateAdmin = authenticateAdmin;
 
     // Request notification permission
     async function requestNotificationPermission() {
@@ -486,7 +487,7 @@
           loginBtn.onclick = async function() {
             try {
               console.log('[DEBUG] Login button clicked - handler executed');
-              console.log('[DEBUG] authenticateAdmin function available:', typeof authenticateAdmin);
+              console.log('[DEBUG] window.authenticateAdmin:', typeof window.authenticateAdmin);
               
               const password = document.getElementById('admin-password').value;
               console.log('[DEBUG] Password field value length:', password ? password.length : 0);
@@ -500,10 +501,10 @@
                 return;
               }
 
-              console.log('[DEBUG] About to call authenticateAdmin...');
+              console.log('[DEBUG] About to call window.authenticateAdmin...');
               errorElement.innerText = 'Logger ind...';
               
-              const success = await authenticateAdmin(password);
+              const success = await window.authenticateAdmin(password);
               console.log('[DEBUG] Authentication result:', success);
               
               if (success) {
@@ -558,7 +559,7 @@
             }
 
             errorElement.innerText = 'Logger ind...';
-            const success = await authenticateAdmin(password);
+            const success = await window.authenticateAdmin(password);
             
             if (success) {
               localStorage.setItem('freddyAdminSession', JSON.stringify({
