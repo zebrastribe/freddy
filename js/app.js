@@ -525,6 +525,7 @@ async function requestNotificationPermission() {
 
   if (Notification.permission === 'granted') {
     notificationPermission = true;
+    localStorage.setItem('notificationPreference', 'true');
     updateNotificationButton();
     updateToggleVisualState(true);
     return true;
@@ -532,6 +533,7 @@ async function requestNotificationPermission() {
 
   if (Notification.permission === 'denied') {
     console.log('Notification permission denied');
+    localStorage.setItem('notificationPreference', 'false');
     updateNotificationButton();
     updateToggleVisualState(false);
     return false;
@@ -540,18 +542,27 @@ async function requestNotificationPermission() {
   try {
     const permission = await Notification.requestPermission();
     notificationPermission = permission === 'granted';
+    localStorage.setItem('notificationPreference', notificationPermission.toString());
     updateNotificationButton();
     updateToggleVisualState(notificationPermission);
     
-    // If permission granted, also request FCM permission
+    // If permission granted, link device for notifications
     if (notificationPermission) {
-      await requestFCMPermission();
+      try {
+        await requestFCMPermission();
+      } catch (error) {
+        console.error('Failed to link device for notifications:', error);
+        notificationPermission = false;
+        localStorage.setItem('notificationPreference', 'false');
+        updateToggleVisualState(false);
+      }
     }
     
     return notificationPermission;
   } catch (error) {
     console.error('Error requesting notification permission:', error);
-    updateNotificationButton();
+    notificationPermission = false;
+    localStorage.setItem('notificationPreference', 'false');
     updateToggleVisualState(false);
     return false;
   }
@@ -570,13 +581,19 @@ function setupNotificationToggle() {
   const toggle = document.getElementById('notification-toggle');
   if (!toggle) return;
 
-  // Set initial state based on permission
-  if (Notification.permission === 'granted') {
-    toggle.checked = true;
-    updateToggleVisualState(true);
+  // Check browser permission and sync with localStorage
+  syncNotificationState();
+
+  // Set initial state based on localStorage (which should now be synced with browser)
+  const userPreference = localStorage.getItem('notificationPreference') === 'true';
+  toggle.checked = userPreference;
+  updateToggleVisualState(userPreference);
+
+  // Disable toggle if browser permission is denied
+  if (Notification.permission === 'denied') {
+    toggle.disabled = true;
   } else {
-    toggle.checked = false;
-    updateToggleVisualState(false);
+    toggle.disabled = false;
   }
 
   toggle.addEventListener('change', async (e) => {
@@ -586,23 +603,54 @@ function setupNotificationToggle() {
       if (permission === 'granted') {
         toggle.checked = true;
         updateToggleVisualState(true);
+        localStorage.setItem('notificationPreference', 'true');
         notificationPermission = true;
         // Link device for notifications
-        await requestFCMPermission();
+        try {
+          await requestFCMPermission();
+        } catch (error) {
+          console.error('Failed to link device for notifications:', error);
+          // Revert toggle if FCM fails
+          toggle.checked = false;
+          updateToggleVisualState(false);
+          localStorage.setItem('notificationPreference', 'false');
+        }
       } else {
+        // Permission denied, revert toggle
         toggle.checked = false;
         updateToggleVisualState(false);
-        notificationPermission = false;
+        localStorage.setItem('notificationPreference', 'false');
+        if (permission === 'denied') {
+          toggle.disabled = true;
+        }
       }
     } else {
-      // Unlink device for notifications
+      // User wants to disable notifications
       toggle.checked = false;
       updateToggleVisualState(false);
+      localStorage.setItem('notificationPreference', 'false');
       notificationPermission = false;
-      // Optionally remove FCM token from Firestore
-      await removeFCMToken();
+      // Unlink device from notifications (remove FCM token)
+      try {
+        // You can add logic here to remove the FCM token from your backend
+        console.log('Device unlinked from notifications');
+      } catch (error) {
+        console.error('Failed to unlink device:', error);
+      }
     }
   });
+}
+
+// Sync localStorage with browser permission
+function syncNotificationState() {
+  const browserPermission = Notification.permission === 'granted';
+  const storedPreference = localStorage.getItem('notificationPreference') === 'true';
+  
+  // If browser permission doesn't match localStorage, update localStorage
+  if (browserPermission !== storedPreference) {
+    localStorage.setItem('notificationPreference', browserPermission.toString());
+    console.log('Synced localStorage with browser permission:', browserPermission);
+  }
 }
 
 // Update toggle visual state
@@ -621,18 +669,6 @@ function updateToggleVisualState(isEnabled) {
     toggleBlock.classList.add('bg-gray-300');
     toggleDot.classList.remove('left-7');
     toggleDot.classList.add('left-1');
-  }
-}
-
-// Remove FCM token from Firestore
-async function removeFCMToken() {
-  try {
-    console.log('[DEBUG] Removing FCM token from Firestore...');
-    const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
-    await deleteDoc(doc(db, "fcm_tokens", "admin"));
-    console.log('[DEBUG] FCM token removed from Firestore');
-  } catch (error) {
-    console.error('[DEBUG] Error removing FCM token:', error);
   }
 }
 
