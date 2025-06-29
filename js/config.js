@@ -135,12 +135,12 @@ export const getConfig = () => {
 };
 
 export async function getFreddyStatus() {
-  const statusDoc = await getDoc(doc(db, "status", "freddy"));
+  const statusDoc = await getDoc(doc(db, "freddy_status", "current"));
   return statusDoc.exists() ? statusDoc.data().mode : "OK";
 }
 
 export async function setFreddyStatus(mode) {
-  await setDoc(doc(db, "status", "freddy"), { mode });
+  await setDoc(doc(db, "freddy_status", "current"), { mode });
 }
 
 // Initialize config when module loads
