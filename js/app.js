@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   translation.applyTranslations();
   
   // Initialize maps
-  await initializeApp();
+  await initializeFreddyApp();
 
   // Register service worker and request notification permissions
   await registerServiceWorker();
@@ -98,7 +98,7 @@ function loadGoogleMapsAPI() {
 }
 
 // Initialize the app
-async function initializeApp() {
+async function initializeFreddyApp() {
   try {
     // Wait for config to be initialized
     await new Promise(resolve => {
