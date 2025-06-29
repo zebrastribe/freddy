@@ -69,6 +69,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.warn('Could not fetch Freddy status:', e);
     // Don't show error to users, just log it - the warning banner will remain hidden
   }
+
+  // Await token processing after DOM is ready
+  await processToken();
 });
 
 // Dynamic Google Maps API loader
@@ -236,9 +239,6 @@ function updateTokenStatus() {
     clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
   }
 }
-
-// Call the function to process the token
-processToken();
 
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
