@@ -483,8 +483,10 @@
     <div class="w-full max-w-full md:max-w-4xl bg-white rounded-none md:rounded-2xl shadow-2xl p-2 md:p-8">
       <h1 class="text-xl md:text-2xl font-bold mb-8 text-center">Freddy Admin</h1>
       <div id="login-section">
-        <input id="admin-password" type="password" placeholder="Adgangskode" class="border rounded px-4 py-4 w-full mb-4 text-lg" autocomplete="current-password">
-        <button id="login-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded w-full mb-4 text-lg">Log ind</button>
+        <form id="login-form" onsubmit="return false;">
+          <input id="admin-password" type="password" placeholder="Adgangskode" class="border rounded px-4 py-4 w-full mb-4 text-lg" autocomplete="current-password">
+          <button id="login-btn" type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-4 rounded w-full mb-4 text-lg">Log ind</button>
+        </form>
         <div id="login-error" class="text-red-600 text-base mb-2"></div>
       </div>
       <div id="admin-section" class="hidden mt-8"></div>

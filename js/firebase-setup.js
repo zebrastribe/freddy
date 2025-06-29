@@ -142,13 +142,27 @@ onMessage(messaging, (payload) => {
 export async function registerFirebaseMessagingServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      // Use absolute path for root scope (works for both local and GitHub Pages)
-      const swPath = '/firebase-messaging-sw.js';
+      // Detect if we're on GitHub Pages (repository name in path)
+      const isGitHubPages = window.location.hostname === 'zebrastribe.github.io';
+      const swPath = isGitHubPages ? '/freddy/firebase-messaging-sw.js' : '/firebase-messaging-sw.js';
+      
+      console.log('[DEBUG] Registering service worker at:', swPath);
       const registration = await navigator.serviceWorker.register(swPath);
       console.log('Firebase messaging service worker registered:', registration);
       return registration;
     } catch (error) {
       console.error('Service worker registration failed:', error);
+      // Try fallback path for GitHub Pages
+      if (window.location.hostname === 'zebrastribe.github.io') {
+        try {
+          console.log('[DEBUG] Trying fallback path for GitHub Pages');
+          const fallbackRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+          console.log('Firebase messaging service worker registered with fallback:', fallbackRegistration);
+          return fallbackRegistration;
+        } catch (fallbackError) {
+          console.error('Fallback service worker registration also failed:', fallbackError);
+        }
+      }
     }
   }
   return null;
