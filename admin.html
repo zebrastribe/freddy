@@ -180,32 +180,59 @@
       try {
         const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
         const tokenDoc = await getDoc(doc(db, 'fcm_tokens', 'admin'));
+        
         if (!tokenDoc.exists()) {
           statusDiv.innerHTML = '<span class="text-red-600">Ingen admin-enhed er linket til notifikationer.</span>';
           return;
         }
+        
         const data = tokenDoc.data();
         const linkedToken = data.token;
         const linkedUserAgent = data.userAgent || 'Ukendt';
         const linkedTimestamp = data.timestamp ? new Date(data.timestamp.seconds ? data.timestamp.seconds * 1000 : data.timestamp).toLocaleString('da-DK') : 'Ukendt';
-        // Compare with current device's token
-        let currentToken = window.currentFCMToken || null;
-        if (!currentToken && window.fcmToken) currentToken = window.fcmToken;
-        if (!currentToken && typeof fcmToken !== 'undefined') currentToken = fcmToken;
-        let match = false;
-        if (currentToken && linkedToken && currentToken === linkedToken) {
-          match = true;
+        
+        // Get current device's token - we need to request it if not available
+        let currentToken = null;
+        try {
+          // Try to get the current FCM token
+          const { getToken } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
+          const { getMessaging } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js');
+          const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
+          
+          const app = initializeApp({
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
+            measurementId: "G-XMHHKFJ9QW"
+          });
+          
+          const messaging = getMessaging(app);
+          currentToken = await getToken(messaging, {
+            vapidKey: 'BI4KzajvA8eJRZ8p3D-yRATNm0eDeS2hfToxP7LB6_9uTU0b3UjooAgdnJoqszasRw2qWxWFxmMN9WnZxK1EUiY'
+          });
+        } catch (tokenError) {
+          console.log('Could not get current FCM token:', tokenError);
         }
-        statusDiv.innerHTML =
-          `<div class="mb-2 ${match ? 'text-green-700' : 'text-red-700'}">
-            <b>${match ? 'Denne enhed er linket til admin-notifikationer.' : 'Denne enhed er <u>IKKE</u> linket til admin-notifikationer.'}</b>
+        
+        const isThisDeviceLinked = currentToken && linkedToken && currentToken === linkedToken;
+        
+        statusDiv.innerHTML = `
+          <div class="mb-2 ${isThisDeviceLinked ? 'text-green-700' : 'text-red-700'}">
+            <strong>${isThisDeviceLinked ? '✅ Denne enhed er linket til notifikationer' : '❌ Denne enhed er IKKE linket til notifikationer'}</strong>
           </div>
-          <div class="text-xs text-gray-600">Senest linket enhed:</div>
-          <div class="text-xs text-gray-800">${linkedUserAgent}</div>
-          <div class="text-xs text-gray-800">${linkedTimestamp}</div>`;
+          <div class="text-sm text-gray-600 mb-2">
+            <strong>Linket enhed:</strong><br>
+            <span class="font-mono text-xs">${linkedUserAgent}</span><br>
+            <strong>Linket den:</strong> ${linkedTimestamp}
+          </div>
+          ${!isThisDeviceLinked ? '<div class="text-sm text-blue-600">Klik på 🔔 for at linke denne enhed til notifikationer.</div>' : ''}
+        `;
       } catch (error) {
-        statusDiv.innerHTML = '<span class="text-red-600">Fejl ved hentning af notifikationsstatus.</span>';
         console.error('Error fetching notification status:', error);
+        statusDiv.innerHTML = '<span class="text-red-600">Fejl ved hentning af notifikationsstatus: ' + error.message + '</span>';
       }
     }
 
@@ -266,9 +293,8 @@
           const granted = await requestNotificationPermission();
           if (granted) {
             document.getElementById('notification-toggle').innerHTML = '🔔 Notifikationer: TIL';
-            // Save the current FCM token for comparison
-            window.currentFCMToken = window.fcmToken || (typeof fcmToken !== 'undefined' ? fcmToken : null);
-            setTimeout(updateNotificationStatus, 1000); // Wait a moment for Firestore write
+            // Update notification status after a moment to allow Firestore write
+            setTimeout(updateNotificationStatus, 1000);
           }
         }
       };
