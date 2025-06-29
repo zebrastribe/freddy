@@ -298,11 +298,12 @@
       document.getElementById('link-this-device').addEventListener('change', async function() {
         // Mark that user is changing the checkbox
         this.dataset.userChanging = 'true';
+        console.log('[DEBUG] Checkbox handler: calling requestFCMPermission');
         
         if (this.checked) {
           // User wants to link this device
           console.log('Linking this device...');
-          const granted = await requestNotificationPermission();
+          const granted = await requestFCMPermission();
           if (granted) {
             // The FCM token will be saved automatically by the firebase-setup.js
             // Wait longer for Firestore write to complete before updating status

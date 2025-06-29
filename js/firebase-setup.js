@@ -62,6 +62,7 @@ function checkAuthState() {
 
 // Request FCM permission and get token
 async function requestFCMPermission() {
+  console.log('[DEBUG] Entered requestFCMPermission handler');
   try {
     console.log('[DEBUG] Requesting notification permission...');
     const permission = await Notification.requestPermission();
