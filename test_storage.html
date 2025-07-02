@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StorageManager Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    button { margin: 5px; padding: 8px 16px; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <h1>StorageManager Test</h1>
+  
+  <div class="test-section">
+    <h3>Test 1: Basic Storage Operations</h3>
+    <button onclick="testBasicStorage()">Test Basic Storage</button>
+    <div id="basic-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: Boolean Storage (Notification Toggle)</h3>
+    <button onclick="testNotificationStorage()">Test Notification Storage</button>
+    <div id="notification-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Type Safety</h3>
+    <button onclick="testTypeSafety()">Test Type Safety</button>
+    <div id="type-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Default Values</h3>
+    <button onclick="testDefaultValues()">Test Default Values</button>
+    <div id="default-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Current localStorage State</h3>
+    <button onclick="showCurrentState()">Show Current State</button>
+    <pre id="current-state"></pre>
+  </div>
+
+  <script type="module">
+    import { StorageManager } from './js/lib/storage.js';
+
+    window.testBasicStorage = function() {
+      const results = document.getElementById('basic-results');
+      try {
+        const storage = new StorageManager('test-basic');
+        
+        // Test set/get
+        storage.set('hello world');
+        const value = storage.get();
+        
+        if (value === 'hello world') {
+          results.innerHTML = '<div class="success">✅ Basic set/get works correctly</div>';
+        } else {
+          results.innerHTML = `<div class="error">❌ Expected 'hello world', got '${value}'</div>`;
+        }
+      } catch (error) {
+        results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.testNotificationStorage = function() {
+      const results = document.getElementById('notification-results');
+      try {
+        const storage = new StorageManager('notificationPreference', 'false');
+        
+        // Test boolean operations
+        storage.setBoolean(true);
+        const boolValue = storage.getBoolean();
+        
+        if (boolValue === true) {
+          results.innerHTML = '<div class="success">✅ Boolean storage works correctly</div>';
+        } else {
+          results.innerHTML = `<div class="error">❌ Expected true, got ${boolValue}</div>`;
+        }
+      } catch (error) {
+        results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.testTypeSafety = function() {
+      const results = document.getElementById('type-results');
+      try {
+        const storage = new StorageManager('test-types');
+        
+        // Test number
+        storage.set('42');
+        const num = storage.getNumber();
+        
+        // Test object
+        const testObj = { name: 'test', value: 123 };
+        storage.set(testObj);
+        const obj = storage.getObject();
+        
+        if (num === 42 && obj.name === 'test') {
+          results.innerHTML = '<div class="success">✅ Type safety works correctly</div>';
+        } else {
+          results.innerHTML = `<div class="error">❌ Type conversion failed</div>`;
+        }
+      } catch (error) {
+        results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.testDefaultValues = function() {
+      const results = document.getElementById('default-results');
+      try {
+        const storage = new StorageManager('test-default', 'default-value');
+        
+        // Test default value
+        const value = storage.get();
+        
+        if (value === 'default-value') {
+          results.innerHTML = '<div class="success">✅ Default values work correctly</div>';
+        } else {
+          results.innerHTML = `<div class="error">❌ Expected 'default-value', got '${value}'</div>`;
+        }
+      } catch (error) {
+        results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.showCurrentState = function() {
+      const stateDiv = document.getElementById('current-state');
+      const state = {};
+      
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        state[key] = localStorage.getItem(key);
+      }
+      
+      stateDiv.textContent = JSON.stringify(state, null, 2);
+    };
+  </script>
+</body>
+</html> 

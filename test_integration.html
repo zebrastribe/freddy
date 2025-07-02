@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Integration Test - Notification Toggle</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    button { margin: 5px; padding: 8px 16px; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
+    
+    /* Toggle styles from main app */
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 32px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 32px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 24px;
+      width: 24px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .slider {
+      background-color: #2196F3;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+  </style>
+</head>
+<body>
+  <h1>Integration Test: Notification Toggle with StorageManager</h1>
+  
+  <div class="test-section info">
+    <h3>Test Instructions</h3>
+    <p>This test verifies that the notification toggle works correctly with the new StorageManager:</p>
+    <ol>
+      <li>Check the initial state (should be OFF by default)</li>
+      <li>Toggle ON and verify localStorage is updated</li>
+      <li>Toggle OFF and verify localStorage is updated</li>
+      <li>Reload the page and verify the toggle state is preserved</li>
+    </ol>
+  </div>
+
+  <div class="test-section">
+    <h3>Notification Toggle</h3>
+    <div class="toggle-container">
+      <label class="toggle-switch">
+        <input type="checkbox" id="notification-toggle">
+        <span class="slider"></span>
+      </label>
+      <span>Notifikationer på denne enhed</span>
+    </div>
+    <div id="notification-permission-message" class="hidden"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test Results</h3>
+    <button onclick="runIntegrationTest()">Run Integration Test</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    <div id="test-results"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Current State</h3>
+    <button onclick="showCurrentState()">Show Current State</button>
+    <pre id="current-state"></pre>
+  </div>
+
+  <script type="module">
+    import { StorageManager } from './js/lib/storage.js';
+
+    // Simulate the notification toggle setup from app.js
+    function setupNotificationToggle() {
+      const toggle = document.getElementById('notification-toggle');
+      const message = document.getElementById('notification-permission-message');
+      
+      if (!toggle) {
+        console.error('Notification toggle element not found!');
+        return;
+      }
+
+      // CURSOR: Using StorageManager for cleaner localStorage handling
+      const notificationStorage = new StorageManager('notificationPreference', 'false');
+
+      console.log('[DEBUG] setupNotificationToggle called');
+      console.log('[DEBUG] localStorage.notificationPreference:', notificationStorage.get());
+
+      // Set toggle state from localStorage ONLY
+      const userPreference = notificationStorage.getBoolean();
+      console.log('[DEBUG] Setting toggle.checked to', userPreference, 'from localStorage');
+      toggle.checked = userPreference;
+
+      toggle.addEventListener('change', async (e) => {
+        console.log('[DEBUG] Toggle changed. Checked:', toggle.checked);
+        
+        if (toggle.checked) {
+          // User wants to enable notifications
+          notificationStorage.setBoolean(true);
+          console.log('[DEBUG] localStorage set to true');
+        } else {
+          // User wants to disable notifications
+          notificationStorage.setBoolean(false);
+          console.log('[DEBUG] localStorage set to false');
+        }
+        console.log('[DEBUG] localStorage.notificationPreference after change:', notificationStorage.get());
+      });
+    }
+
+    // Initialize the toggle
+    document.addEventListener('DOMContentLoaded', () => {
+      setupNotificationToggle();
+    });
+
+    window.runIntegrationTest = function() {
+      const results = document.getElementById('test-results');
+      const storage = new StorageManager('notificationPreference', 'false');
+      
+      try {
+        // Test 1: Check initial state
+        const initialValue = storage.get();
+        const initialBoolean = storage.getBoolean();
+        
+        let testResults = '<h4>Test Results:</h4>';
+        testResults += `<p>✅ Initial value: "${initialValue}" (boolean: ${initialBoolean})</p>`;
+        
+        // Test 2: Check toggle state
+        const toggle = document.getElementById('notification-toggle');
+        testResults += `<p>✅ Toggle checked: ${toggle.checked}</p>`;
+        
+        // Test 3: Verify consistency
+        if (toggle.checked === initialBoolean) {
+          testResults += '<p>✅ Toggle state matches localStorage</p>';
+        } else {
+          testResults += '<p>❌ Toggle state does not match localStorage</p>';
+        }
+        
+        results.innerHTML = testResults;
+        
+      } catch (error) {
+        results.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+      }
+    };
+
+    window.clearStorage = function() {
+      const storage = new StorageManager('notificationPreference');
+      storage.clear();
+      location.reload();
+    };
+
+    window.showCurrentState = function() {
+      const stateDiv = document.getElementById('current-state');
+      const storage = new StorageManager('notificationPreference', 'false');
+      const toggle = document.getElementById('notification-toggle');
+      
+      const state = {
+        localStorage: {
+          raw: storage.get(),
+          boolean: storage.getBoolean()
+        },
+        toggle: {
+          checked: toggle.checked
+        },
+        allLocalStorage: {}
+      };
+      
+      // Show all localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        state.allLocalStorage[key] = localStorage.getItem(key);
+      }
+      
+      stateDiv.textContent = JSON.stringify(state, null, 2);
+    };
+  </script>
+</body>
+</html> 
