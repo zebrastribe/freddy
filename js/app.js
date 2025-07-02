@@ -18,6 +18,7 @@ import { db, auth, checkAuthState, onAuthStateChanged } from './lib/firebase_con
 import { FirebaseMessaging } from './features/notifications/firebase_messaging.js';
 import { CheckInManager } from './features/checkin/checkin_manager.js';
 import { CheckInUI } from './features/checkin/checkin_ui.js';
+import { MapManager } from './features/maps/map_manager.js';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Global variables
@@ -33,6 +34,7 @@ let hasValidToken = false; // Track if user has a valid token
 let firebaseMessaging = null; // Firebase messaging instance
 let checkInManager = null; // Check-in manager instance
 let checkInUI = null; // Check-in UI instance
+let mapManager = null; // Map manager instance
 
 // Suppress reCAPTCHA 401 errors from cluttering the console
 window.addEventListener('error', (event) => {
@@ -51,8 +53,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await translation.loadTranslations();
   translation.applyTranslations();
   
-  // Initialize maps
-  await initializeFreddyApp();
+  // Initialize map system
+  await initializeMapSystem();
 
   // Initialize Firebase messaging
   await initializeFirebaseMessaging();
@@ -81,123 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupNotificationToggle();
 });
 
-// Dynamic Google Maps API loader
-function loadGoogleMapsAPI() {
-  return new Promise((resolve, reject) => {
-    // Check if already loaded
-    if (window.google && window.google.maps) {
-      resolve();
-      return;
-    }
-
-    const config = getConfig();
-    const apiKey = config.googleMaps.apiKey;
-    
-    if (!apiKey) {
-      reject(new Error('Google Maps API key not available'));
-      return;
-    }
-
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      console.log('Google Maps API script loaded');
-      resolve();
-    };
-    
-    script.onerror = () => {
-      reject(new Error('Failed to load Google Maps API'));
-    };
-    
-    document.head.appendChild(script);
-  });
-}
-
-// Initialize the app
-async function initializeFreddyApp() {
-  try {
-    // Wait for config to be initialized
-    await new Promise(resolve => {
-      const checkConfig = () => {
-        const config = getConfig();
-        if (config.googleMaps.apiKey) {
-          resolve();
-        } else {
-          setTimeout(checkConfig, 100);
-        }
-      };
-      checkConfig();
-    });
-
-    // Load Google Maps API
-    await loadGoogleMapsAPI();
-    
-    // Initialize maps
-    initializeMaps();
-    
-  } catch (error) {
-    console.error('Failed to initialize app:', error);
-  }
-}
-
-function initializeMaps() {
-  waitForGoogleMaps(() => {
-    const mapConfig = getConfig().googleMaps;
-    
-    // Initialize the main map
-    map = new google.maps.Map(document.getElementById('map'), {
-      center: mapConfig.defaultCenter,
-      zoom: mapConfig.defaultZoom,
-      mapId: mapConfig.mapId,
-      disableDefaultUI: true,
-      zoomControl: true,
-      streetViewControl: false,
-      mapTypeControl: false,
-      fullscreenControl: false
-    });
-
-    // Initialize the recorded check-ins map
-    recordedMap = new google.maps.Map(document.getElementById('recordedMap'), {
-      center: mapConfig.defaultCenter,
-      zoom: mapConfig.defaultZoom,
-      mapId: mapConfig.mapId,
-      disableDefaultUI: true,
-      zoomControl: true,
-      streetViewControl: false,
-      mapTypeControl: false,
-      fullscreenControl: false
-    });
-
-    console.log('Maps initialized successfully');
-  });
-}
-
-function waitForGoogleMaps(callback, maxAttempts = 100) {
-  let attempts = 0;
-  
-  function checkGoogleMaps() {
-    attempts++;
-    
-    if (window.google && window.google.maps && window.google.maps.Map) {
-      console.log('Google Maps API loaded successfully');
-      callback();
-    } else if (attempts >= maxAttempts) {
-      console.error('Google Maps API failed to load after', maxAttempts, 'attempts');
-      // Continue without maps - show error message to user
-      const mapElements = document.querySelectorAll('#map, #recordedMap');
-      mapElements.forEach(element => {
-        element.innerHTML = '<div class="flex items-center justify-center h-full bg-gray-100 text-gray-600">Map could not be loaded. Please refresh the page.</div>';
-      });
-    } else {
-      setTimeout(checkGoogleMaps, 100);
-    }
-  }
-  
-  checkGoogleMaps();
-}
+// Old map functions removed - now handled by MapManager
 
 // Make token validation mandatory for check-ins
 async function processToken() {
@@ -276,8 +162,8 @@ onAuthStateChanged(auth, (currentUser) => {
     // Use CheckInManager if available
     if (checkInManager) {
       checkInManager.fetchLastCoordinates().then(coordinates => {
-        if (coordinates) {
-          updateMap(coordinates.latitude, coordinates.longitude);
+        if (coordinates && mapManager) {
+          mapManager.updateMap(coordinates.latitude, coordinates.longitude);
         }
       });
       checkInManager.fetchCheckIns();
@@ -290,41 +176,7 @@ onAuthStateChanged(auth, (currentUser) => {
 
 // Old check-in functions removed - now handled by CheckInManager
 
-function updateMap(latitude, longitude) {
-  if (!map) {
-    console.warn('Map not initialized - skipping update');
-    return;
-  }
-  
-  if (!window.google || !window.google.maps) {
-    console.warn('Google Maps API not available - skipping update');
-    return;
-  }
-  
-  try {
-    const position = { lat: latitude, lng: longitude };
-    if (marker) {
-      marker.position = position;
-    } else {
-      if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-        marker = new google.maps.marker.AdvancedMarkerElement({
-          position: position,
-          map: map
-        });
-      } else {
-        console.warn('AdvancedMarkerElement not available - using regular marker');
-        marker = new google.maps.Marker({
-          position: position,
-          map: map
-        });
-      }
-    }
-    map.setCenter(position);
-    map.setZoom(15);
-  } catch (error) {
-    console.error('Error updating map:', error);
-  }
-}
+// Old updateMap function removed - now handled by MapManager
 
 // Register Firebase messaging service worker
 async function registerServiceWorker() {
@@ -520,22 +372,20 @@ async function initializeCheckInSystem() {
     checkInManager = new CheckInManager(db, auth, config);
     
     // Create a simple map manager for now (we'll extract this in Phase 4)
-    const mapManager = {
-      updateMap: updateMap,
+    const mapManagerInterface = {
+      updateMap: (lat, lng) => {
+        if (mapManager) {
+          mapManager.updateMap(lat, lng);
+        }
+      },
       addMarker: (lat, lng, title) => {
-        if (recordedMap && typeof lat === 'number' && typeof lng === 'number') {
-          if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-            new google.maps.marker.AdvancedMarkerElement({
-              position: { lat, lng },
-              map: recordedMap,
-              title: title
-            });
-          }
+        if (mapManager) {
+          mapManager.addMarker(lat, lng, title);
         }
       }
     };
     
-    checkInUI = new CheckInUI(checkInManager, mapManager);
+    checkInUI = new CheckInUI(checkInManager, mapManagerInterface);
     
     // Set up check-in listener
     checkInManager.setupCheckInListener();
@@ -543,5 +393,34 @@ async function initializeCheckInSystem() {
     console.log('[DEBUG] Check-in system initialized successfully');
   } catch (error) {
     console.error('[DEBUG] Failed to initialize check-in system:', error);
+  }
+}
+
+// Initialize map system
+async function initializeMapSystem() {
+  try {
+    const config = getConfig();
+    mapManager = new MapManager(config);
+    
+    // Set up callbacks
+    mapManager.setOnMapReady(() => {
+      console.log('[DEBUG] Maps are ready');
+    });
+    
+    mapManager.setOnMapError((error) => {
+      console.error('[DEBUG] Map error:', error);
+    });
+    
+    // Load Google Maps API and initialize maps
+    await mapManager.loadGoogleMapsAPI();
+    await mapManager.initializeMaps();
+    
+    // Update global variables for backward compatibility
+    map = mapManager.getMap();
+    recordedMap = mapManager.getRecordedMap();
+    
+    console.log('[DEBUG] Map system initialized successfully');
+  } catch (error) {
+    console.error('[DEBUG] Failed to initialize map system:', error);
   }
 }
