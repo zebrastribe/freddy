@@ -16,6 +16,8 @@ import { getFreddyStatus } from './config.js';
 import { StorageManager } from './lib/storage.js';
 import { db, auth, checkAuthState, onAuthStateChanged } from './lib/firebase_config.js';
 import { FirebaseMessaging } from './features/notifications/firebase_messaging.js';
+import { CheckInManager } from './features/checkin/checkin_manager.js';
+import { CheckInUI } from './features/checkin/checkin_ui.js';
 import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Global variables
@@ -29,6 +31,8 @@ let notificationPermission = false;
 let lastCheckInTime = null;
 let hasValidToken = false; // Track if user has a valid token
 let firebaseMessaging = null; // Firebase messaging instance
+let checkInManager = null; // Check-in manager instance
+let checkInUI = null; // Check-in UI instance
 
 // Suppress reCAPTCHA 401 errors from cluttering the console
 window.addEventListener('error', (event) => {
@@ -53,9 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize Firebase messaging
   await initializeFirebaseMessaging();
   
-  // Register service worker and setup check-in listener
+  // Initialize check-in system
+  await initializeCheckInSystem();
+  
+  // Register service worker
   await registerServiceWorker();
-  setupCheckInListener();
 
   try {
     const mode = await getFreddyStatus();
@@ -217,39 +223,48 @@ async function processToken() {
 
 // Function to update token status indicator
 function updateTokenStatus() {
-  const clickButton = document.getElementById('clickButton');
-  const checkInForm = document.getElementById('check-in-form');
-  const tokenStatusContainer = document.getElementById('token-status');
-  const checkInTab = document.getElementById('checkInTab');
-  const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
-  const checkInContent = document.getElementById('checkInContent');
-  const recordedCheckInsContent = document.getElementById('recordedCheckInsContent');
-
-  // Always hide the token status indicators - no need to inform users
-  tokenStatusContainer.classList.add('hidden');
-
-  if (hasValidToken) {
-    clickButton.disabled = false;
-    clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-    clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
-    if (checkInForm) checkInForm.classList.remove('hidden');
-    // Enable the check-in tab
-    checkInTab.disabled = false;
-    checkInTab.classList.remove('opacity-50', 'pointer-events-none');
+  if (checkInUI) {
+    checkInUI.updateTokenStatus(hasValidToken);
   } else {
-    clickButton.disabled = true;
-    clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-    clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
-    if (checkInForm) checkInForm.classList.add('hidden');
-    // Switch to the recorded check-ins tab and disable the check-in tab
-    checkInContent.classList.add('hidden');
-    recordedCheckInsContent.classList.remove('hidden');
-    checkInTab.disabled = true;
-    checkInTab.classList.add('opacity-50', 'pointer-events-none');
-    recordedCheckInsTab.classList.add('text-blue-600', 'border-blue-600');
-    recordedCheckInsTab.classList.remove('text-gray-600', 'border-gray-200');
-    checkInTab.classList.add('text-gray-600', 'border-gray-200');
-    checkInTab.classList.remove('text-blue-600', 'border-blue-600');
+    // Fallback to direct DOM manipulation if CheckInUI is not available
+    const clickButton = document.getElementById('clickButton');
+    const checkInForm = document.getElementById('check-in-form');
+    const checkInTab = document.getElementById('checkInTab');
+    const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
+    const checkInContent = document.getElementById('checkInContent');
+    const recordedCheckInsContent = document.getElementById('recordedCheckInsContent');
+
+    // Always hide the token status indicators - no need to inform users
+    const tokenStatusContainer = document.getElementById('token-status');
+    if (tokenStatusContainer) {
+      tokenStatusContainer.classList.add('hidden');
+    }
+
+    if (hasValidToken) {
+      if (clickButton) {
+        clickButton.disabled = false;
+        clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
+        clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
+      }
+      if (checkInForm) checkInForm.classList.remove('hidden');
+      // Enable the check-in tab
+      if (checkInTab) {
+        checkInTab.disabled = false;
+        checkInTab.classList.remove('opacity-50', 'pointer-events-none');
+      }
+    } else {
+      if (clickButton) {
+        clickButton.disabled = true;
+        clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
+        clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+      }
+      if (checkInForm) checkInForm.classList.add('hidden');
+      // Disable the check-in tab
+      if (checkInTab) {
+        checkInTab.disabled = true;
+        checkInTab.classList.add('opacity-50', 'pointer-events-none');
+      }
+    }
   }
 }
 
@@ -257,114 +272,22 @@ onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
     console.log("User authenticated:", user);
-    fetchLastCoordinates(); // Fetch last coordinates when user is authenticated
-    fetchCheckIns(); // Fetch and display all check-ins
+    
+    // Use CheckInManager if available, otherwise fall back to old functions
+    if (checkInManager) {
+      checkInManager.fetchLastCoordinates().then(coordinates => {
+        if (coordinates) {
+          updateMap(coordinates.latitude, coordinates.longitude);
+        }
+      });
+      checkInManager.fetchCheckIns();
+    } else {
+      fetchLastCoordinates(); // Fallback to old function
+      fetchCheckIns(); // Fallback to old function
+    }
   } else {
     user = null;
     console.info("No Firebase user authenticated (this is OK for public check-in).");
-  }
-});
-
-document.getElementById('clickButton').addEventListener('click', async (event) => {
-  event.preventDefault();
-  const nameInput = document.getElementById('nameInput');
-  const errorMessage = document.getElementById('error-message');
-  const spinner = document.getElementById('spinner');
-  const successMessage = document.getElementById('success-message');
-
-  // Check if user has a valid token
-  if (!hasValidToken) {
-    errorMessage.classList.remove('hidden');
-    errorMessage.innerText = "Access denied. A valid token is required to check in.";
-    return;
-  }
-
-  if (nameInput.value.trim() === "") {
-    errorMessage.classList.remove('hidden');
-    errorMessage.innerText = "Please enter your name.";
-    return;
-  } else {
-    errorMessage.classList.add('hidden');
-  }
-
-  // Show spinner
-  spinner.classList.remove('hidden');
-
-  try {
-    // Check-in logic
-    let recaptchaToken = null;
-
-    // Skip reCAPTCHA verification completely to avoid 401 errors
-    console.log('reCAPTCHA is disabled - skipping verification');
-
-    const name = nameInput.value;
-    if (navigator.geolocation) {
-      console.log('Requesting geolocation...');
-      try {
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 60000
-          });
-        });
-        const { latitude, longitude } = position.coords;
-        console.log('Geolocation:', latitude, longitude);
-        try {
-          // Ensure anonymous authentication for unauthenticated users
-          if (!auth.currentUser) {
-            console.log('No authenticated user, attempting anonymous sign-in...');
-            try {
-              await signInAnonymously(auth);
-              console.log('Anonymous authentication successful');
-            } catch (authError) {
-              console.log('Anonymous authentication error:', authError.message);
-              // Continue anyway, as Firestore rules might allow unauthenticated writes
-            }
-          }
-          
-          const docRef = await addDoc(collection(db, "clicks"), {
-            timestamp: serverTimestamp(),
-            userId: auth.currentUser?.uid || null,
-            name: name,
-            latitude: latitude,
-            longitude: longitude,
-            recaptchaToken: recaptchaToken // Include reCAPTCHA token (null if disabled)
-          });
-          console.log("Document successfully written! ID:", docRef.id);
-          updateMap(latitude, longitude);
-          successMessage.classList.remove('hidden');
-          nameInput.value = "";
-          nameInput.disabled = true;
-          setTimeout(() => {
-            nameInput.disabled = false;
-            successMessage.classList.add('hidden');
-          }, 15000);
-          fetchCheckIns();
-        } catch (error) {
-          console.error("Error writing document: ", error);
-          errorMessage.innerText = "Error saving check-in: " + (error.message || error);
-          errorMessage.classList.remove('hidden');
-        } finally {
-          spinner.classList.add('hidden');
-        }
-      } catch (error) {
-        console.error("Error getting geolocation: ", error);
-        errorMessage.innerText = "Error getting location: " + (error.message || error);
-        errorMessage.classList.remove('hidden');
-        spinner.classList.add('hidden');
-      }
-    } else {
-      console.error("Geolocation is not supported by this browser.");
-      errorMessage.innerText = "Geolocation is not supported by this browser.";
-      errorMessage.classList.remove('hidden');
-      spinner.classList.add('hidden');
-    }
-  } catch (error) {
-    console.error("reCAPTCHA or general error:", error);
-    errorMessage.innerText = error.message || "An error occurred. Please try again.";
-    errorMessage.classList.remove('hidden');
-    spinner.classList.add('hidden');
   }
 });
 
@@ -440,31 +363,6 @@ async function fetchCheckIns() {
   document.getElementById('prevPage').disabled = currentPage === 1;
   document.getElementById('nextPage').disabled = currentPage === totalPages;
 }
-
-// Call initRecordedMap when the Recorded Check-Ins tab is clicked
-document.getElementById('recordedCheckInsTab').addEventListener('click', () => {
-  document.getElementById('checkInContent').classList.add('hidden');
-  document.getElementById('recordedCheckInsContent').classList.remove('hidden');
-  document.getElementById('recordedCheckInsTab').classList.add('text-blue-600', 'border-blue-600');
-  document.getElementById('recordedCheckInsTab').classList.remove('text-gray-600', 'border-gray-200');
-  document.getElementById('checkInTab').classList.add('text-gray-600', 'border-gray-200');
-  document.getElementById('checkInTab').classList.remove('text-blue-600', 'border-blue-600');
-
-  // Fetch and display check-ins
-  fetchCheckIns();
-});
-
-document.getElementById('prevPage').addEventListener('click', () => {
-  if (currentPage > 1) {
-    currentPage--;
-    fetchCheckIns();
-  }
-});
-
-document.getElementById('nextPage').addEventListener('click', () => {
-  currentPage++;
-  fetchCheckIns();
-});
 
 function updateMap(latitude, longitude) {
   if (!map) {
@@ -655,6 +553,11 @@ function setupNotificationToggle() {
           await firebaseMessaging.requestPermission();
         }
         console.log('[DEBUG] Device linked for notifications');
+        
+        // Update CheckInManager notification permission
+        if (checkInManager) {
+          checkInManager.setNotificationPermission(true);
+        }
       } catch (error) {
         console.error('Failed to link device for notifications:', error);
         // Don't revert the toggle - user preference is still true
@@ -671,6 +574,11 @@ function setupNotificationToggle() {
       try {
         // You can add logic here to remove the FCM token from your backend
         console.log('[DEBUG] Device unlinked from notifications');
+        
+        // Update CheckInManager notification permission
+        if (checkInManager) {
+          checkInManager.setNotificationPermission(false);
+        }
       } catch (error) {
         console.error('Failed to unlink device:', error);
       }
@@ -679,50 +587,35 @@ function setupNotificationToggle() {
   });
 }
 
-// Show notification for new check-in
-function showCheckInNotification(checkIn) {
-  if (!notificationPermission) return;
-
-  const notification = new Notification('Ny Freddy Check-in! 🐱', {
-    body: `${checkIn.name} har lige checket ind!`,
-    icon: '/img/emoji-cat-192x192.png',
-    badge: '/img/emoji-cat-192x192.png',
-    tag: 'freddy-checkin',
-    requireInteraction: false,
-    silent: false
-  });
-
-  // Auto-close after 5 seconds
-  setTimeout(() => {
-    notification.close();
-  }, 5000);
-
-  // Handle click on notification
-  notification.onclick = function() {
-    window.focus();
-    notification.close();
-  };
-}
-
-// Set up real-time listener for new check-ins
-function setupCheckInListener() {
-  const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
-  
-  onSnapshot(q, (snapshot) => {
-    snapshot.docChanges().forEach((change) => {
-      if (change.type === "added") {
-        const checkIn = change.doc.data();
-        const checkInTime = checkIn.timestamp?.toDate?.() || new Date();
-        
-        // Only show notification if this is a new check-in (not from page load)
-        if (lastCheckInTime && checkInTime > lastCheckInTime) {
-          showCheckInNotification(checkIn);
+// Initialize check-in system
+async function initializeCheckInSystem() {
+  try {
+    const config = getConfig();
+    checkInManager = new CheckInManager(db, auth, config);
+    
+    // Create a simple map manager for now (we'll extract this in Phase 4)
+    const mapManager = {
+      updateMap: updateMap,
+      addMarker: (lat, lng, title) => {
+        if (recordedMap && typeof lat === 'number' && typeof lng === 'number') {
+          if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
+            new google.maps.marker.AdvancedMarkerElement({
+              position: { lat, lng },
+              map: recordedMap,
+              title: title
+            });
+          }
         }
-        
-        lastCheckInTime = checkInTime;
       }
-    });
-  }, (error) => {
-    console.error("Error listening to check-ins:", error);
-  });
+    };
+    
+    checkInUI = new CheckInUI(checkInManager, mapManager);
+    
+    // Set up check-in listener
+    checkInManager.setupCheckInListener();
+    
+    console.log('[DEBUG] Check-in system initialized successfully');
+  } catch (error) {
+    console.error('[DEBUG] Failed to initialize check-in system:', error);
+  }
 }
