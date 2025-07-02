@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Map System Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    button { margin: 5px; padding: 8px 16px; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
+    .status { font-weight: bold; }
+    
+    /* Mock map elements for testing */
+    .mock-map {
+      border: 2px solid #ddd;
+      height: 300px;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8f9fa;
+      color: #666;
+    }
+    
+    .map-controls {
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Map System Test</h1>
+  
+  <div class="test-section info">
+    <h3>Test Status</h3>
+    <div id="test-status">Loading...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 1: MapManager Class</h3>
+    <button onclick="testMapManager()">Test MapManager</button>
+    <div id="map-manager-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: API Loading</h3>
+    <button onclick="testAPILoading()">Test API Loading</button>
+    <div id="api-loading-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Map Initialization</h3>
+    <button onclick="testMapInitialization()">Test Map Initialization</button>
+    <div id="map-init-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Mock Map Integration</h3>
+    <button onclick="testMockMap()">Test Mock Map</button>
+    <div id="mock-map-result"></div>
+    
+    <!-- Mock map elements for testing -->
+    <div class="mock-map" id="mock-map">
+      Mock Map Element
+    </div>
+    
+    <div class="mock-map" id="mock-recorded-map">
+      Mock Recorded Map Element
+    </div>
+    
+    <div class="map-controls">
+      <h4>Map Controls</h4>
+      <button onclick="testUpdateMap()">Update Map (55.6761, 12.5683)</button>
+      <button onclick="testAddMarker()">Add Marker (55.6761, 12.5683)</button>
+      <button onclick="testSetMapView()">Set Map View (55.6761, 12.5683, zoom 10)</button>
+      <button onclick="testGetMapInfo()">Get Map Info</button>
+    </div>
+  </div>
+
+  <script type="module">
+    let mapManager = null;
+    let testResults = {};
+
+    // Mock config for testing
+    const mockConfig = {
+      googleMaps: {
+        apiKey: 'test-api-key',
+        defaultCenter: { lat: 55.6761, lng: 12.5683 },
+        defaultZoom: 10,
+        mapId: 'test-map-id'
+      }
+    };
+
+    // Mock Google Maps API for testing
+    const mockGoogleMaps = {
+      Map: class MockMap {
+        constructor(element, options) {
+          this.element = element;
+          this.options = options;
+          this.center = options.center;
+          this.zoom = options.zoom;
+          this.markers = [];
+        }
+        
+        setCenter(position) {
+          this.center = position;
+        }
+        
+        setZoom(zoom) {
+          this.zoom = zoom;
+        }
+        
+        getCenter() {
+          return {
+            lat: () => this.center.lat,
+            lng: () => this.center.lng
+          };
+        }
+        
+        getZoom() {
+          return this.zoom;
+        }
+        
+        fitBounds(bounds) {
+          console.log('Mock fitBounds called');
+        }
+      },
+      Marker: class MockMarker {
+        constructor(options) {
+          this.position = options.position;
+          this.map = options.map;
+          this.title = options.title;
+        }
+      },
+      marker: {
+        AdvancedMarkerElement: class MockAdvancedMarker {
+          constructor(options) {
+            this.position = options.position;
+            this.map = options.map;
+            this.title = options.title;
+          }
+        }
+      },
+      LatLngBounds: class MockLatLngBounds {
+        constructor() {
+          this.bounds = [];
+        }
+        
+        extend(latLng) {
+          this.bounds.push(latLng);
+        }
+      },
+      LatLng: class MockLatLng {
+        constructor(lat, lng) {
+          this.lat = lat;
+          this.lng = lng;
+        }
+      }
+    };
+
+    // Test MapManager Class
+    window.testMapManager = async function() {
+      const resultDiv = document.getElementById('map-manager-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        const { MapManager } = await import('./js/features/maps/map_manager.js');
+        
+        mapManager = new MapManager(mockConfig);
+        
+        if (mapManager) {
+          resultDiv.innerHTML = '<div class="success">✅ MapManager instantiated successfully</div>';
+          testResults.mapManager = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Failed to instantiate MapManager</div>';
+          testResults.mapManager = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ MapManager error: ${error.message}</div>`;
+        testResults.mapManager = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test API Loading
+    window.testAPILoading = async function() {
+      const resultDiv = document.getElementById('api-loading-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!mapManager) {
+          resultDiv.innerHTML = '<div class="error">❌ MapManager not initialized</div>';
+          testResults.apiLoading = false;
+          return;
+        }
+
+        // Mock Google Maps API
+        window.google = { maps: mockGoogleMaps };
+        
+        // Test API loading
+        await mapManager.loadGoogleMapsAPI();
+        
+        resultDiv.innerHTML = '<div class="success">✅ API loading working correctly</div>';
+        testResults.apiLoading = true;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ API loading error: ${error.message}</div>`;
+        testResults.apiLoading = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Map Initialization
+    window.testMapInitialization = async function() {
+      const resultDiv = document.getElementById('map-init-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!mapManager) {
+          resultDiv.innerHTML = '<div class="error">❌ MapManager not initialized</div>';
+          testResults.mapInit = false;
+          return;
+        }
+
+        // Test map initialization
+        await mapManager.initializeMaps();
+        
+        if (mapManager.isMapsInitialized()) {
+          resultDiv.innerHTML = '<div class="success">✅ Map initialization working correctly</div>';
+          testResults.mapInit = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Map initialization failed</div>';
+          testResults.mapInit = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Map initialization error: ${error.message}</div>`;
+        testResults.mapInit = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Mock Map Integration
+    window.testMockMap = async function() {
+      const resultDiv = document.getElementById('mock-map-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!mapManager) {
+          resultDiv.innerHTML = '<div class="error">❌ MapManager not initialized</div>';
+          testResults.mockMap = false;
+          return;
+        }
+
+        // Test map methods
+        mapManager.updateMap(55.6761, 12.5683);
+        mapManager.addMarker(55.6761, 12.5683, 'Test Marker');
+        
+        resultDiv.innerHTML = '<div class="success">✅ Mock map integration working correctly</div>';
+        testResults.mockMap = true;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Mock map error: ${error.message}</div>`;
+        testResults.mockMap = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Update Map
+    window.testUpdateMap = function() {
+      if (mapManager) {
+        mapManager.updateMap(55.6761, 12.5683);
+        console.log('Map updated to Copenhagen coordinates');
+      }
+    };
+
+    // Test Add Marker
+    window.testAddMarker = function() {
+      if (mapManager) {
+        mapManager.addMarker(55.6761, 12.5683, 'Copenhagen Marker');
+        console.log('Marker added to Copenhagen');
+      }
+    };
+
+    // Test Set Map View
+    window.testSetMapView = function() {
+      if (mapManager) {
+        mapManager.setMapView(55.6761, 12.5683, 10);
+        console.log('Map view set to Copenhagen with zoom 10');
+      }
+    };
+
+    // Test Get Map Info
+    window.testGetMapInfo = function() {
+      if (mapManager) {
+        const center = mapManager.getMapCenter();
+        const zoom = mapManager.getMapZoom();
+        const isInitialized = mapManager.isMapsInitialized();
+        const isAvailable = mapManager.isGoogleMapsAvailable();
+        
+        console.log('Map Info:', {
+          center,
+          zoom,
+          isInitialized,
+          isAvailable
+        });
+      }
+    };
+
+    // Update test status
+    function updateTestStatus() {
+      const statusDiv = document.getElementById('test-status');
+      const totalTests = Object.keys(testResults).length;
+      const passedTests = Object.values(testResults).filter(Boolean).length;
+      
+      if (totalTests === 0) {
+        statusDiv.innerHTML = '<span class="info">Ready to run tests</span>';
+      } else if (passedTests === totalTests) {
+        statusDiv.innerHTML = `<span class="success">✅ All tests passed (${passedTests}/${totalTests})</span>`;
+      } else {
+        statusDiv.innerHTML = `<span class="error">❌ Some tests failed (${passedTests}/${totalTests})</span>`;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTestStatus();
+    });
+  </script>
+</body>
+</html> 
