@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in System Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    button { margin: 5px; padding: 8px 16px; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
+    .status { font-weight: bold; }
+    
+    /* Mock UI elements for testing */
+    .mock-form {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .mock-table {
+      border: 1px solid #ddd;
+      margin: 10px 0;
+    }
+    .mock-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .mock-table th, .mock-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Check-in System Test</h1>
+  
+  <div class="test-section info">
+    <h3>Test Status</h3>
+    <div id="test-status">Loading...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 1: CheckInManager Class</h3>
+    <button onclick="testCheckInManager()">Test CheckInManager</button>
+    <div id="checkin-manager-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: CheckInUI Class</h3>
+    <button onclick="testCheckInUI()">Test CheckInUI</button>
+    <div id="checkin-ui-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Data Validation</h3>
+    <button onclick="testDataValidation()">Test Validation</button>
+    <div id="validation-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Mock UI Integration</h3>
+    <button onclick="testMockUI()">Test Mock UI</button>
+    <div id="mock-ui-result"></div>
+    
+    <!-- Mock UI elements for testing -->
+    <div class="mock-form">
+      <h4>Mock Check-in Form</h4>
+      <form id="mock-checkin-form">
+        <input type="text" id="mock-name-input" placeholder="Enter name" value="Test User">
+        <button type="submit">Check In</button>
+      </form>
+      <div id="mock-spinner" class="hidden">Loading...</div>
+      <div id="mock-success-message" class="hidden">Success!</div>
+      <div id="mock-error-message" class="hidden">Error!</div>
+    </div>
+    
+    <div class="mock-table">
+      <h4>Mock Check-ins Table</h4>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Date</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="mock-checkins-list">
+        </tbody>
+      </table>
+      <div>
+        <button id="mock-prev-page">Previous</button>
+        <button id="mock-next-page">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    let checkInManager = null;
+    let checkInUI = null;
+    let testResults = {};
+
+    // Mock Firebase services for testing
+    const mockDb = {
+      collection: () => ({
+        add: async (data) => ({ id: 'mock-doc-id', ...data }),
+        get: async () => ({
+          docs: [
+            {
+              id: 'mock-1',
+              data: () => ({
+                name: 'Test User',
+                latitude: 55.6761,
+                longitude: 12.5683,
+                timestamp: { toDate: () => new Date() }
+              })
+            }
+          ]
+        }),
+        orderBy: () => ({
+          limit: () => ({
+            get: async () => ({
+              docs: [
+                {
+                  id: 'mock-1',
+                  data: () => ({
+                    name: 'Test User',
+                    latitude: 55.6761,
+                    longitude: 12.5683,
+                    timestamp: { toDate: () => new Date() }
+                  })
+                }
+              ]
+            })
+          })
+        })
+      })
+    };
+
+    const mockAuth = {
+      currentUser: { uid: 'mock-user-id' },
+      signInAnonymously: async () => ({ user: { uid: 'mock-user-id' } })
+    };
+
+    const mockConfig = {
+      app: { entriesPerPage: 10 }
+    };
+
+    // Test CheckInManager Class
+    window.testCheckInManager = async function() {
+      const resultDiv = document.getElementById('checkin-manager-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        const { CheckInManager } = await import('./js/features/checkin/checkin_manager.js');
+        
+        checkInManager = new CheckInManager(mockDb, mockAuth, mockConfig);
+        
+        if (checkInManager) {
+          resultDiv.innerHTML = '<div class="success">✅ CheckInManager instantiated successfully</div>';
+          testResults.checkInManager = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Failed to instantiate CheckInManager</div>';
+          testResults.checkInManager = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ CheckInManager error: ${error.message}</div>`;
+        testResults.checkInManager = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test CheckInUI Class
+    window.testCheckInUI = async function() {
+      const resultDiv = document.getElementById('checkin-ui-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        const { CheckInUI } = await import('./js/features/checkin/checkin_ui.js');
+        
+        if (!checkInManager) {
+          resultDiv.innerHTML = '<div class="error">❌ CheckInManager not initialized</div>';
+          testResults.checkInUI = false;
+          return;
+        }
+        
+        checkInUI = new CheckInUI(checkInManager);
+        
+        if (checkInUI) {
+          resultDiv.innerHTML = '<div class="success">✅ CheckInUI instantiated successfully</div>';
+          testResults.checkInUI = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Failed to instantiate CheckInUI</div>';
+          testResults.checkInUI = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ CheckInUI error: ${error.message}</div>`;
+        testResults.checkInUI = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Data Validation
+    window.testDataValidation = async function() {
+      const resultDiv = document.getElementById('validation-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!checkInManager) {
+          resultDiv.innerHTML = '<div class="error">❌ CheckInManager not initialized</div>';
+          testResults.validation = false;
+          return;
+        }
+
+        // Test valid data
+        const validResult = checkInManager.validateCheckInData('Test User', 55.6761, 12.5683);
+        
+        // Test invalid data
+        const invalidResult = checkInManager.validateCheckInData('', NaN, 'invalid');
+        
+        if (validResult.isValid && !invalidResult.isValid) {
+          resultDiv.innerHTML = `
+            <div class="success">
+              ✅ Data validation working correctly<br>
+              Valid data: ${validResult.isValid}<br>
+              Invalid data: ${invalidResult.isValid} (${invalidResult.errors.length} errors)
+            </div>
+          `;
+          testResults.validation = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Data validation not working correctly</div>';
+          testResults.validation = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Validation error: ${error.message}</div>`;
+        testResults.validation = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Mock UI Integration
+    window.testMockUI = async function() {
+      const resultDiv = document.getElementById('mock-ui-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!checkInUI) {
+          resultDiv.innerHTML = '<div class="error">❌ CheckInUI not initialized</div>';
+          testResults.mockUI = false;
+          return;
+        }
+
+        // Test UI methods
+        checkInUI.showSpinner(true);
+        checkInUI.showSuccessMessage('Test success message');
+        checkInUI.showErrorMessage('Test error message');
+        
+        // Test token status update
+        checkInUI.updateTokenStatus(true);
+        
+        resultDiv.innerHTML = '<div class="success">✅ Mock UI integration working correctly</div>';
+        testResults.mockUI = true;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Mock UI error: ${error.message}</div>`;
+        testResults.mockUI = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Update test status
+    function updateTestStatus() {
+      const statusDiv = document.getElementById('test-status');
+      const totalTests = Object.keys(testResults).length;
+      const passedTests = Object.values(testResults).filter(Boolean).length;
+      
+      if (totalTests === 0) {
+        statusDiv.innerHTML = '<span class="info">Ready to run tests</span>';
+      } else if (passedTests === totalTests) {
+        statusDiv.innerHTML = `<span class="success">✅ All tests passed (${passedTests}/${totalTests})</span>`;
+      } else {
+        statusDiv.innerHTML = `<span class="error">❌ Some tests failed (${passedTests}/${totalTests})</span>`;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTestStatus();
+    });
+  </script>
+</body>
+</html> 

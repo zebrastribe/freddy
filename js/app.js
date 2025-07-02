@@ -273,7 +273,7 @@ onAuthStateChanged(auth, (currentUser) => {
     user = currentUser;
     console.log("User authenticated:", user);
     
-    // Use CheckInManager if available, otherwise fall back to old functions
+    // Use CheckInManager if available
     if (checkInManager) {
       checkInManager.fetchLastCoordinates().then(coordinates => {
         if (coordinates) {
@@ -281,9 +281,6 @@ onAuthStateChanged(auth, (currentUser) => {
         }
       });
       checkInManager.fetchCheckIns();
-    } else {
-      fetchLastCoordinates(); // Fallback to old function
-      fetchCheckIns(); // Fallback to old function
     }
   } else {
     user = null;
@@ -291,78 +288,7 @@ onAuthStateChanged(auth, (currentUser) => {
   }
 });
 
-async function fetchLastCoordinates() {
-  if (user) {
-    try {
-      const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const lastDoc = querySnapshot.docs[0];
-        const { latitude, longitude } = lastDoc.data();
-        updateMap(latitude, longitude);
-      } else {
-        console.log("No previous coordinates found.");
-      }
-    } catch (error) {
-      console.error("Error fetching last coordinates:", error);
-    }
-  }
-}
-
-async function fetchCheckIns() {
-  if (typeof user === 'undefined') user = null; // Defensive: ensure user is defined
-  const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"));
-  const querySnapshot = await getDocs(q);
-  const checkInsList = document.getElementById('checkInsList');
-  checkInsList.innerHTML = ''; // Clear the table body
-
-  const docs = querySnapshot.docs;
-  const totalPages = Math.ceil(docs.length / entriesPerPage);
-  const start = (currentPage - 1) * entriesPerPage;
-  const end = start + entriesPerPage;
-  const currentDocs = docs.slice(start, end);
-
-  currentDocs.forEach((doc) => {
-    const data = doc.data();
-    const name = data.name || '-';
-    const latitude = typeof data.latitude === 'number' ? data.latitude : '-';
-    const longitude = typeof data.longitude === 'number' ? data.longitude : '-';
-    let formattedDate = '-';
-    let time = '-';
-    if (data.timestamp && typeof data.timestamp.toDate === 'function') {
-      const date = data.timestamp.toDate();
-      formattedDate = `${date.getDate()} of ${date.toLocaleString('en-US', { month: 'long' })} ${date.getFullYear()}`;
-      time = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-    }
-    // Only render rows with at least name, latitude, longitude, and timestamp
-    if (name !== '-' && latitude !== '-' && longitude !== '-' && formattedDate !== '-') {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="py-2 px-4 border-b border-gray-200">${name}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${latitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${longitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${formattedDate}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${time}</td>
-      `;
-      checkInsList.appendChild(row);
-      // Add marker to the recorded map
-      if (recordedMap && typeof latitude === 'number' && typeof longitude === 'number') {
-        if (google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
-          new google.maps.marker.AdvancedMarkerElement({
-            position: { lat: latitude, lng: longitude },
-            map: recordedMap,
-            title: name
-          });
-        } else {
-          console.error('AdvancedMarkerElement is not available. Make sure the marker library is loaded.');
-        }
-      }
-    }
-  });
-
-  document.getElementById('prevPage').disabled = currentPage === 1;
-  document.getElementById('nextPage').disabled = currentPage === totalPages;
-}
+// Old check-in functions removed - now handled by CheckInManager
 
 function updateMap(latitude, longitude) {
   if (!map) {
