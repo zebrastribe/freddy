@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FirebaseMessaging Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .success { background-color: #d4edda; border-color: #c3e6cb; }
+    .error { background-color: #f8d7da; border-color: #f5c6cb; }
+    .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    button { margin: 5px; padding: 8px 16px; }
+    pre { background: #f8f9fa; padding: 10px; border-radius: 3px; }
+    .status { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>FirebaseMessaging Test</h1>
+  
+  <div class="test-section info">
+    <h3>Test Status</h3>
+    <div id="test-status">Loading...</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 1: Firebase Configuration</h3>
+    <button onclick="testFirebaseConfig()">Test Firebase Config</button>
+    <div id="firebase-config-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 2: FirebaseMessaging Class</h3>
+    <button onclick="testFirebaseMessaging()">Test FirebaseMessaging</button>
+    <div id="firebase-messaging-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 3: Notification Permission</h3>
+    <button onclick="testNotificationPermission()">Test Permission</button>
+    <div id="notification-permission-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test 4: Integration Test</h3>
+    <button onclick="testIntegration()">Test Integration</button>
+    <div id="integration-result"></div>
+  </div>
+
+  <script type="module">
+    let firebaseMessaging = null;
+    let testResults = {};
+
+    // Test Firebase Configuration
+    window.testFirebaseConfig = async function() {
+      const resultDiv = document.getElementById('firebase-config-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        const { app, db, auth, VAPID_KEY } = await import('./js/lib/firebase_config.js');
+        
+        if (app && db && auth && VAPID_KEY) {
+          resultDiv.innerHTML = '<div class="success">✅ Firebase configuration loaded successfully</div>';
+          testResults.firebaseConfig = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Firebase configuration missing required exports</div>';
+          testResults.firebaseConfig = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Firebase configuration error: ${error.message}</div>`;
+        testResults.firebaseConfig = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test FirebaseMessaging Class
+    window.testFirebaseMessaging = async function() {
+      const resultDiv = document.getElementById('firebase-messaging-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        const { FirebaseMessaging } = await import('./js/features/notifications/firebase_messaging.js');
+        const { app, db, VAPID_KEY } = await import('./js/lib/firebase_config.js');
+        
+        firebaseMessaging = new FirebaseMessaging(app, db, VAPID_KEY);
+        
+        if (firebaseMessaging) {
+          resultDiv.innerHTML = '<div class="success">✅ FirebaseMessaging class instantiated successfully</div>';
+          testResults.firebaseMessaging = true;
+        } else {
+          resultDiv.innerHTML = '<div class="error">❌ Failed to instantiate FirebaseMessaging</div>';
+          testResults.firebaseMessaging = false;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ FirebaseMessaging error: ${error.message}</div>`;
+        testResults.firebaseMessaging = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Notification Permission
+    window.testNotificationPermission = async function() {
+      const resultDiv = document.getElementById('notification-permission-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!firebaseMessaging) {
+          resultDiv.innerHTML = '<div class="error">❌ FirebaseMessaging not initialized</div>';
+          testResults.notificationPermission = false;
+          return;
+        }
+
+        const isSupported = firebaseMessaging.isSupported();
+        const isGranted = firebaseMessaging.isPermissionGranted();
+        const isDenied = firebaseMessaging.isPermissionDenied();
+        
+        resultDiv.innerHTML = `
+          <div class="success">
+            ✅ Notification support: ${isSupported ? 'Yes' : 'No'}<br>
+            ✅ Permission granted: ${isGranted ? 'Yes' : 'No'}<br>
+            ✅ Permission denied: ${isDenied ? 'Yes' : 'No'}
+          </div>
+        `;
+        testResults.notificationPermission = true;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Notification permission error: ${error.message}</div>`;
+        testResults.notificationPermission = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Test Integration
+    window.testIntegration = async function() {
+      const resultDiv = document.getElementById('integration-result');
+      resultDiv.innerHTML = '<div class="info">Testing...</div>';
+      
+      try {
+        if (!firebaseMessaging) {
+          resultDiv.innerHTML = '<div class="error">❌ FirebaseMessaging not initialized</div>';
+          testResults.integration = false;
+          return;
+        }
+
+        // Test initialization
+        await firebaseMessaging.initialize();
+        
+        resultDiv.innerHTML = '<div class="success">✅ FirebaseMessaging integration test passed</div>';
+        testResults.integration = true;
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error">❌ Integration error: ${error.message}</div>`;
+        testResults.integration = false;
+      }
+      
+      updateTestStatus();
+    };
+
+    // Update test status
+    function updateTestStatus() {
+      const statusDiv = document.getElementById('test-status');
+      const totalTests = Object.keys(testResults).length;
+      const passedTests = Object.values(testResults).filter(Boolean).length;
+      
+      if (totalTests === 0) {
+        statusDiv.innerHTML = '<span class="info">Ready to run tests</span>';
+      } else if (passedTests === totalTests) {
+        statusDiv.innerHTML = `<span class="success">✅ All tests passed (${passedTests}/${totalTests})</span>`;
+      } else {
+        statusDiv.innerHTML = `<span class="error">❌ Some tests failed (${passedTests}/${totalTests})</span>`;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      updateTestStatus();
+    });
+  </script>
+</body>
+</html> 
