@@ -17,6 +17,7 @@ import { config, getConfig } from './config.js';
 import { Translation } from './modules/translation/translation.js';
 import { getFreddyStatus } from './config.js';
 import { requestFCMPermission } from './firebase-setup.js';
+import { StorageManager } from './lib/storage.js';
 
 // Initialize Firebase
 const firebaseConfig = getConfig().firebase;
@@ -576,18 +577,15 @@ function setupNotificationToggle() {
     return;
   }
 
+  // CURSOR: Using StorageManager for cleaner localStorage handling
+  const notificationStorage = new StorageManager('notificationPreference', 'false');
+
   // Debug: Log initial state
   console.log('[DEBUG] setupNotificationToggle called');
-  console.log('[DEBUG] localStorage.notificationPreference:', localStorage.getItem('notificationPreference'));
-
-  // Initialize localStorage if this is the first visit
-  if (localStorage.getItem('notificationPreference') === null) {
-    localStorage.setItem('notificationPreference', 'false');
-    console.log('[DEBUG] First visit - set localStorage to false');
-  }
+  console.log('[DEBUG] localStorage.notificationPreference:', notificationStorage.get());
 
   // Set toggle state from localStorage ONLY
-  const userPreference = localStorage.getItem('notificationPreference') === 'true';
+  const userPreference = notificationStorage.getBoolean();
   console.log('[DEBUG] Setting toggle.checked to', userPreference, 'from localStorage');
   toggle.checked = userPreference;
   
@@ -623,7 +621,7 @@ function setupNotificationToggle() {
     if (toggle.checked) {
       // User wants to enable notifications
       // First, update localStorage immediately
-      localStorage.setItem('notificationPreference', 'true');
+      notificationStorage.setBoolean(true);
       notificationPermission = true;
       console.log('[DEBUG] localStorage set to true');
       
@@ -634,7 +632,7 @@ function setupNotificationToggle() {
         if (permission !== 'granted') {
           // Permission denied - revert toggle and localStorage
           toggle.checked = false;
-          localStorage.setItem('notificationPreference', 'false');
+          notificationStorage.setBoolean(false);
           notificationPermission = false;
           console.log('[DEBUG] Permission denied - reverted to false');
           if (message) {
@@ -661,7 +659,7 @@ function setupNotificationToggle() {
     } else {
       // User wants to disable notifications
       // Update localStorage immediately
-      localStorage.setItem('notificationPreference', 'false');
+      notificationStorage.setBoolean(false);
       notificationPermission = false;
       console.log('[DEBUG] localStorage set to false');
       
@@ -673,7 +671,7 @@ function setupNotificationToggle() {
         console.error('Failed to unlink device:', error);
       }
     }
-    console.log('[DEBUG] localStorage.notificationPreference after change:', localStorage.getItem('notificationPreference'));
+    console.log('[DEBUG] localStorage.notificationPreference after change:', notificationStorage.get());
   });
 }
 
