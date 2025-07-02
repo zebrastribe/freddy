@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freddy - Test Suite</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            background: #fafafa;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .test-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .test-card h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .test-card p {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .test-link {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .test-link:hover {
+            background: #2980b9;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #666;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            color: #333;
+        }
+        .status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="../" class="back-link">← Back to Freddy</a>
+        
+        <h1>🧪 Freddy Test Suite</h1>
+        
+        <div class="status">
+            ✅ All test pages are organized and ready to run
+        </div>
+        
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>📦 Storage Manager</h3>
+                <p>Test the StorageManager class for localStorage operations and data persistence.</p>
+                <a href="pages/test_storage.html" class="test-link">Run Storage Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🔔 Firebase Messaging</h3>
+                <p>Test push notifications and Firebase Cloud Messaging integration.</p>
+                <a href="pages/test_firebase_messaging.html" class="test-link">Run Messaging Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>📍 Check-in System</h3>
+                <p>Test the complete check-in functionality including UI and business logic.</p>
+                <a href="pages/test_checkin_system.html" class="test-link">Run Check-in Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🗺️ Map System</h3>
+                <p>Test Google Maps integration, API loading, and map operations.</p>
+                <a href="pages/test_map_system.html" class="test-link">Run Map Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🔗 Integration Tests</h3>
+                <p>Test how all modules work together in the complete application.</p>
+                <a href="pages/test_integration.html" class="test-link">Run Integration Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🌐 API Tests</h3>
+                <p>Test all external APIs including Google Maps, Firebase, and reCAPTCHA.</p>
+                <a href="pages/test.html" class="test-link">Run API Tests</a>
+            </div>
+            
+            <div class="test-card">
+                <h3>🛡️ reCAPTCHA Debug</h3>
+                <p>Debug reCAPTCHA integration and troubleshoot bot protection issues.</p>
+                <a href="pages/recaptcha-debug.html" class="test-link">Run reCAPTCHA Debug</a>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; color: #666; font-size: 14px;">
+            <p>💡 Tip: Open browser Developer Tools (F12) to see detailed test results and any errors.</p>
+        </div>
+    </div>
+</body>
+</html> 

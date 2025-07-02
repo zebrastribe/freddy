@@ -1,7 +1,7 @@
 // Configuration file for API keys and settings
 // This file fetches API keys from Firebase Cloud Functions for security
 
-import { db } from './firebase-setup.js';
+import { db } from './lib/firebase_config.js';
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Default configuration (fallback)

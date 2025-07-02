@@ -28,7 +28,6 @@ export class FirebaseMessaging {
    */
   async initialize() {
     if (this.isInitialized) {
-      console.log('[DEBUG] FirebaseMessaging already initialized');
       return;
     }
 
@@ -36,9 +35,8 @@ export class FirebaseMessaging {
       // Set up foreground message handler
       this.setupForegroundHandler();
       this.isInitialized = true;
-      console.log('[DEBUG] FirebaseMessaging initialized successfully');
     } catch (error) {
-      console.error('[DEBUG] Error initializing FirebaseMessaging:', error);
+      console.error('Error initializing FirebaseMessaging:', error);
       throw error;
     }
   }
@@ -48,51 +46,36 @@ export class FirebaseMessaging {
    * @returns {Promise<string|null>} FCM token or null if permission denied
    */
   async requestPermission() {
-    console.log('[DEBUG] Entered requestFCMPermission handler');
-    
     try {
-      console.log('[DEBUG] Requesting notification permission...');
       const permission = await Notification.requestPermission();
-      console.log('[DEBUG] Notification permission result:', permission);
       
       if (permission === 'granted') {
-        console.log('[DEBUG] Notification permission granted');
-        
         // Get the existing service worker registration
         const registration = await navigator.serviceWorker.getRegistration();
-        console.log('[DEBUG] Existing service worker registration:', registration);
         
         if (!registration) {
-          console.log('[DEBUG] No service worker registration found, registering now...');
           await this.registerServiceWorker();
         }
         
         // Get FCM token using the existing service worker
         try {
-          console.log('[DEBUG] Requesting FCM token...');
           const token = await getToken(this.messaging, {
             vapidKey: this.vapidKey,
             serviceWorkerRegistration: registration || await navigator.serviceWorker.getRegistration()
           });
-          console.log('[DEBUG] FCM token result:', token);
           
           if (token) {
             this.fcmToken = token;
-            console.log('[DEBUG] FCM Token:', token);
             // Save token to Firestore for server-side notifications
             await this.saveToken(token);
             return token;
-          } else {
-            console.log('[DEBUG] No registration token available');
           }
         } catch (tokenError) {
-          console.log('[DEBUG] FCM token error:', tokenError);
+          console.error('FCM token error:', tokenError);
         }
-      } else {
-        console.log('[DEBUG] Notification permission denied');
       }
     } catch (error) {
-      console.error('[DEBUG] Error getting FCM permission:', error);
+      console.error('Error getting FCM permission:', error);
     }
     
     return null;
@@ -104,15 +87,13 @@ export class FirebaseMessaging {
    */
   async saveToken(token) {
     try {
-      console.log('[DEBUG] Saving FCM token to Firestore...');
       await setDoc(doc(this.db, "fcm_tokens", "admin"), {
         token: token,
         timestamp: new Date(),
         userAgent: navigator.userAgent
       });
-      console.log('[DEBUG] FCM token saved to Firestore');
     } catch (error) {
-      console.error('[DEBUG] Error saving FCM token:', error);
+      console.error('Error saving FCM token:', error);
       throw error;
     }
   }
@@ -157,18 +138,14 @@ export class FirebaseMessaging {
         const isGitHubPages = window.location.hostname === 'zebrastribe.github.io';
         const swPath = isGitHubPages ? '/freddy/firebase-messaging-sw.js' : '/firebase-messaging-sw.js';
         
-        console.log('[DEBUG] Registering service worker at:', swPath);
         const registration = await navigator.serviceWorker.register(swPath);
-        console.log('Firebase messaging service worker registered:', registration);
         return registration;
       } catch (error) {
         console.error('Service worker registration failed:', error);
         // Try fallback path for GitHub Pages
         if (window.location.hostname === 'zebrastribe.github.io') {
           try {
-            console.log('[DEBUG] Trying fallback path for GitHub Pages');
             const fallbackRegistration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-            console.log('Firebase messaging service worker registered with fallback:', fallbackRegistration);
             return fallbackRegistration;
           } catch (fallbackError) {
             console.error('Fallback service worker registration also failed:', fallbackError);

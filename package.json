@@ -1,8 +1,36 @@
 {
+  "name": "freddy-location-tracker",
+  "version": "1.0.0",
+  "description": "A location tracking web application for Freddy the adventurous ginger cat",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "dev": "python3 -m http.server 8000",
+    "test": "echo 'Open http://localhost:8000/tests/pages/ to run tests'",
+    "build": "echo 'No build step required - static site'",
+    "deploy": "echo 'Deploy to GitHub Pages or Firebase Hosting'"
+  },
+  "keywords": [
+    "location-tracking",
+    "google-maps",
+    "firebase",
+    "pwa",
+    "geolocation"
+  ],
+  "author": "Jesper",
+  "license": "MIT",
   "dependencies": {
     "firebase-admin": "^13.4.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.53.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zebrastribe/freddy.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zebrastribe/freddy/issues"
+  },
+  "homepage": "https://zebrastribe.github.io/freddy"
 }

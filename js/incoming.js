@@ -8,7 +8,7 @@ The useToken function is another asynchronous function that marks the token as u
 Overall, this script provides a robust mechanism for managing tokens, ensuring they are valid and marking them as used to prevent reuse. This is particularly useful in applications that require secure token-based authentication or authorization.
 */
 
-import { db } from './firebase-setup.js';
+import { db } from './lib/firebase_config.js';
 import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 let token = null;

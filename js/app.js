@@ -19,17 +19,10 @@ import { FirebaseMessaging } from './features/notifications/firebase_messaging.j
 import { CheckInManager } from './features/checkin/checkin_manager.js';
 import { CheckInUI } from './features/checkin/checkin_ui.js';
 import { MapManager } from './features/maps/map_manager.js';
-import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Global variables
 let user = null;
-let marker;
-let currentPage = 1;
-const entriesPerPage = getConfig().app.entriesPerPage;
-let map = null;
-let recordedMap = null;
 let notificationPermission = false;
-let lastCheckInTime = null;
 let hasValidToken = false; // Track if user has a valid token
 let firebaseMessaging = null; // Firebase messaging instance
 let checkInManager = null; // Check-in manager instance
@@ -79,11 +72,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await processToken();
   
   // Set up notification toggle last, after everything else is ready
-  console.log('Setting up notification toggle...');
   setupNotificationToggle();
 });
-
-// Old map functions removed - now handled by MapManager
 
 // Make token validation mandatory for check-ins
 async function processToken() {
@@ -91,15 +81,12 @@ async function processToken() {
   if (token) {
     const valid = await isTokenValid();
     if (valid) {
-      console.log('Token is valid.');
       await useToken();
       hasValidToken = true;
     } else {
-      console.log('Token is not valid.');
       hasValidToken = false;
     }
   } else {
-    console.log('No token provided - check-ins will be blocked.');
     hasValidToken = false;
   }
   
@@ -157,7 +144,6 @@ function updateTokenStatus() {
 onAuthStateChanged(auth, (currentUser) => {
   if (currentUser) {
     user = currentUser;
-    console.log("User authenticated:", user);
     
     // Use CheckInManager if available
     if (checkInManager) {
@@ -170,20 +156,14 @@ onAuthStateChanged(auth, (currentUser) => {
     }
   } else {
     user = null;
-    console.info("No Firebase user authenticated (this is OK for public check-in).");
   }
 });
-
-// Old check-in functions removed - now handled by CheckInManager
-
-// Old updateMap function removed - now handled by MapManager
 
 // Register Firebase messaging service worker
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
       const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-      console.log('Firebase messaging service worker registered:', registration);
       return registration;
     } catch (error) {
       console.error('Service worker registration failed:', error);
@@ -198,21 +178,19 @@ async function initializeFirebaseMessaging() {
     const { app, VAPID_KEY } = await import('./lib/firebase_config.js');
     firebaseMessaging = new FirebaseMessaging(app, db, VAPID_KEY);
     await firebaseMessaging.initialize();
-    console.log('[DEBUG] Firebase messaging initialized successfully');
   } catch (error) {
-    console.error('[DEBUG] Failed to initialize Firebase messaging:', error);
+    console.error('Failed to initialize Firebase messaging:', error);
   }
 }
 
 // Request notification permission
 async function requestNotificationPermission() {
   if (!firebaseMessaging) {
-    console.error('[DEBUG] Firebase messaging not initialized');
+    console.error('Firebase messaging not initialized');
     return false;
   }
 
   if (!firebaseMessaging.isSupported()) {
-    console.log('This browser does not support notifications');
     return false;
   }
 
@@ -222,7 +200,6 @@ async function requestNotificationPermission() {
   }
 
   if (firebaseMessaging.isPermissionDenied()) {
-    console.log('Notification permission denied');
     notificationPermission = false;
     return false;
   }
@@ -255,16 +232,11 @@ function setupNotificationToggle() {
     return;
   }
 
-  // CURSOR: Using StorageManager for cleaner localStorage handling
+  // Using StorageManager for cleaner localStorage handling
   const notificationStorage = new StorageManager('notificationPreference', 'false');
-
-  // Debug: Log initial state
-  console.log('[DEBUG] setupNotificationToggle called');
-  console.log('[DEBUG] localStorage.notificationPreference:', notificationStorage.get());
 
   // Set toggle state from localStorage ONLY
   const userPreference = notificationStorage.getBoolean();
-  console.log('[DEBUG] Setting toggle.checked to', userPreference, 'from localStorage');
   toggle.checked = userPreference;
   
   // Update the global notificationPermission variable to match localStorage
@@ -272,7 +244,6 @@ function setupNotificationToggle() {
 
   // Only disable the toggle if browser permission is denied
   if (firebaseMessaging && firebaseMessaging.isPermissionDenied()) {
-    console.log('[DEBUG] Browser permission denied, disabling toggle');
     toggle.disabled = true;
     if (message) {
       message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
@@ -294,25 +265,20 @@ function setupNotificationToggle() {
   }
 
   toggle.addEventListener('change', async (e) => {
-    console.log('[DEBUG] Toggle changed. Checked:', toggle.checked);
-    
     if (toggle.checked) {
       // User wants to enable notifications
       // First, update localStorage immediately
       notificationStorage.setBoolean(true);
       notificationPermission = true;
-      console.log('[DEBUG] localStorage set to true');
       
       // Then request permission if not already granted
       if (!firebaseMessaging || !firebaseMessaging.isPermissionGranted()) {
         const permission = await Notification.requestPermission();
-        console.log('[DEBUG] Notification.requestPermission() result:', permission);
         if (permission !== 'granted') {
           // Permission denied - revert toggle and localStorage
           toggle.checked = false;
           notificationStorage.setBoolean(false);
           notificationPermission = false;
-          console.log('[DEBUG] Permission denied - reverted to false');
           if (message) {
             message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
             message.classList.remove('hidden');
@@ -330,7 +296,6 @@ function setupNotificationToggle() {
         if (firebaseMessaging) {
           await firebaseMessaging.requestPermission();
         }
-        console.log('[DEBUG] Device linked for notifications');
         
         // Update CheckInManager notification permission
         if (checkInManager) {
@@ -346,13 +311,9 @@ function setupNotificationToggle() {
       // Update localStorage immediately
       notificationStorage.setBoolean(false);
       notificationPermission = false;
-      console.log('[DEBUG] localStorage set to false');
       
       if (message) message.classList.add('hidden');
       try {
-        // You can add logic here to remove the FCM token from your backend
-        console.log('[DEBUG] Device unlinked from notifications');
-        
         // Update CheckInManager notification permission
         if (checkInManager) {
           checkInManager.setNotificationPermission(false);
@@ -361,7 +322,6 @@ function setupNotificationToggle() {
         console.error('Failed to unlink device:', error);
       }
     }
-    console.log('[DEBUG] localStorage.notificationPreference after change:', notificationStorage.get());
   });
 }
 
@@ -389,10 +349,8 @@ async function initializeCheckInSystem() {
     
     // Set up check-in listener
     checkInManager.setupCheckInListener();
-    
-    console.log('[DEBUG] Check-in system initialized successfully');
   } catch (error) {
-    console.error('[DEBUG] Failed to initialize check-in system:', error);
+    console.error('Failed to initialize check-in system:', error);
   }
 }
 
@@ -404,23 +362,17 @@ async function initializeMapSystem() {
     
     // Set up callbacks
     mapManager.setOnMapReady(() => {
-      console.log('[DEBUG] Maps are ready');
+      // Maps are ready
     });
     
     mapManager.setOnMapError((error) => {
-      console.error('[DEBUG] Map error:', error);
+      console.error('Map error:', error);
     });
     
     // Load Google Maps API and initialize maps
     await mapManager.loadGoogleMapsAPI();
     await mapManager.initializeMaps();
-    
-    // Update global variables for backward compatibility
-    map = mapManager.getMap();
-    recordedMap = mapManager.getRecordedMap();
-    
-    console.log('[DEBUG] Map system initialized successfully');
   } catch (error) {
-    console.error('[DEBUG] Failed to initialize map system:', error);
+    console.error('Failed to initialize map system:', error);
   }
 }
