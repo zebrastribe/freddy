@@ -9,21 +9,14 @@ The initMaps and initRecordedMap functions initialize Google Maps for displaying
 Overall, this script provides a robust solution for handling translations, token validation, user authentication, and map interactions, leveraging Firebase Firestore and Google Maps APIs.
 */
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
 import { config, getConfig } from './config.js';
 import { Translation } from './modules/translation/translation.js';
 import { getFreddyStatus } from './config.js';
-import { requestFCMPermission } from './firebase-setup.js';
 import { StorageManager } from './lib/storage.js';
-
-// Initialize Firebase
-const firebaseConfig = getConfig().firebase;
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { db, auth, checkAuthState, onAuthStateChanged } from './lib/firebase_config.js';
+import { FirebaseMessaging } from './features/notifications/firebase_messaging.js';
+import { collection, addDoc, serverTimestamp, getDocs, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
 // Global variables
 let user = null;
@@ -35,6 +28,7 @@ let recordedMap = null;
 let notificationPermission = false;
 let lastCheckInTime = null;
 let hasValidToken = false; // Track if user has a valid token
+let firebaseMessaging = null; // Firebase messaging instance
 
 // Suppress reCAPTCHA 401 errors from cluttering the console
 window.addEventListener('error', (event) => {
@@ -56,9 +50,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize maps
   await initializeFreddyApp();
 
-  // Register service worker and request notification permissions
+  // Initialize Firebase messaging
+  await initializeFirebaseMessaging();
+  
+  // Register service worker and setup check-in listener
   await registerServiceWorker();
-  await requestNotificationPermission();
   setupCheckInListener();
 
   try {
@@ -520,38 +516,44 @@ async function registerServiceWorker() {
   return null;
 }
 
+// Initialize Firebase messaging
+async function initializeFirebaseMessaging() {
+  try {
+    const { app, VAPID_KEY } = await import('./lib/firebase_config.js');
+    firebaseMessaging = new FirebaseMessaging(app, db, VAPID_KEY);
+    await firebaseMessaging.initialize();
+    console.log('[DEBUG] Firebase messaging initialized successfully');
+  } catch (error) {
+    console.error('[DEBUG] Failed to initialize Firebase messaging:', error);
+  }
+}
+
 // Request notification permission
 async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
+  if (!firebaseMessaging) {
+    console.error('[DEBUG] Firebase messaging not initialized');
+    return false;
+  }
+
+  if (!firebaseMessaging.isSupported()) {
     console.log('This browser does not support notifications');
     return false;
   }
 
-  if (Notification.permission === 'granted') {
+  if (firebaseMessaging.isPermissionGranted()) {
     notificationPermission = true;
     return true;
   }
 
-  if (Notification.permission === 'denied') {
+  if (firebaseMessaging.isPermissionDenied()) {
     console.log('Notification permission denied');
     notificationPermission = false;
     return false;
   }
 
   try {
-    const permission = await Notification.requestPermission();
-    notificationPermission = permission === 'granted';
-    
-    // If permission granted, link device for notifications
-    if (notificationPermission) {
-      try {
-        await requestFCMPermission();
-      } catch (error) {
-        console.error('Failed to link device for notifications:', error);
-        notificationPermission = false;
-      }
-    }
-    
+    const token = await firebaseMessaging.requestPermission();
+    notificationPermission = !!token;
     return notificationPermission;
   } catch (error) {
     console.error('Error requesting notification permission:', error);
@@ -593,7 +595,7 @@ function setupNotificationToggle() {
   notificationPermission = userPreference;
 
   // Only disable the toggle if browser permission is denied
-  if (Notification.permission === 'denied') {
+  if (firebaseMessaging && firebaseMessaging.isPermissionDenied()) {
     console.log('[DEBUG] Browser permission denied, disabling toggle');
     toggle.disabled = true;
     if (message) {
@@ -626,7 +628,7 @@ function setupNotificationToggle() {
       console.log('[DEBUG] localStorage set to true');
       
       // Then request permission if not already granted
-      if (Notification.permission !== 'granted') {
+      if (!firebaseMessaging || !firebaseMessaging.isPermissionGranted()) {
         const permission = await Notification.requestPermission();
         console.log('[DEBUG] Notification.requestPermission() result:', permission);
         if (permission !== 'granted') {
@@ -649,7 +651,9 @@ function setupNotificationToggle() {
       // Permission granted, enable notifications
       if (message) message.classList.add('hidden');
       try {
-        await requestFCMPermission();
+        if (firebaseMessaging) {
+          await firebaseMessaging.requestPermission();
+        }
         console.log('[DEBUG] Device linked for notifications');
       } catch (error) {
         console.error('Failed to link device for notifications:', error);
