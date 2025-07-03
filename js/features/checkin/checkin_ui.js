@@ -1,85 +1,229 @@
 /**
- * CheckInUI - Handles all check-in related UI operations
+ * CheckInUI - Enhanced check-in user interface with pet support
  * 
- * This class manages the check-in form, table display,
- * pagination, and user interactions.
+ * This class provides UI components and interactions for creating check-ins
+ * with support for multiple pets in the multi-user system.
  */
-export class CheckInUI {
+import { CheckInManager } from './checkin_manager.js';
+
+class CheckInUI {
   /**
    * Create a new CheckInUI instance
-   * @param {CheckInManager} checkInManager - CheckInManager instance
-   * @param {Object} mapManager - Map manager for updating map display
+   * @param {CheckInManager} checkinManager - CheckInManager instance
+   * @param {Object} petUI - PetUI instance
+   * @param {Object} config - App configuration
    */
-  constructor(checkInManager, mapManager = null) {
-    this.checkInManager = checkInManager;
-    this.mapManager = mapManager;
-    this.currentPage = 1;
+  constructor(checkinManager, petUI, config) {
+    this.checkinManager = checkinManager;
+    this.petUI = petUI;
+    this.config = config;
+    this.currentPet = null;
     this.isSubmitting = false;
-    
-    // Bind methods to preserve context
-    this.handleCheckInSubmit = this.handleCheckInSubmit.bind(this);
-    this.handlePageChange = this.handlePageChange.bind(this);
-    this.handleTabSwitch = this.handleTabSwitch.bind(this);
-    
-    this.initialize();
   }
 
   /**
-   * Initialize the UI components
+   * Initialize check-in UI components
    */
-  initialize() {
+  async initialize() {
+    try {
+      // Set up event listeners
     this.setupEventListeners();
-    this.setupCallbacks();
+      
+      // Render initial UI
+      this.renderCheckInForm();
+      
+      // Set up pet selection listener
+      this.setupPetSelectionListener();
+      
+      console.log('CheckInUI initialized successfully');
+    } catch (error) {
+      console.error('Error initializing CheckInUI:', error);
+      throw error;
+    }
   }
 
   /**
-   * Set up event listeners for UI interactions
+   * Set up event listeners for check-in UI
    */
   setupEventListeners() {
     // Check-in form submission
-    const checkInForm = document.getElementById('check-in-form');
-    if (checkInForm) {
-      checkInForm.addEventListener('submit', this.handleCheckInSubmit);
+    const checkinForm = document.getElementById('checkin-form');
+    if (checkinForm) {
+      checkinForm.addEventListener('submit', this.handleCheckInSubmit.bind(this));
     }
 
-    // Pagination controls
-    const prevButton = document.getElementById('prevPage');
-    const nextButton = document.getElementById('nextPage');
-    
-    if (prevButton) {
-      prevButton.addEventListener('click', () => this.handlePageChange('prev'));
-    }
-    
-    if (nextButton) {
-      nextButton.addEventListener('click', () => this.handlePageChange('next'));
+    // Pet selection for check-in
+    const checkinPetSelect = document.getElementById('checkin-pet-select');
+    if (checkinPetSelect) {
+      checkinPetSelect.addEventListener('change', this.handleCheckInPetSelection.bind(this));
     }
 
-    // Tab switching
-    const checkInTab = document.getElementById('checkInTab');
-    const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
-    
-    if (checkInTab) {
-      checkInTab.addEventListener('click', () => this.handleTabSwitch('checkin'));
+    // Location button
+    const locationButton = document.getElementById('get-location-btn');
+    if (locationButton) {
+      locationButton.addEventListener('click', this.handleGetLocation.bind(this));
     }
-    
-    if (recordedCheckInsTab) {
-      recordedCheckInsTab.addEventListener('click', () => this.handleTabSwitch('recorded'));
+
+    // Clear form button
+    const clearButton = document.getElementById('clear-checkin-btn');
+    if (clearButton) {
+      clearButton.addEventListener('click', this.handleClearForm.bind(this));
     }
   }
 
   /**
-   * Set up callbacks for CheckInManager events
+   * Set up pet selection listener to sync with PetUI
    */
-  setupCallbacks() {
-    // When check-in is created
-    this.checkInManager.setOnCheckInCreated((checkInData) => {
-      this.handleCheckInCreated(checkInData);
+  setupPetSelectionListener() {
+    // Listen for pet selection changes from PetUI
+    const petSelect = document.getElementById('pet-select');
+    if (petSelect) {
+      petSelect.addEventListener('change', (event) => {
+        const petId = event.target.value;
+        this.updateCheckInPetSelection(petId);
+      });
+    }
+  }
+
+  /**
+   * Render check-in form
+   */
+  renderCheckInForm() {
+    const formContainer = document.getElementById('checkin-form-container');
+    if (!formContainer) return;
+
+    formContainer.innerHTML = `
+      <form id="checkin-form" class="checkin-form">
+        <h3>Create Check-in</h3>
+        
+        <div class="form-group">
+          <label for="checkin-pet-select">Pet (Optional)</label>
+          <select id="checkin-pet-select" name="petId" class="form-control">
+            <option value="">No specific pet</option>
+          </select>
+          <small class="form-text text-muted">Select a pet to associate with this check-in</small>
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-name">Your Name *</label>
+          <input type="text" id="checkin-name" name="name" required maxlength="100" class="form-control" placeholder="Enter your name">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-latitude">Latitude *</label>
+          <input type="number" id="checkin-latitude" name="latitude" required step="any" class="form-control" placeholder="e.g., 55.6761">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-longitude">Longitude *</label>
+          <input type="number" id="checkin-longitude" name="longitude" required step="any" class="form-control" placeholder="e.g., 12.5683">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-accuracy">GPS Accuracy (meters)</label>
+          <input type="number" id="checkin-accuracy" name="accuracy" min="0" step="any" class="form-control" placeholder="e.g., 5">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-altitude">Altitude (meters)</label>
+          <input type="number" id="checkin-altitude" name="altitude" step="any" class="form-control" placeholder="e.g., 10">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-speed">Speed (m/s)</label>
+          <input type="number" id="checkin-speed" name="speed" min="0" step="any" class="form-control" placeholder="e.g., 2.5">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-heading">Heading (degrees)</label>
+          <input type="number" id="checkin-heading" name="heading" min="0" max="360" step="any" class="form-control" placeholder="e.g., 180">
+        </div>
+
+        <div class="form-group">
+          <label for="checkin-description">Description</label>
+          <textarea id="checkin-description" name="description" maxlength="500" class="form-control" rows="3" placeholder="Optional description of the check-in"></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="get-location-btn" class="btn btn-secondary">
+            📍 Get Current Location
+          </button>
+          <button type="button" id="clear-checkin-btn" class="btn btn-outline-secondary">
+            Clear Form
+          </button>
+          <button type="submit" id="submit-checkin-btn" class="btn btn-primary" disabled>
+            Create Check-in
+          </button>
+        </div>
+
+        <div id="checkin-status" class="checkin-status" style="display: none;"></div>
+      </form>
+    `;
+
+    // Populate pet selection dropdown
+    this.populatePetSelection();
+  }
+
+  /**
+   * Populate pet selection dropdown
+   */
+  populatePetSelection() {
+    const petSelect = document.getElementById('checkin-pet-select');
+    if (!petSelect) return;
+
+    // Clear existing options (except the first "No specific pet" option)
+    petSelect.innerHTML = '<option value="">No specific pet</option>';
+
+    // Get user's pets from PetUI
+    const userPets = this.petUI.getUserPets();
+    
+    userPets.forEach(pet => {
+      const option = document.createElement('option');
+      option.value = pet.id;
+      option.textContent = pet.name;
+      option.dataset.petId = pet.id;
+      petSelect.appendChild(option);
     });
 
-    // When check-ins are fetched
-    this.checkInManager.setOnCheckInFetched((result) => {
-      this.renderCheckInTable(result);
-    });
+    // If there's a currently selected pet in PetUI, select it here too
+    const currentPet = this.petUI.getCurrentPet();
+    if (currentPet) {
+      petSelect.value = currentPet.id;
+      this.currentPet = currentPet;
+    }
+  }
+
+  /**
+   * Update check-in pet selection based on PetUI selection
+   * @param {string} petId - Pet ID to select
+   */
+  updateCheckInPetSelection(petId) {
+    const checkinPetSelect = document.getElementById('checkin-pet-select');
+    if (checkinPetSelect) {
+      checkinPetSelect.value = petId || '';
+    }
+    
+    if (petId) {
+      const userPets = this.petUI.getUserPets();
+      this.currentPet = userPets.find(pet => pet.id === petId) || null;
+    } else {
+      this.currentPet = null;
+    }
+  }
+
+  /**
+   * Handle check-in pet selection
+   * @param {Event} event - Selection change event
+   */
+  handleCheckInPetSelection(event) {
+    const petId = event.target.value;
+    
+    if (petId) {
+      const userPets = this.petUI.getUserPets();
+      this.currentPet = userPets.find(pet => pet.id === petId) || null;
+    } else {
+      this.currentPet = null;
+    }
   }
 
   /**
@@ -90,287 +234,233 @@ export class CheckInUI {
     event.preventDefault();
     
     if (this.isSubmitting) {
-      return; // Prevent double submission
-    }
-
-    this.isSubmitting = true;
-    this.showSpinner(true);
-    this.hideMessages();
-
-    try {
-      const nameInput = document.getElementById('nameInput');
-      const name = nameInput.value.trim();
-      
-      if (!name) {
-        throw new Error('Please enter your name');
-      }
-
-      // Get current location
-      const location = await this.checkInManager.getCurrentLocation();
-      
-      // Validate data
-      const validation = this.checkInManager.validateCheckInData(
-        name, 
-        location.latitude, 
-        location.longitude
-      );
-      
-      if (!validation.isValid) {
-        throw new Error(validation.errors.join(', '));
-      }
-
-      // Get reCAPTCHA token if available
-      let recaptchaToken = null;
-      if (window.grecaptcha && window.grecaptcha.ready) {
-        try {
-          recaptchaToken = await grecaptcha.execute('6LcKqXYpAAAAAJqXqXqXqXqXqXqXqXqXqXqXqXqX', { action: 'checkin' });
-        } catch (recaptchaError) {
-          console.warn('reCAPTCHA error:', recaptchaError);
-          // Continue without reCAPTCHA token
-        }
-      }
-
-      // Create check-in
-      await this.checkInManager.createCheckIn(
-        name, 
-        location.latitude, 
-        location.longitude, 
-        recaptchaToken
-      );
-
-      // Clear form and show success
-      nameInput.value = '';
-      this.showSuccessMessage('Check-in successful!');
-      
-      // Refresh check-ins list
-      await this.refreshCheckIns();
-
-    } catch (error) {
-      console.error('Check-in error:', error);
-      this.showErrorMessage(error.message || 'An error occurred. Please try again.');
-    } finally {
-      this.isSubmitting = false;
-      this.showSpinner(false);
-      
-      // Re-enable form after delay
-      setTimeout(() => {
-        const nameInput = document.getElementById('nameInput');
-        if (nameInput) {
-          nameInput.disabled = false;
-        }
-        this.hideMessages();
-      }, 15000);
-    }
-  }
-
-  /**
-   * Handle check-in creation success
-   * @param {Object} checkInData - Check-in data
-   */
-  handleCheckInCreated(checkInData) {
-    // Update map if map manager is available
-    if (this.mapManager && typeof this.mapManager.updateMap === 'function') {
-      this.mapManager.updateMap(checkInData.latitude, checkInData.longitude);
-    }
-  }
-
-  /**
-   * Handle page change for pagination
-   * @param {string} direction - 'prev' or 'next'
-   */
-  async handlePageChange(direction) {
-    if (direction === 'prev' && this.currentPage > 1) {
-      this.currentPage--;
-    } else if (direction === 'next') {
-      this.currentPage++;
-    } else {
-      return; // Invalid page change
-    }
-
-    await this.refreshCheckIns();
-  }
-
-  /**
-   * Handle tab switching
-   * @param {string} tab - Tab to switch to ('checkin' or 'recorded')
-   */
-  async handleTabSwitch(tab) {
-    const checkInContent = document.getElementById('checkInContent');
-    const recordedCheckInsContent = document.getElementById('recordedCheckInsContent');
-    const checkInTab = document.getElementById('checkInTab');
-    const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
-
-    if (tab === 'checkin') {
-      checkInContent.classList.remove('hidden');
-      recordedCheckInsContent.classList.add('hidden');
-      checkInTab.classList.add('text-blue-600', 'border-blue-600');
-      checkInTab.classList.remove('text-gray-600', 'border-gray-200');
-      recordedCheckInsTab.classList.add('text-gray-600', 'border-gray-200');
-      recordedCheckInsTab.classList.remove('text-blue-600', 'border-blue-600');
-    } else if (tab === 'recorded') {
-      checkInContent.classList.add('hidden');
-      recordedCheckInsContent.classList.remove('hidden');
-      recordedCheckInsTab.classList.add('text-blue-600', 'border-blue-600');
-      recordedCheckInsTab.classList.remove('text-gray-600', 'border-gray-200');
-      checkInTab.classList.add('text-gray-600', 'border-gray-200');
-      checkInTab.classList.remove('text-blue-600', 'border-blue-600');
-      
-      // Fetch and display check-ins
-      await this.refreshCheckIns();
-    }
-  }
-
-  /**
-   * Render check-in table
-   * @param {Object} result - Check-ins data with pagination
-   */
-  renderCheckInTable(result) {
-    const { checkIns, pagination } = result;
-    const checkInsList = document.getElementById('checkInsList');
-    const prevButton = document.getElementById('prevPage');
-    const nextButton = document.getElementById('nextPage');
-
-    if (!checkInsList) {
-      console.error('Check-ins list element not found');
       return;
     }
-
-    // Clear existing rows
-    checkInsList.innerHTML = '';
-
-    // Add check-in rows
-    checkIns.forEach(checkIn => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="py-2 px-4 border-b border-gray-200">${checkIn.name}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${checkIn.latitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${checkIn.longitude}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${checkIn.formattedDate}</td>
-        <td class="py-2 px-4 border-b border-gray-200">${checkIn.time}</td>
-      `;
-      checkInsList.appendChild(row);
-
-      // Add marker to map if available
-      if (this.mapManager && typeof this.mapManager.addMarker === 'function') {
-        this.mapManager.addMarker(checkIn.latitude, checkIn.longitude, checkIn.name);
-      }
-    });
-
-    // Update pagination controls
-    if (prevButton) {
-      prevButton.disabled = !pagination.hasPrev;
-    }
     
-    if (nextButton) {
-      nextButton.disabled = !pagination.hasNext;
-    }
-
-    this.currentPage = pagination.currentPage;
-  }
-
-  /**
-   * Refresh check-ins list
-   */
-  async refreshCheckIns() {
     try {
-      await this.checkInManager.fetchCheckIns(this.currentPage);
+      this.isSubmitting = true;
+      this.showStatus('Creating check-in...', 'info');
+      
+      const formData = new FormData(event.target);
+      const checkinData = {
+        name: formData.get('name').trim(),
+        latitude: parseFloat(formData.get('latitude')),
+        longitude: parseFloat(formData.get('longitude')),
+        accuracy: formData.get('accuracy') ? parseFloat(formData.get('accuracy')) : null,
+        altitude: formData.get('altitude') ? parseFloat(formData.get('altitude')) : null,
+        speed: formData.get('speed') ? parseFloat(formData.get('speed')) : null,
+        heading: formData.get('heading') ? parseFloat(formData.get('heading')) : null,
+        description: formData.get('description').trim(),
+        domain: window.location.hostname
+      };
+
+      // Validate check-in data
+      const validation = CheckInManager.validateCheckInData(checkinData);
+      if (!validation.isValid) {
+        this.showStatus(validation.errors.join(', '), 'error');
+        return;
+      }
+
+      // Get pet ID if selected
+      const petId = formData.get('petId') || null;
+
+      // Create check-in
+      const checkin = await this.checkinManager.createCheckIn(checkinData, petId);
+      
+      // Show success message
+      const petName = this.currentPet ? ` for ${this.currentPet.name}` : '';
+      this.showStatus(`Check-in created successfully${petName}!`, 'success');
+      
+      // Clear form
+      this.clearForm();
+      
+      // Trigger any success callbacks
+      if (this.onCheckInCreated) {
+        this.onCheckInCreated(checkin);
+      }
+
     } catch (error) {
-      console.error('Error refreshing check-ins:', error);
+      console.error('Error creating check-in:', error);
+      this.showStatus('Failed to create check-in: ' + error.message, 'error');
+    } finally {
+      this.isSubmitting = false;
     }
   }
 
   /**
-   * Show spinner
-   * @param {boolean} show - Whether to show or hide spinner
+   * Handle get current location button click
+   * @param {Event} event - Click event
    */
-  showSpinner(show) {
-    const spinner = document.getElementById('spinner');
-    if (spinner) {
-      if (show) {
-        spinner.classList.remove('hidden');
-      } else {
-        spinner.classList.add('hidden');
-      }
-    }
-  }
-
-  /**
-   * Show success message
-   * @param {string} message - Success message
-   */
-  showSuccessMessage(message) {
-    const successMessage = document.getElementById('successMessage');
-    if (successMessage) {
-      successMessage.textContent = message;
-      successMessage.classList.remove('hidden');
-    }
-  }
-
-  /**
-   * Show error message
-   * @param {string} message - Error message
-   */
-  showErrorMessage(message) {
-    const errorMessage = document.getElementById('errorMessage');
-    if (errorMessage) {
-      errorMessage.textContent = message;
-      errorMessage.classList.remove('hidden');
-    }
-  }
-
-  /**
-   * Hide all messages
-   */
-  hideMessages() {
-    const successMessage = document.getElementById('successMessage');
-    const errorMessage = document.getElementById('errorMessage');
+  async handleGetLocation(event) {
+    event.preventDefault();
     
-    if (successMessage) {
-      successMessage.classList.add('hidden');
-    }
-    
-    if (errorMessage) {
-      errorMessage.classList.add('hidden');
+    try {
+      this.showStatus('Getting your location...', 'info');
+      
+      const position = await this.getCurrentLocation();
+      
+      // Update form fields
+      const latitudeField = document.getElementById('checkin-latitude');
+      const longitudeField = document.getElementById('checkin-longitude');
+      const accuracyField = document.getElementById('checkin-accuracy');
+      
+      if (latitudeField) latitudeField.value = position.latitude;
+      if (longitudeField) longitudeField.value = position.longitude;
+      if (accuracyField) accuracyField.value = position.accuracy || '';
+      
+      this.showStatus('Location obtained successfully!', 'success');
+      
+      // Enable submit button
+      this.updateSubmitButton();
+      
+    } catch (error) {
+      console.error('Error getting location:', error);
+      this.showStatus('Failed to get location: ' + error.message, 'error');
     }
   }
 
   /**
-   * Update token status in UI
-   * @param {boolean} hasValidToken - Whether user has valid token
+   * Handle clear form button click
+   * @param {Event} event - Click event
    */
-  updateTokenStatus(hasValidToken) {
-    const clickButton = document.getElementById('clickButton');
-    const checkInForm = document.getElementById('check-in-form');
-    const checkInTab = document.getElementById('checkInTab');
+  handleClearForm(event) {
+    event.preventDefault();
+    this.clearForm();
+    this.showStatus('Form cleared', 'info');
+  }
 
-    if (clickButton) {
-      if (hasValidToken) {
-        clickButton.disabled = false;
-        clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
-      } else {
-        clickButton.disabled = true;
-        clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-        clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
+  /**
+   * Get current location using geolocation API
+   * @returns {Promise<Object>} Location data
+   */
+  getCurrentLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
       }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          });
+        },
+        (error) => {
+          reject(new Error(`Error getting location: ${error.message}`));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  }
+
+  /**
+   * Clear the check-in form
+   */
+  clearForm() {
+    const form = document.getElementById('checkin-form');
+    if (form) {
+      form.reset();
     }
-
-    if (checkInForm) {
-      if (hasValidToken) {
-        checkInForm.classList.remove('hidden');
-      } else {
-        checkInForm.classList.add('hidden');
-      }
+    
+    // Keep the current pet selection
+    const petSelect = document.getElementById('checkin-pet-select');
+    if (petSelect && this.currentPet) {
+      petSelect.value = this.currentPet.id;
     }
+    
+    this.updateSubmitButton();
+  }
 
-    if (checkInTab) {
-      if (hasValidToken) {
-        checkInTab.disabled = false;
-        checkInTab.classList.remove('opacity-50', 'pointer-events-none');
-      } else {
-        checkInTab.disabled = true;
-        checkInTab.classList.add('opacity-50', 'pointer-events-none');
-      }
+  /**
+   * Update submit button state based on form validity
+   */
+  updateSubmitButton() {
+    const submitButton = document.getElementById('submit-checkin-btn');
+    const form = document.getElementById('checkin-form');
+    
+    if (submitButton && form) {
+      const isValid = form.checkValidity();
+      submitButton.disabled = !isValid || this.isSubmitting;
     }
   }
-} 
+
+  /**
+   * Show status message
+   * @param {string} message - Status message
+   * @param {string} type - Message type (info, success, error)
+   */
+  showStatus(message, type = 'info') {
+    const statusElement = document.getElementById('checkin-status');
+    if (!statusElement) return;
+
+    const typeClass = {
+      info: 'status-info',
+      success: 'status-success',
+      error: 'status-error'
+    }[type] || 'status-info';
+
+    statusElement.className = `checkin-status ${typeClass}`;
+    statusElement.textContent = message;
+    statusElement.style.display = 'block';
+
+    // Auto-hide success messages after 3 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        statusElement.style.display = 'none';
+      }, 3000);
+    }
+  }
+
+  /**
+   * Hide status message
+   */
+  hideStatus() {
+    const statusElement = document.getElementById('checkin-status');
+    if (statusElement) {
+      statusElement.style.display = 'none';
+    }
+  }
+
+  /**
+   * Set callback for when check-in is created
+   * @param {Function} callback - Callback function
+   */
+  setOnCheckInCreated(callback) {
+    this.onCheckInCreated = callback;
+  }
+
+  /**
+   * Get current pet
+   * @returns {Object|null} Current pet document
+   */
+  getCurrentPet() {
+    return this.currentPet;
+  }
+
+  /**
+   * Set current pet
+   * @param {Object} pet - Pet document
+   */
+  setCurrentPet(pet) {
+    this.currentPet = pet;
+    this.updateCheckInPetSelection(pet?.id || null);
+  }
+
+  /**
+   * Refresh the UI (e.g., after pet list changes)
+   */
+  refresh() {
+    this.populatePetSelection();
+    this.updateSubmitButton();
+  }
+}
+
+// At the end of the file, export as ES module
+export { CheckInUI }; 

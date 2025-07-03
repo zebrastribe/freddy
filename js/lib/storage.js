@@ -1,36 +1,134 @@
 /**
- * StorageManager - Handles localStorage operations with type safety and defaults
+ * @component StorageManager
+ * @description Manages localStorage operations with type safety and error handling
+ * @version 1.0.0
+ * @author Freddy Team
  * 
- * This class provides a clean interface for managing localStorage data,
- * with built-in support for default values and type conversion.
+ * @requirements
+ * - Browser localStorage support
+ * - ES6+ JavaScript support
+ * 
+ * @dependencies
+ * - None (standalone utility)
+ * 
+ * @public-api
+ * - constructor(key, defaultValue)
+ * - get() -> string
+ * - set(value) -> void
+ * - getBoolean() -> boolean
+ * - setBoolean(value) -> void
+ * - remove() -> void
+ * 
+ * @usage
+ * ```javascript
+ * const storage = new StorageManager('userPreference', 'false');
+ * storage.setBoolean(true);
+ * const value = storage.getBoolean(); // true
+ * ```
+ * 
+ * @error-handling
+ * - Gracefully handles localStorage errors
+ * - Returns default values when localStorage is unavailable
+ * - Logs errors to console for debugging
+ * 
+ * @examples
+ * ```javascript
+ * // Basic usage
+ * const storage = new StorageManager('theme', 'light');
+ * storage.set('dark');
+ * const theme = storage.get(); // 'dark'
+ * 
+ * // Boolean operations
+ * const notifications = new StorageManager('notifications', 'false');
+ * notifications.setBoolean(true);
+ * const enabled = notifications.getBoolean(); // true
+ * 
+ * // Error handling
+ * const storage = new StorageManager('key', 'default');
+ * // If localStorage fails, get() returns 'default'
+ * ```
+ */
+
+/**
+ * StorageManager class for handling localStorage operations with error handling
  */
 export class StorageManager {
   /**
-   * Create a new StorageManager instance
+   * Creates a new StorageManager instance
    * @param {string} key - The localStorage key to manage
-   * @param {any} defaultValue - Default value if key doesn't exist
+   * @param {string} defaultValue - Default value to return if key doesn't exist
    */
-  constructor(key, defaultValue = null) {
+  constructor(key, defaultValue = '') {
     this.key = key;
     this.defaultValue = defaultValue;
   }
 
   /**
-   * Get the current value from localStorage
-   * @returns {string|null} The stored value or default
+   * Gets the stored value from localStorage
+   * @returns {string} The stored value or default value if not found
+   * @throws {Error} When localStorage is not available (handled internally)
    */
   get() {
-    const value = localStorage.getItem(this.key);
-    return value !== null ? value : this.defaultValue;
+    try {
+      const value = localStorage.getItem(this.key);
+      return value !== null ? value : this.defaultValue;
+    } catch (error) {
+      console.error(`Error getting localStorage item '${this.key}':`, error);
+      return this.defaultValue;
+    }
   }
 
   /**
-   * Get the value as a boolean
-   * @returns {boolean} The stored value converted to boolean
+   * Sets a value in localStorage
+   * @param {any} value - The value to store (will be converted to string)
+   * @throws {Error} When localStorage is not available (handled internally)
+   */
+  set(value) {
+    try {
+      localStorage.setItem(this.key, String(value));
+    } catch (error) {
+      console.error(`Error setting localStorage item '${this.key}':`, error);
+    }
+  }
+
+  /**
+   * Gets a boolean value from localStorage
+   * @returns {boolean} True if stored value is "true", false otherwise
+   * @throws {Error} When localStorage is not available (handled internally)
    */
   getBoolean() {
-    const value = this.get();
-    return value === 'true';
+    try {
+      const value = localStorage.getItem(this.key);
+      return value === 'true';
+    } catch (error) {
+      console.error(`Error getting boolean localStorage item '${this.key}':`, error);
+      return false;
+    }
+  }
+
+  /**
+   * Sets a boolean value in localStorage
+   * @param {boolean} value - The boolean value to store
+   * @throws {Error} When localStorage is not available (handled internally)
+   */
+  setBoolean(value) {
+    try {
+      localStorage.setItem(this.key, String(Boolean(value)));
+    } catch (error) {
+      console.error(`Error setting boolean localStorage item '${this.key}':`, error);
+    }
+  }
+
+  /**
+   * Removes the item from localStorage
+   * @throws {Error} When localStorage is not available (handled internally)
+   */
+  remove() {
+    try {
+      localStorage.removeItem(this.key);
+    } catch (error) {
+      console.error(`Error removing localStorage item '${this.key}':`, error);
+    }
   }
 
   /**
@@ -60,60 +158,11 @@ export class StorageManager {
   }
 
   /**
-   * Set a value in localStorage
-   * @param {any} value - The value to store
-   */
-  set(value) {
-    if (value === null || value === undefined) {
-      this.clear();
-      return;
-    }
-    
-    const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    localStorage.setItem(this.key, stringValue);
-  }
-
-  /**
-   * Set a boolean value
-   * @param {boolean} value - The boolean to store
-   */
-  setBoolean(value) {
-    this.set(value ? 'true' : 'false');
-  }
-
-  /**
    * Check if the key exists in localStorage
    * @returns {boolean} True if key exists
    */
   exists() {
     return localStorage.getItem(this.key) !== null;
-  }
-
-  /**
-   * Remove the key from localStorage
-   */
-  clear() {
-    localStorage.removeItem(this.key);
-  }
-
-  /**
-   * Get all keys that match a pattern
-   * @param {string} pattern - Regex pattern to match keys
-   * @returns {string[]} Array of matching keys
-   */
-  static getKeys(pattern = null) {
-    const keys = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (pattern) {
-        if (new RegExp(pattern).test(key)) {
-          keys.push(key);
-        }
-      } else {
-        keys.push(key);
-      }
-    }
-    return keys;
   }
 
   /**

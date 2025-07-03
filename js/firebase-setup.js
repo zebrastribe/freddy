@@ -11,8 +11,8 @@ Finally, the script exports the db, auth, checkAuthState, and onAuthStateChanged
 // Import Firebase services
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-messaging.js";
 
 // Your web app's Firebase configuration 
@@ -35,6 +35,13 @@ const messaging = getMessaging(app);
 
 // FCM Token management
 let fcmToken = null;
+
+// Only use emulators in local development
+if (window.location.hostname === "localhost") {
+  connectFirestoreEmulator(db, "localhost", 8080);
+  connectAuthEmulator(auth, "http://localhost:9099");
+  console.log("[DEBUG] Connected to Firestore and Auth emulators");
+}
 
 // Function to handle user authentication
 function authenticateUser() {
@@ -180,4 +187,4 @@ export async function registerFirebaseMessagingServiceWorker() {
 }
 
 // Export necessary functions and variables
-export { db, auth, checkAuthState, onAuthStateChanged, requestFCMPermission, fcmToken };
+export { db, auth, checkAuthState, onAuthStateChanged, requestFCMPermission, fcmToken, firebaseConfig };

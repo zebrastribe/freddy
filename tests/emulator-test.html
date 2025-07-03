@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Emulator Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Firebase Emulator Test</h1>
+        <p>This test uses the Firebase Emulator to isolate if the issue is with production Firestore.</p>
+        
+        <button onclick="testEmulatorWrite()">Test Emulator Write</button>
+        <button onclick="testEmulatorAuth()">Test Emulator Auth</button>
+        <button onclick="testEmulatorRead()">Test Emulator Read</button>
+        <button onclick="clearLog()">Clear Log</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, connectFirestoreEmulator, collection, addDoc, getDocs, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, connectAuthEmulator, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:1234567890abcdef"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Connect to emulators
+        connectFirestoreEmulator(db, '127.0.0.1', 8080);
+        connectAuthEmulator(auth, 'http://127.0.0.1:9099');
+
+        window.log = function(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.className = type;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        window.testEmulatorWrite = async function() {
+            try {
+                log('🧪 Testing emulator write...', 'info');
+                
+                const testData = {
+                    name: 'Emulator Test',
+                    timestamp: new Date().toISOString(),
+                    test: true,
+                    source: 'emulator'
+                };
+                
+                log(`Attempting to write: ${JSON.stringify(testData, null, 2)}`, 'info');
+                
+                const docRef = await addDoc(collection(db, 'test_emulator'), testData);
+                log(`✅ SUCCESS: Emulator write succeeded - Document ID: ${docRef.id}`, 'success');
+                
+            } catch (error) {
+                log(`❌ FAILED: Emulator write failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        window.testEmulatorAuth = async function() {
+            try {
+                log('🧪 Testing emulator authentication...', 'info');
+                
+                const userCredential = await signInAnonymously(auth);
+                const user = userCredential.user;
+                
+                log(`✅ SUCCESS: Emulator auth - UID: ${user.uid}`, 'success');
+                log(`User object: ${JSON.stringify(user, null, 2)}`, 'info');
+                
+            } catch (error) {
+                log(`❌ FAILED: Emulator auth failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        window.testEmulatorRead = async function() {
+            try {
+                log('🧪 Testing emulator read...', 'info');
+                
+                const querySnapshot = await getDocs(collection(db, 'test_emulator'));
+                const docs = [];
+                querySnapshot.forEach((doc) => {
+                    docs.push({ id: doc.id, ...doc.data() });
+                });
+                
+                log(`✅ SUCCESS: Emulator read - Found ${docs.length} documents`, 'success');
+                if (docs.length > 0) {
+                    log(`Documents: ${JSON.stringify(docs, null, 2)}`, 'info');
+                }
+                
+            } catch (error) {
+                log(`❌ FAILED: Emulator read failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        // Initialize
+        log('🚀 Firebase Emulator Test loaded', 'info');
+        log('Emulator connected to: 127.0.0.1:8080 (Firestore), 127.0.0.1:9099 (Auth)', 'info');
+        log('Click buttons to run tests...', 'info');
+    </script>
+</body>
+</html> 

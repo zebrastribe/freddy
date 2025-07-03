@@ -39,6 +39,7 @@ Please note that the file path is provided for reference.
   </div>
   <div class="container mx-auto p-4">
     <div id="content"></div>
+    <div id="checkin-form-container"></div>
     <div id="root" class="flex flex-col items-center my-4 min-h-screen">
       <h1 data-translate="welcome_message" class="text-3xl font-bold mb-4"></h1>
       <p data-translate="description_part1" class="mb-4 text-lg text-gray-700 text-center max-w-lg"></p>
@@ -83,11 +84,23 @@ Please note that the file path is provided for reference.
       <div id="checkInContent" class="tab-content w-full max-w-5xl my-5">
         <div id="check-in-form">
           <p data-translate="description_checkin" class="text-gray-700 text-base mb-4 my-4"></p>
-          <input type="text" id="nameInput" data-translate="checkin_name_placeholder" placeholder="Your name?" class="mb-4 p-2 border border-gray-300 rounded w-full required">
-          <div data-translate="checkin_error" id="error-message" class="hidden text-red-500 mb-4"></div>
-          <form id="checkInForm" onsubmit="handleFormSubmit(event)">
-            <!-- Existing form fields -->
-            <button data-translate="checkin_button_text" id="clickButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"></button>
+          <form id="legacy-checkin-form" class="checkin-form">
+            <h3 data-translate="checkin_tab"></h3>
+            
+            <div class="form-group">
+              <label for="legacy-name" data-translate="checkin_name_placeholder"></label>
+              <input type="text" id="legacy-name" name="name" required maxlength="100" class="form-control mb-4 p-2 border border-gray-300 rounded w-full" data-translate="checkin_name_placeholder" placeholder="">
+            </div>
+
+            <input type="hidden" id="legacy-latitude" name="latitude">
+            <input type="hidden" id="legacy-longitude" name="longitude">
+
+            <div class="form-actions">
+              <button type="button" id="legacy-get-location-btn" class="btn btn-secondary mb-4 bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                📍 <span data-translate="get_location_btn">Get Current Location</span>
+              </button>
+              <button type="submit" id="legacy-submit-btn" class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full" data-translate="checkin_button_text"></button>
+            </div>
           </form>
           <div data-translate="checkin_loading" id="spinner" class="hidden mt-4"></div>
           <div data-translate="checkin_success" id="success-message" class="hidden text-green-500 mt-4"></div>
@@ -124,7 +137,7 @@ Please note that the file path is provided for reference.
       </div>
     </div>
   </div>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=20250103"></script>
   <script>
     // Tab switching logic
     document.getElementById('checkInTab').addEventListener('click', () => {

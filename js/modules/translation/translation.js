@@ -47,6 +47,9 @@ export class Translation {
   }
 
   translate(key) {
+    if (!this.translations[key]) {
+      console.warn('Missing translation for:', key);
+    }
     return this.translations[key] || key;
   }
 

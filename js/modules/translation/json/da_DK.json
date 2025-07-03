@@ -18,5 +18,18 @@
     "checkin_point_lat": "Breddegrad",
     "checkin_point_long": "Længdegrad",
     "checkin_point_prev": "Tidligere",
-    "checkin_point_next": "Næste"
+    "checkin_point_next": "Næste",
+    "get_location_btn": "Få position",
+    "Check In": "Registrer møde",
+    "Your name?": "Dit navn?",
+    "Freddys trail": "Freddys spor",
+    "Checking token...": "Tjekker token...",
+    "Notifications on this device": "Notifikationer på denne enhed",
+    "Enable to receive messages on this device (requires browser permission)": "Slå til for at modtage beskeder på denne enhed (kræver browser-tilladelse)",
+    "Map Unavailable": "Kort utilgængeligt",
+    "Check-in": "Indtjekning",
+    "Check-in successful!": "Indtjekning lykkedes!",
+    "Loading...": "Indlæser...",
+    "Submit": "Indsend",
+    "Cancel": "Annuller"
 }

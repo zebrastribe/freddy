@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Firestore Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔬 Minimal Firestore Test</h1>
+        <p>This test bypasses all complex logic and tests basic Firestore operations.</p>
+        
+        <button onclick="testDirectWrite()">Test Direct Write (clicks)</button>
+        <button onclick="testAnonymousAuth()">Test Anonymous Auth</button>
+        <button onclick="testAuthenticatedWrite()">Test Authenticated Write (clicks)</button>
+        <button onclick="testOtherCollection()">Test Other Collection (test)</button>
+        <button onclick="clearLog()">Clear Log</button>
+        
+        <div id="log" class="log"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
+            measurementId: "G-XMHHKFJ9QW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            logDiv.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        window.clearLog = function() {
+            document.getElementById('log').innerHTML = '';
+        };
+
+        // Test 1: Direct write without authentication
+        window.testDirectWrite = async function() {
+            log('🧪 Testing direct write to clicks collection without authentication...', 'info');
+            
+            try {
+                const testData = {
+                    name: 'Direct Test',
+                    timestamp: new Date(),
+                    test: true
+                };
+                
+                log(`Attempting to write: ${JSON.stringify(testData, null, 2)}`, 'info');
+                
+                await setDoc(doc(db, 'clicks', 'direct_test'), testData);
+                log('✅ SUCCESS: Direct write to clicks worked!', 'success');
+            } catch (error) {
+                log(`❌ FAILED: Direct write to clicks failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        // Test 2: Anonymous authentication
+        window.testAnonymousAuth = async function() {
+            log('🧪 Testing anonymous authentication...', 'info');
+            
+            try {
+                const userCredential = await signInAnonymously(auth);
+                const user = userCredential.user;
+                log(`✅ SUCCESS: Anonymous auth - UID: ${user.uid}`, 'success');
+                log(`User object: ${JSON.stringify(user, null, 2)}`, 'info');
+            } catch (error) {
+                log(`❌ FAILED: Anonymous auth failed - ${error.code}: ${error.message}`, 'error');
+            }
+        };
+
+        // Test 3: Authenticated write
+        window.testAuthenticatedWrite = async function() {
+            log('🧪 Testing authenticated write to clicks collection...', 'info');
+            
+            try {
+                // First authenticate
+                const userCredential = await signInAnonymously(auth);
+                const user = userCredential.user;
+                log(`Authenticated as: ${user.uid}`, 'info');
+                
+                // Then try to write
+                const testData = {
+                    name: 'Authenticated Test',
+                    userId: user.uid,
+                    timestamp: new Date(),
+                    test: true
+                };
+                
+                log(`Attempting authenticated write: ${JSON.stringify(testData, null, 2)}`, 'info');
+                
+                await setDoc(doc(db, 'clicks', 'auth_test'), testData);
+                log('✅ SUCCESS: Authenticated write to clicks worked!', 'success');
+            } catch (error) {
+                log(`❌ FAILED: Authenticated write to clicks failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        // Test 4: Write to different collection
+        window.testOtherCollection = async function() {
+            log('🧪 Testing write to different collection (test)...', 'info');
+            
+            try {
+                // First authenticate
+                const userCredential = await signInAnonymously(auth);
+                const user = userCredential.user;
+                log(`Authenticated as: ${user.uid}`, 'info');
+                
+                // Then try to write to a different collection
+                const testData = {
+                    name: 'Other Collection Test',
+                    userId: user.uid,
+                    timestamp: new Date(),
+                    test: true
+                };
+                
+                log(`Attempting write to 'test' collection: ${JSON.stringify(testData, null, 2)}`, 'info');
+                
+                await setDoc(doc(db, 'test', 'other_test'), testData);
+                log('✅ SUCCESS: Write to test collection worked!', 'success');
+            } catch (error) {
+                log(`❌ FAILED: Write to test collection failed - ${error.code}: ${error.message}`, 'error');
+                log(`Full error: ${JSON.stringify(error, null, 2)}`, 'error');
+            }
+        };
+
+        // Initialize
+        log('🚀 Minimal Firestore Test loaded', 'info');
+        log('Click buttons to run tests...', 'info');
+    </script>
+</body>
+</html> 

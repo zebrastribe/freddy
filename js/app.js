@@ -1,378 +1,689 @@
-/*
-The provided JavaScript code is a comprehensive script that integrates various functionalities, including translation, token validation, user authentication, and map interactions using Google Maps and Firebase Firestore.
-The script begins by importing necessary modules and functions from Firebase and other local files. It then sets up an event listener for the DOMContentLoaded event to initialize translations using the Translation class. This class detects the user's language, loads the appropriate translation file, and applies translations to elements with the data-translate attribute.
-The script defines several asynchronous functions to handle token validation and usage. The processToken function checks if a token is valid using isTokenValid and marks it as used with useToken if valid. The logTokenFromUrl function extracts a token from the URL and logs it to the console.
-User authentication is managed using Firebase's onAuthStateChanged function, which sets the user variable when a user is authenticated. Upon authentication, it fetches the last known coordinates and all check-ins from Firestore, updating the map and displaying check-ins in a table.
-The script also includes an event listener for a button click that captures the user's geolocation, adds a document to the Firestore collection with the user's name and coordinates, and updates the map. It handles errors and displays appropriate messages during this process.
-The fetchLastCoordinates and fetchCheckIns functions query Firestore to retrieve the last known coordinates and all check-ins, respectively. The check-ins are displayed in a paginated table, and markers are added to the map for each check-in.
-The initMaps and initRecordedMap functions initialize Google Maps for displaying the user's current location and recorded check-ins. The script also includes event listeners for pagination controls and tab switching to manage the display of check-ins.
-Overall, this script provides a robust solution for handling translations, token validation, user authentication, and map interactions, leveraging Firebase Firestore and Google Maps APIs.
-*/
+/**
+ * Main Application - Multi-User, Multi-Pet System
+ * 
+ * This is the main application file that initializes and coordinates
+ * all the multi-user system components while maintaining backward compatibility.
+ */
 
-import { logTokenFromUrl, getToken, isTokenValid, useToken } from './incoming.js';
-import { config, getConfig } from './config.js';
-import { Translation } from './modules/translation/translation.js';
-import { getFreddyStatus } from './config.js';
-import { StorageManager } from './lib/storage.js';
-import { db, auth, checkAuthState, onAuthStateChanged } from './lib/firebase_config.js';
-import { FirebaseMessaging } from './features/notifications/firebase_messaging.js';
+// Import core modules
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+
+// Import configuration
+import { config } from './config.js';
+
+// Import multi-user system components
+import { AuthManager } from './features/users/auth_manager.js';
+import { UserManager } from './features/users/user_manager.js';
+import { PermissionMiddleware } from './features/users/permission_middleware.js';
+import { PetManager } from './features/pets/pet_manager.js';
+import { PetUI } from './features/pets/pet_ui.js';
 import { CheckInManager } from './features/checkin/checkin_manager.js';
 import { CheckInUI } from './features/checkin/checkin_ui.js';
+
+// Import legacy components for backward compatibility
 import { MapManager } from './features/maps/map_manager.js';
 
-// Global variables
-let user = null;
-let notificationPermission = false;
-let hasValidToken = false; // Track if user has a valid token
-let firebaseMessaging = null; // Firebase messaging instance
-let checkInManager = null; // Check-in manager instance
-let checkInUI = null; // Check-in UI instance
-let mapManager = null; // Map manager instance
+// Import Translation class
+import { Translation } from './modules/translation/translation.js';
 
-// Suppress reCAPTCHA 401 errors from cluttering the console
-window.addEventListener('error', (event) => {
-  if (event.message && event.message.includes('recaptcha') && event.message.includes('401')) {
-    event.preventDefault();
-    return false;
-  }
-});
-
-// Call the function to log the token from URL
-logTokenFromUrl();
-
-// Initialize maps when the page loads
-document.addEventListener('DOMContentLoaded', async () => {
-  const translation = new Translation();
-  await translation.loadTranslations();
-  translation.applyTranslations();
-  
-  // Initialize map system
-  await initializeMapSystem();
-
-  // Initialize Firebase messaging
-  await initializeFirebaseMessaging();
-  
-  // Initialize check-in system
-  await initializeCheckInSystem();
-  
-  // Register service worker
-  await registerServiceWorker();
-
-  try {
-    const mode = await getFreddyStatus();
-    if (mode === 'MISSING') {
-      document.getElementById('freddy-warning').style.display = '';
-    }
-  } catch (e) {
-    console.warn('Could not fetch Freddy status:', e);
-    // Don't show error to users, just log it - the warning banner will remain hidden
-  }
-
-  // Await token processing after DOM is ready
-  await processToken();
-  
-  // Set up notification toggle last, after everything else is ready
-  setupNotificationToggle();
-});
-
-// Make token validation mandatory for check-ins
-async function processToken() {
-  const token = getToken();
-  if (token) {
-    const valid = await isTokenValid();
-    if (valid) {
-      await useToken();
-      hasValidToken = true;
-    } else {
-      hasValidToken = false;
-    }
-  } else {
-    hasValidToken = false;
-  }
-  
-  // Update the UI to show token status
-  updateTokenStatus();
-}
-
-// Function to update token status indicator
-function updateTokenStatus() {
-  if (checkInUI) {
-    checkInUI.updateTokenStatus(hasValidToken);
-  } else {
-    // Fallback to direct DOM manipulation if CheckInUI is not available
-    const clickButton = document.getElementById('clickButton');
-    const checkInForm = document.getElementById('check-in-form');
-    const checkInTab = document.getElementById('checkInTab');
-    const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
-    const checkInContent = document.getElementById('checkInContent');
-    const recordedCheckInsContent = document.getElementById('recordedCheckInsContent');
-
-    // Always hide the token status indicators - no need to inform users
-    const tokenStatusContainer = document.getElementById('token-status');
-    if (tokenStatusContainer) {
-      tokenStatusContainer.classList.add('hidden');
-    }
-
-    if (hasValidToken) {
-      if (clickButton) {
-        clickButton.disabled = false;
-        clickButton.classList.remove('bg-gray-400', 'cursor-not-allowed');
-        clickButton.classList.add('bg-blue-500', 'hover:bg-blue-700');
-      }
-      if (checkInForm) checkInForm.classList.remove('hidden');
-      // Enable the check-in tab
-      if (checkInTab) {
-        checkInTab.disabled = false;
-        checkInTab.classList.remove('opacity-50', 'pointer-events-none');
-      }
-    } else {
-      if (clickButton) {
-        clickButton.disabled = true;
-        clickButton.classList.add('bg-gray-400', 'cursor-not-allowed');
-        clickButton.classList.remove('bg-blue-500', 'hover:bg-blue-700');
-      }
-      if (checkInForm) checkInForm.classList.add('hidden');
-      // Disable the check-in tab
-      if (checkInTab) {
-        checkInTab.disabled = true;
-        checkInTab.classList.add('opacity-50', 'pointer-events-none');
-      }
-    }
-  }
-}
-
-onAuthStateChanged(auth, (currentUser) => {
-  if (currentUser) {
-    user = currentUser;
+/**
+ * Main Application Class
+ */
+class MultiUserApp {
+  /**
+   * Create a new MultiUserApp instance
+   */
+  constructor() {
+    this.firebaseApp = null;
+    this.db = null;
+    this.auth = null;
+    this.config = config;
     
-    // Use CheckInManager if available
-    if (checkInManager) {
-      checkInManager.fetchLastCoordinates().then(coordinates => {
-        if (coordinates && mapManager) {
-          mapManager.updateMap(coordinates.latitude, coordinates.longitude);
-        }
-      });
-      checkInManager.fetchCheckIns();
-    }
-  } else {
-    user = null;
+    // Multi-user system components
+    this.authManager = null;
+    this.userManager = null;
+    this.permissionMiddleware = null;
+    this.petManager = null;
+    this.petUI = null;
+    this.checkinManager = null;
+    this.checkinUI = null;
+    
+    // Legacy components
+    this.mapManager = null;
+    
+    // State
+    this.isInitialized = false;
+    this.currentUser = null;
+    this.isLegacyMode = false;
   }
-});
 
-// Register Firebase messaging service worker
-async function registerServiceWorker() {
-  if ('serviceWorker' in navigator) {
+  /**
+   * Initialize the application
+   */
+  async initialize() {
     try {
-      const registration = await navigator.serviceWorker.register('./firebase-messaging-sw.js');
-      return registration;
-    } catch (error) {
-      console.error('Service worker registration failed:', error);
-    }
-  }
-  return null;
-}
-
-// Initialize Firebase messaging
-async function initializeFirebaseMessaging() {
-  try {
-    const { app, VAPID_KEY } = await import('./lib/firebase_config.js');
-    firebaseMessaging = new FirebaseMessaging(app, db, VAPID_KEY);
-    await firebaseMessaging.initialize();
-  } catch (error) {
-    console.error('Failed to initialize Firebase messaging:', error);
-  }
-}
-
-// Request notification permission
-async function requestNotificationPermission() {
-  if (!firebaseMessaging) {
-    console.error('Firebase messaging not initialized');
-    return false;
-  }
-
-  if (!firebaseMessaging.isSupported()) {
-    return false;
-  }
-
-  if (firebaseMessaging.isPermissionGranted()) {
-    notificationPermission = true;
-    return true;
-  }
-
-  if (firebaseMessaging.isPermissionDenied()) {
-    notificationPermission = false;
-    return false;
-  }
-
-  try {
-    const token = await firebaseMessaging.requestPermission();
-    notificationPermission = !!token;
-    return notificationPermission;
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
-    notificationPermission = false;
-    return false;
-  }
-}
-
-// Update notification button text
-function updateNotificationButton() {
-  const button = document.getElementById('notification-toggle');
-  if (button) {
-    button.innerHTML = notificationPermission ? '🔔 Notifikationer: TIL' : '🔕 Notifikationer: FRA';
-  }
-}
-
-function setupNotificationToggle() {
-  const toggle = document.getElementById('notification-toggle');
-  const message = document.getElementById('notification-permission-message');
-  const toggleLabel = toggle.closest('label');
-  if (!toggle) {
-    console.error('Notification toggle element not found!');
-    return;
-  }
-
-  // Using StorageManager for cleaner localStorage handling
-  const notificationStorage = new StorageManager('notificationPreference', 'false');
-
-  // Set toggle state from localStorage ONLY
-  const userPreference = notificationStorage.getBoolean();
-  toggle.checked = userPreference;
-  
-  // Update the global notificationPermission variable to match localStorage
-  notificationPermission = userPreference;
-
-  // Only disable the toggle if browser permission is denied
-  if (firebaseMessaging && firebaseMessaging.isPermissionDenied()) {
-    toggle.disabled = true;
-    if (message) {
-      message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
-      message.classList.remove('hidden');
-    }
-  } else {
-    toggle.disabled = false;
-    if (message) message.classList.add('hidden');
-  }
-
-  // Add click handler to label for disabled toggle
-  if (toggleLabel) {
-    toggleLabel.addEventListener('click', (e) => {
-      if (toggle.disabled) {
-        e.preventDefault();
-        alert('Du har blokeret notifikationer for denne side. Gå til browserens indstillinger for at tillade dem igen.');
+      console.log('Initializing Multi-User Application...');
+      this.updateStatus('Initializing Multi-User Application...');
+      
+      // Note: "heartbeats undefined" messages in console are from browser extensions, not this app
+      
+      // Initialize Firebase
+      this.updateStatus('Initializing Firebase...');
+      await this.initializeFirebase();
+      
+      // Initialize multi-user system
+      this.updateStatus('Initializing multi-user system...');
+      await this.initializeMultiUserSystem();
+      
+      // Check if we should run in legacy mode
+      this.updateStatus('Checking application mode...');
+      await this.checkLegacyMode();
+      
+      if (this.isLegacyMode) {
+        this.updateStatus('Initializing legacy mode...');
+        await this.initializeLegacyMode();
+      } else {
+        this.updateStatus('Initializing multi-user mode...');
+        await this.initializeMultiUserMode();
       }
+      
+      this.isInitialized = true;
+      this.updateStatus(`✅ Application initialized successfully in ${this.getCurrentMode()} mode`);
+      console.log('Multi-User Application initialized successfully');
+      
+    } catch (error) {
+      console.error('Error initializing application:', error);
+      this.updateStatus(`❌ Error initializing application: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize Firebase
+   */
+  async initializeFirebase() {
+    try {
+      this.firebaseApp = initializeApp(this.config.firebase);
+      this.db = getFirestore(this.firebaseApp);
+      this.auth = getAuth(this.firebaseApp);
+      
+      // Enable anonymous authentication for legacy mode
+      try {
+        const { signInAnonymously } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js");
+        await signInAnonymously(this.auth);
+        console.log('Anonymous authentication enabled');
+      } catch (authError) {
+        console.warn('Could not enable anonymous authentication:', authError.message);
+        // Continue without anonymous auth - this is not critical for basic functionality
+      }
+      
+      console.log('Firebase initialized successfully');
+    } catch (error) {
+      console.error('Error initializing Firebase:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize multi-user system components
+   */
+  async initializeMultiUserSystem() {
+    try {
+      // Initialize user management first
+      this.userManager = new UserManager(this.db, this.auth, this.config);
+      this.authManager = new AuthManager(this.db, this.auth, this.config);
+      
+      // Initialize permission middleware with auth manager
+      this.permissionMiddleware = new PermissionMiddleware(this.authManager);
+      
+      // Initialize pet management
+      this.petManager = new PetManager(this.db, this.auth, this.config, this.permissionMiddleware);
+      
+      // Initialize check-in management
+      this.checkinManager = new CheckInManager(this.db, this.auth, this.config, this.permissionMiddleware, this.petManager);
+      
+      console.log('Multi-user system components initialized');
+    } catch (error) {
+      console.error('Error initializing multi-user system:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check if we should run in legacy mode
+   */
+  async checkLegacyMode() {
+    try {
+      // Check if we're on a legacy domain (freddy.stri.be)
+      const isLegacyDomain = window.location.hostname === 'freddy.stri.be' || 
+                            window.location.hostname === 'localhost' ||
+                            window.location.pathname.includes('/freddy/');
+      
+      // If we're on a legacy domain, definitely run in legacy mode
+      if (isLegacyDomain) {
+        this.isLegacyMode = true;
+        console.log('Running in legacy mode (legacy domain detected)');
+        return;
+      }
+      
+      // Try to check if there are any pets in the system
+      // If this fails due to permissions, we'll default to legacy mode
+      try {
+        const { collection, getDocs, limit, query } = await import("https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js");
+        const petsQuery = query(collection(this.db, 'pets'), limit(1));
+        const petsSnapshot = await getDocs(petsQuery);
+        const hasPets = !petsSnapshot.empty;
+        
+        // Run in legacy mode if no pets exist in the system yet
+        this.isLegacyMode = !hasPets;
+        
+        console.log(`Running in ${this.isLegacyMode ? 'legacy' : 'multi-user'} mode (${hasPets ? 'pets found' : 'no pets found'})`);
+        
+      } catch (petsError) {
+        console.warn('Could not check for pets (permissions or network issue), defaulting to legacy mode:', petsError.message);
+        this.isLegacyMode = true;
+      }
+      
+    } catch (error) {
+      console.error('Error checking legacy mode:', error);
+      // Default to legacy mode on error
+      this.isLegacyMode = true;
+    }
+  }
+
+  /**
+   * Initialize legacy mode (backward compatibility)
+   */
+  async initializeLegacyMode() {
+    try {
+      console.log('Initializing legacy mode for backward compatibility...');
+      
+      // Initialize legacy map manager
+      this.mapManager = new MapManager(this.config);
+      
+      // Set up legacy check-in system
+      await this.setupLegacyCheckIn();
+      
+      // Set up legacy UI
+      await this.setupLegacyUI();
+      
+      console.log('Legacy mode initialized successfully');
+    } catch (error) {
+      console.error('Error initializing legacy mode:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize multi-user mode
+   */
+  async initializeMultiUserMode() {
+    try {
+      console.log('Initializing multi-user mode...');
+      
+      // Initialize UI components
+      this.petUI = new PetUI(this.petManager, this.config);
+      this.checkinUI = new CheckInUI(this.checkinManager, this.petUI, this.config);
+      
+      // Initialize map manager with multi-user support
+      this.mapManager = new MapManager(this.config);
+      
+      // Set up multi-user UI
+      await this.setupMultiUserUI();
+      
+      console.log('Multi-user mode initialized successfully');
+    } catch (error) {
+      console.error('Error initializing multi-user mode:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up legacy check-in system
+   */
+  async setupLegacyCheckIn() {
+    try {
+      // Create a legacy check-in manager that doesn't require pet selection
+      const legacyCheckinManager = new CheckInManager(this.db, this.auth, this.config, this.permissionMiddleware, this.petManager);
+      
+      // Override createCheckIn to not require petId
+      const originalCreateCheckIn = legacyCheckinManager.createCheckIn.bind(legacyCheckinManager);
+      legacyCheckinManager.createCheckIn = async (checkinData) => {
+        return await originalCreateCheckIn(checkinData, null);
+      };
+      
+      this.checkinManager = legacyCheckinManager;
+      
+      console.log('Legacy check-in system set up');
+    } catch (error) {
+      console.error('Error setting up legacy check-in:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up legacy UI
+   */
+  async setupLegacyUI() {
+    try {
+      // Hide multi-user UI elements
+      this.hideMultiUserElements();
+      
+      // Set up legacy check-in form
+      this.setupLegacyCheckInForm();
+      
+      // Set up legacy map
+      if (this.mapManager) {
+        try {
+          await this.mapManager.initializeMaps();
+          console.log('Legacy maps initialized successfully');
+        } catch (mapError) {
+          console.warn('Could not initialize maps (Google Maps API or network issue):', mapError.message);
+          // Continue without maps - this is not critical for basic functionality
+        }
+      }
+      
+      console.log('Legacy UI set up');
+      setTimeout(() => this.loadAndRenderCheckIns(), 0);
+    } catch (error) {
+      console.error('Error setting up legacy UI:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up multi-user UI
+   */
+  async setupMultiUserUI() {
+    try {
+      // Initialize UI components
+      await this.petUI.initialize();
+      await this.checkinUI.initialize();
+      
+      // Set up multi-user interface
+      this.setupMultiUserInterface();
+      
+      // Set up map with pet support
+      if (this.mapManager) {
+        try {
+          await this.mapManager.initializeMaps();
+          console.log('Multi-user maps initialized successfully');
+        } catch (mapError) {
+          console.warn('Could not initialize maps (Google Maps API or network issue):', mapError.message);
+          // Continue without maps - this is not critical for basic functionality
+        }
+      }
+      
+      console.log('Multi-user UI set up');
+    } catch (error) {
+      console.error('Error setting up multi-user UI:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up multi-user interface
+   */
+  setupMultiUserInterface() {
+    try {
+      // Create main interface container
+      const mainContainer = document.getElementById('main-container');
+      if (!mainContainer) return;
+
+      // Add multi-user interface elements
+      mainContainer.innerHTML = `
+        <div class="multi-user-interface">
+          <div class="header">
+            <h1>Pet Tracking System</h1>
+            <div class="user-info" id="user-info"></div>
+          </div>
+          
+          <div class="main-content">
+            <div class="sidebar">
+              <div class="pet-selection">
+                <h3>Select Pet</h3>
+                <select id="pet-select" class="form-control">
+                  <option value="">Select a pet...</option>
+                </select>
+                <div id="create-pet-form-container" style="display: none;"></div>
+              </div>
+              
+              <div class="pet-info" id="pet-info">
+                <p>Select a pet to view information</p>
+              </div>
+            </div>
+            
+            <div class="content-area">
+              <div class="checkin-section">
+                <h3>Create Check-in</h3>
+                <div id="checkin-form-container"></div>
+              </div>
+              
+              <div class="map-section">
+                <h3>Map</h3>
+                <div id="map-container"></div>
+              </div>
+              
+              <div class="checkins-section">
+                <h3>Recent Check-ins</h3>
+                <div id="checkins-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      console.log('Multi-user interface set up');
+    } catch (error) {
+      console.error('Error setting up multi-user interface:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set up legacy check-in form
+   */
+  setupLegacyCheckInForm() {
+    try {
+      // The form is already in the HTML, just set up event listeners
+      this.setupLegacyFormListeners();
+      
+      // Apply translations to the form
+      if (window.translation && typeof window.translation.applyTranslations === 'function') {
+        window.translation.applyTranslations();
+      }
+
+      // Automatically get location and fill hidden fields
+      this.autoFillLocationForLegacyForm();
+
+      console.log('Legacy check-in form set up');
+    } catch (error) {
+      console.error('Error setting up legacy check-in form:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Automatically get user location and fill hidden fields for legacy form
+   */
+  async autoFillLocationForLegacyForm() {
+    const latitudeField = document.getElementById('legacy-latitude');
+    const longitudeField = document.getElementById('legacy-longitude');
+    const submitBtn = document.getElementById('legacy-submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      const position = await this.getCurrentLocation();
+      if (latitudeField) latitudeField.value = position.latitude;
+      if (longitudeField) longitudeField.value = position.longitude;
+      if (submitBtn) submitBtn.disabled = false;
+    } catch (error) {
+      console.error('Could not get location automatically:', error);
+      if (submitBtn) submitBtn.disabled = false;
+      // Optionally show a message to the user
+    }
+  }
+
+  /**
+   * Set up legacy form event listeners
+   */
+  setupLegacyFormListeners() {
+    try {
+      const form = document.getElementById('legacy-checkin-form');
+      if (form) {
+        form.addEventListener('submit', this.handleLegacyCheckIn.bind(this));
+      }
+
+      const locationBtn = document.getElementById('legacy-get-location-btn');
+      if (locationBtn) {
+        locationBtn.addEventListener('click', this.handleLegacyGetLocation.bind(this));
+        }
+      } catch (error) {
+      console.error('Error setting up legacy form listeners:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle legacy check-in submission
+   */
+  async handleLegacyCheckIn(event) {
+    event.preventDefault();
+    
+    try {
+      const formData = new FormData(event.target);
+      const checkinData = {
+        name: formData.get('name').trim(),
+        latitude: parseFloat(formData.get('latitude')),
+        longitude: parseFloat(formData.get('longitude'))
+      };
+
+      // Validate data
+      const validation = CheckInManager.validateCheckInData(checkinData);
+      if (!validation.isValid) {
+        alert('Error: ' + validation.errors.join(', '));
+        return;
+      }
+
+      // Create legacy check-in (allows anonymous users)
+      const checkin = await this.checkinManager.createLegacyCheckIn(checkinData);
+      
+      event.target.reset();
+      setTimeout(() => this.loadAndRenderCheckIns(), 0);
+      
+    } catch (error) {
+      console.error('Error creating legacy check-in:', error);
+      alert('Error creating check-in: ' + error.message);
+    }
+  }
+
+  /**
+   * Handle legacy get location
+   */
+  async handleLegacyGetLocation(event) {
+    event.preventDefault();
+    try {
+      const position = await this.getCurrentLocation();
+      const latitudeField = document.getElementById('legacy-latitude');
+      const longitudeField = document.getElementById('legacy-longitude');
+      if (latitudeField) latitudeField.value = position.latitude;
+      if (longitudeField) longitudeField.value = position.longitude;
+
+      // Add a marker on the map at the user's location
+      if (this.mapManager && typeof this.mapManager.updateMap === 'function') {
+        this.mapManager.updateMap(position.latitude, position.longitude);
+        }
+      } catch (error) {
+      console.error('Error getting location:', error);
+      alert('Error getting location: ' + error.message);
+    }
+  }
+
+  /**
+   * Get current location
+   */
+  getCurrentLocation() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          reject(new Error(`Error getting location: ${error.message}`));
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000
+        }
+      );
     });
   }
 
-  toggle.addEventListener('change', async (e) => {
-    if (toggle.checked) {
-      // User wants to enable notifications
-      // First, update localStorage immediately
-      notificationStorage.setBoolean(true);
-      notificationPermission = true;
-      
-      // Then request permission if not already granted
-      if (!firebaseMessaging || !firebaseMessaging.isPermissionGranted()) {
-        const permission = await Notification.requestPermission();
-        if (permission !== 'granted') {
-          // Permission denied - revert toggle and localStorage
-          toggle.checked = false;
-          notificationStorage.setBoolean(false);
-          notificationPermission = false;
-          if (message) {
-            message.textContent = 'Du har blokeret notifikationer for denne side. Tillad dem i browserens indstillinger for at aktivere.';
-            message.classList.remove('hidden');
-          }
-          if (permission === 'denied') {
-            toggle.disabled = true;
-          }
-          return;
-        }
-      }
-      
-      // Permission granted, enable notifications
-      if (message) message.classList.add('hidden');
-      try {
-        if (firebaseMessaging) {
-          await firebaseMessaging.requestPermission();
-        }
-        
-        // Update CheckInManager notification permission
-        if (checkInManager) {
-          checkInManager.setNotificationPermission(true);
-        }
-      } catch (error) {
-        console.error('Failed to link device for notifications:', error);
-        // Don't revert the toggle - user preference is still true
-        // Just log the error
-      }
-    } else {
-      // User wants to disable notifications
-      // Update localStorage immediately
-      notificationStorage.setBoolean(false);
-      notificationPermission = false;
-      
-      if (message) message.classList.add('hidden');
-      try {
-        // Update CheckInManager notification permission
-        if (checkInManager) {
-          checkInManager.setNotificationPermission(false);
-        }
-      } catch (error) {
-        console.error('Failed to unlink device:', error);
-      }
+  /**
+   * Hide multi-user elements
+   */
+  hideMultiUserElements() {
+    const elements = [
+      'pet-select',
+      'pet-info',
+      'create-pet-form-container',
+      'checkin-pet-select'
+    ];
+    
+    elements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.style.display = 'none';
     }
   });
 }
 
-// Initialize check-in system
-async function initializeCheckInSystem() {
-  try {
-    const config = getConfig();
-    checkInManager = new CheckInManager(db, auth, config);
-    
-    // Create a simple map manager for now (we'll extract this in Phase 4)
-    const mapManagerInterface = {
-      updateMap: (lat, lng) => {
-        if (mapManager) {
-          mapManager.updateMap(lat, lng);
-        }
-      },
-      addMarker: (lat, lng, title) => {
-        if (mapManager) {
-          mapManager.addMarker(lat, lng, title);
-        }
+  /**
+   * Get current user
+   */
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
+  /**
+   * Get current mode
+   */
+  getCurrentMode() {
+    return this.isLegacyMode ? 'legacy' : 'multi-user';
+  }
+
+  /**
+   * Check if application is initialized
+   */
+  isAppInitialized() {
+    return this.isInitialized;
+  }
+
+  /**
+   * Update status display
+   */
+  updateStatus(message) {
+    const statusElement = document.getElementById('status-content');
+    if (statusElement) {
+      statusElement.textContent = message;
+    }
+    console.log('Status:', message);
+  }
+
+  // Add this function to fetch and render check-ins in legacy mode
+  async loadAndRenderCheckIns() {
+    const tableBody = document.getElementById('checkInsList');
+    if (!tableBody || !this.checkinManager) {
+      console.log('loadAndRenderCheckIns: tableBody or checkinManager not found', { 
+        tableBody: !!tableBody, 
+        checkinManager: !!this.checkinManager 
+      });
+      return;
+    }
+    try {
+      console.log('loadAndRenderCheckIns: Fetching check-ins...');
+      // Use bypassPermissions=true for legacy mode to allow public access
+      const checkIns = await this.checkinManager.getAllCheckIns(100, true);
+      console.log('loadAndRenderCheckIns: Found', checkIns.length, 'check-ins');
+      
+      tableBody.innerHTML = '';
+      checkIns.forEach(checkin => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${checkin.name || ''}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${checkin.latitude || ''}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${checkin.longitude || ''}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${checkin.timestamp ? new Date(checkin.timestamp.seconds ? checkin.timestamp.seconds * 1000 : checkin.timestamp).toLocaleDateString() : ''}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${checkin.timestamp ? new Date(checkin.timestamp.seconds ? checkin.timestamp.seconds * 1000 : checkin.timestamp).toLocaleTimeString() : ''}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+      console.log('loadAndRenderCheckIns: Rendered', checkIns.length, 'check-ins to table');
+      // Render markers on the map
+      if (this.mapManager && typeof this.mapManager.renderCheckInMarkers === 'function') {
+        this.mapManager.renderCheckInMarkers(checkIns);
       }
-    };
-    
-    checkInUI = new CheckInUI(checkInManager, mapManagerInterface);
-    
-    // Set up check-in listener
-    checkInManager.setupCheckInListener();
   } catch (error) {
-    console.error('Failed to initialize check-in system:', error);
+      console.error('Error loading check-ins:', error);
+    }
   }
 }
 
-// Initialize map system
-async function initializeMapSystem() {
+// Create and export global app instance
+const app = new MultiUserApp();
+
+// Make app available globally
+window.app = app;
+
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const config = getConfig();
-    mapManager = new MapManager(config);
-    
-    // Set up callbacks
-    mapManager.setOnMapReady(() => {
-      // Maps are ready
-    });
-    
-    mapManager.setOnMapError((error) => {
-      console.error('Map error:', error);
-    });
-    
-    // Load Google Maps API and initialize maps
-    await mapManager.loadGoogleMapsAPI();
-    await mapManager.initializeMaps();
+    // Initialize Translation
+    window.translation = new Translation();
+    await window.translation.loadTranslations();
+    console.log('Translations loaded:', window.translation.translations);
+
+    await app.initialize();
+    console.log('Application ready!');
+
+    // Localhost bypass for token check
+    function bypassTokenCheckForLocalhost() {
+      if (window.location.hostname === 'localhost') {
+        // Hide the 'Checking token...' message
+        const tokenLoading = document.getElementById('token-loading');
+        if (tokenLoading) tokenLoading.style.display = 'none';
+
+        // Enable the check-in button
+        const checkInButton = document.getElementById('clickButton');
+        if (checkInButton) checkInButton.disabled = false;
+
+        // Show the form if it's hidden
+        const checkInForm = document.getElementById('checkInForm');
+        if (checkInForm) checkInForm.style.display = '';
+
+        // Optionally, show a message that check-ins are enabled for localhost
+        return true;
+      }
+      return false;
+    }
+
+    // Call this function on DOMContentLoaded or app initialization
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bypassTokenCheckForLocalhost);
+    } else {
+      bypassTokenCheckForLocalhost();
+    }
+
+    // Ensure loadAndRenderCheckIns is called when the 'Freddys møder med andre' tab is clicked
+    const recordedCheckInsTab = document.getElementById('recordedCheckInsTab');
+    if (recordedCheckInsTab) {
+      recordedCheckInsTab.addEventListener('click', () => {
+        if (window.app && typeof window.app.loadAndRenderCheckIns === 'function') {
+          window.app.loadAndRenderCheckIns();
+        }
+      });
+    }
   } catch (error) {
-    console.error('Failed to initialize map system:', error);
+    console.error('Failed to initialize application:', error);
+    document.body.innerHTML = `
+      <div style="padding: 20px; text-align: center;">
+        <h1>Error</h1>
+        <p>Failed to initialize application: ${error.message}</p>
+        <button onclick="location.reload()">Retry</button>
+      </div>
+    `;
   }
-}
+});
+
+// Export for use in other modules
+export { app, MultiUserApp };

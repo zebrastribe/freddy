@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Test</title>
+</head>
+<body>
+    <h1>Simple Test</h1>
+    <div id="status">Testing...</div>
+    
+    <script type="module">
+        try {
+            console.log('Starting simple test...');
+            
+            // Test basic imports
+            const { app } = await import('./js/app.js');
+            console.log('✅ App imported successfully');
+            
+            // Wait a bit for initialization
+            setTimeout(() => {
+                const status = document.getElementById('status');
+                if (app.isAppInitialized()) {
+                    status.innerHTML = `
+                        <h2>✅ Application initialized successfully!</h2>
+                        <p><strong>Mode:</strong> ${app.getCurrentMode()}</p>
+                        <p><strong>Initialized:</strong> ${app.isAppInitialized()}</p>
+                    `;
+                } else {
+                    status.innerHTML = `
+                        <h2>⏳ Application still initializing...</h2>
+                        <p>This is normal for the first load.</p>
+                    `;
+                }
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Test failed:', error);
+            document.getElementById('status').innerHTML = `
+                <h2>❌ Test failed!</h2>
+                <p><strong>Error:</strong> ${error.message}</p>
+                <pre>${error.stack}</pre>
+            `;
+        }
+    </script>
+</body>
+</html> 

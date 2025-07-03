@@ -36,6 +36,9 @@
     let lastCheckInTime = null;
     let sessionToken = null;
 
+    // Guard to ensure listener is only registered once
+    let checkInListenerInitialized = false;
+
     // Admin authentication function
     async function authenticateAdmin(password) {
       try {
@@ -131,6 +134,8 @@
 
     // Set up real-time listener for new check-ins
     function setupCheckInListener() {
+      if (checkInListenerInitialized) return;
+      checkInListenerInitialized = true;
       const q = query(collection(db, "clicks"), orderBy("timestamp", "desc"), limit(1));
       
       onSnapshot(q, (snapshot) => {
@@ -140,7 +145,8 @@
             const checkInTime = checkIn.timestamp?.toDate?.() || new Date();
             
             // Only show notification if this is a new check-in (not from page load)
-            if (lastCheckInTime && checkInTime > lastCheckInTime) {
+            // AND this device is NOT linked for FCM push
+            if (lastCheckInTime && checkInTime > lastCheckInTime && !window.isThisDeviceLinkedForPush) {
               showCheckInNotification(checkIn);
             }
             
@@ -265,6 +271,8 @@
         console.log('[DEBUG] Firestore linked token:', linkedDevice.token);
         const isThisDeviceLinked = currentToken && linkedDevice.token && currentToken === linkedDevice.token;
         console.log('[DEBUG] isThisDeviceLinked:', isThisDeviceLinked);
+        // Set global flag for push notification suppression
+        window.isThisDeviceLinkedForPush = isThisDeviceLinked;
         
         // Update checkbox state only after confirming match
         const linkCheckbox = document.getElementById('link-this-device');
