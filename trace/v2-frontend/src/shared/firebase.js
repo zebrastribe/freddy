@@ -5,7 +5,7 @@ import { getMessaging } from 'firebase/messaging'
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY",
+  apiKey: "demo-api-key",
   authDomain: "tracker-6a648.firebaseapp.com",
   projectId: "tracker-6a648",
   storageBucket: "tracker-6a648.appspot.com",

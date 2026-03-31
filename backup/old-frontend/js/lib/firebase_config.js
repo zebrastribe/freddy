@@ -6,7 +6,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/fireba
 
 // Firebase configuration
 export const firebaseConfig = {
-  apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+  apiKey: "demo-api-key",
   authDomain: "tracker-6a648.firebaseapp.com",
   projectId: "tracker-6a648",
   storageBucket: "tracker-6a648.appspot.com",

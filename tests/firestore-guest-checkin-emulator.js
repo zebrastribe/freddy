@@ -6,7 +6,7 @@ const { getAuth, signInWithEmailAndPassword, signOut, createUserWithEmailAndPass
 // Use your real API key for emulator testing (safe, does not touch prod)
 const firebaseConfig = {
   projectId: 'demo-test', // or your real projectId
-  apiKey: 'AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss', // <-- replace with your real API key if needed
+  apiKey: 'demo-api-key',
 };
 
 const app = initializeApp(firebaseConfig);

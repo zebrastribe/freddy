@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.13.0/
 const defaultConfig = {
   // Google Maps API Configuration
   googleMaps: {
-    apiKey: 'AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY',
+    apiKey: 'demo-google-maps-key',
     mapId: '8bac4e61a05fc3c2',
     defaultCenter: { lat: 55.6606758, lng: 12.5226001 },
     defaultZoom: 15
@@ -21,7 +21,7 @@ const defaultConfig = {
   
   // Firebase Configuration
   firebase: {
-    apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+    apiKey: "demo-api-key",
     authDomain: "tracker-6a648.firebaseapp.com",
     projectId: "tracker-6a648",
     storageBucket: "tracker-6a648.appspot.com",
