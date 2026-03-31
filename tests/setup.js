@@ -4,7 +4,7 @@
  */
 
 // Import Jest DOM matchers
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // Global test setup
 beforeAll(() => {
@@ -69,36 +69,44 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  console.log.mockRestore();
-  console.warn.mockRestore();
-  console.error.mockRestore();
+  if (console.log && console.log.mockRestore) console.log.mockRestore();
+  if (console.warn && console.warn.mockRestore) console.warn.mockRestore();
+  if (console.error && console.error.mockRestore) console.error.mockRestore();
 });
 
 // Mock fetch API
 global.fetch = jest.fn();
 
-// Mock window.location
-Object.defineProperty(window, 'location', {
-  value: {
-    href: 'http://localhost:8000/',
-    hostname: 'localhost',
-    pathname: '/',
-    search: '',
-    hash: ''
-  },
-  writable: true
-});
+// Mock window.location (guarded: jsdom may make this non-configurable)
+try {
+  Object.defineProperty(window, 'location', {
+    value: {
+      href: 'http://localhost:8000/',
+      hostname: 'localhost',
+      pathname: '/',
+      search: '',
+      hash: ''
+    },
+    writable: true
+  });
+} catch (error) {
+  // Keep native jsdom location when property cannot be redefined.
+}
 
-// Mock window.history
-Object.defineProperty(window, 'history', {
-  value: {
-    pushState: jest.fn(),
-    replaceState: jest.fn(),
-    back: jest.fn(),
-    forward: jest.fn()
-  },
-  writable: true
-});
+// Mock window.history (guarded)
+try {
+  Object.defineProperty(window, 'history', {
+    value: {
+      pushState: jest.fn(),
+      replaceState: jest.fn(),
+      back: jest.fn(),
+      forward: jest.fn()
+    },
+    writable: true
+  });
+} catch (error) {
+  // Keep native jsdom history when property cannot be redefined.
+}
 
 // Mock window.localStorage (basic implementation)
 const localStorageMock = {
@@ -161,16 +169,20 @@ global.requestAnimationFrame = jest.fn(callback => setTimeout(callback, 0));
 // Mock cancelAnimationFrame
 global.cancelAnimationFrame = jest.fn(id => clearTimeout(id));
 
-// Mock performance API
-Object.defineProperty(window, 'performance', {
-  value: {
-    now: jest.fn(() => Date.now()),
-    mark: jest.fn(),
-    measure: jest.fn(),
-    getEntriesByType: jest.fn(() => [])
-  },
-  writable: true
-});
+// Mock performance API (guarded)
+try {
+  Object.defineProperty(window, 'performance', {
+    value: {
+      now: jest.fn(() => Date.now()),
+      mark: jest.fn(),
+      measure: jest.fn(),
+      getEntriesByType: jest.fn(() => [])
+    },
+    writable: true
+  });
+} catch (error) {
+  // Keep native jsdom performance when property cannot be redefined.
+}
 
 // Mock URLSearchParams
 global.URLSearchParams = class {
@@ -221,8 +233,8 @@ global.URL = class {
   }
 };
 
-// Export common test utilities
-export const createMockElement = (tagName = 'div', attributes = {}) => {
+// Common test utilities
+const createMockElement = (tagName = 'div', attributes = {}) => {
   const element = document.createElement(tagName);
   Object.entries(attributes).forEach(([key, value]) => {
     element.setAttribute(key, value);
@@ -230,11 +242,11 @@ export const createMockElement = (tagName = 'div', attributes = {}) => {
   return element;
 };
 
-export const createMockEvent = (type, options = {}) => {
+const createMockEvent = (type, options = {}) => {
   return new Event(type, options);
 };
 
-export const waitFor = (callback, timeout = 1000) => {
+const waitFor = (callback, timeout = 1000) => {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
     

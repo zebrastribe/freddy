@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permission Debug Test</title>
+</head>
+<body>
+    <h1>Permission Debug Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+        import { getFirestore, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+        import { getConfig } from './js/config.js';
+        import { AuthManager } from './js/features/users/auth_manager.js';
+        import { PermissionMiddleware } from './js/features/users/permission_middleware.js';
+        
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function testPermissions() {
+            try {
+                log('🔧 Initializing Firebase...');
+                const config = getConfig();
+                const app = initializeApp(config);
+                const auth = getAuth(app);
+                const db = getFirestore(app);
+                
+                log('🔧 Signing in anonymously...');
+                await signInAnonymously(auth);
+                
+                log('🔧 Creating AuthManager...');
+                const authManager = new AuthManager(app);
+                await authManager.waitForInitialization();
+                
+                log('🔧 Creating PermissionMiddleware...');
+                const permissionMiddleware = new PermissionMiddleware(authManager);
+                
+                log('🔧 Debugging current state...');
+                log('Current user: ' + JSON.stringify(auth.currentUser));
+                log('Is authenticated: ' + authManager.isAuthenticated());
+                log('User role: ' + authManager.getUserRole());
+                log('User permissions: ' + JSON.stringify(authManager.getUserPermissions()));
+                log('Accessible pets: ' + JSON.stringify(permissionMiddleware.getAccessiblePets()));
+                
+                // Test with a specific pet UUID
+                const testPetUUID = 'pet_b2d86960-d20a-49ee-830a-d9d254b707d5_uid123_freddy_1751641197';
+                log('🔧 Testing permission for pet: ' + testPetUUID);
+                log('Can access pet: ' + permissionMiddleware.canAccessPet(testPetUUID));
+                log('Is pet owner: ' + permissionMiddleware.isPetOwner(testPetUUID));
+                log('Is admin: ' + permissionMiddleware.isAdmin());
+                
+                // Check what pets exist in the database
+                log('🔧 Checking pets in database...');
+                const petsQuery = query(collection(db, 'pets'));
+                const petsSnapshot = await getDocs(petsQuery);
+                const pets = petsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                log('Found pets: ' + JSON.stringify(pets.map(p => ({ id: p.id, name: p.name, userId: p.userId }))));
+                
+                // Check what users exist
+                log('🔧 Checking users in database...');
+                const usersQuery = query(collection(db, 'users'));
+                const usersSnapshot = await getDocs(usersQuery);
+                const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                log('Found users: ' + JSON.stringify(users.map(u => ({ id: u.id, name: u.name, pets: u.pets }))));
+                
+                // Check check-ins for the test pet
+                log('🔧 Checking check-ins for test pet...');
+                const checkinsQuery = query(collection(db, 'clicks'), where('petId', '==', testPetUUID));
+                const checkinsSnapshot = await getDocs(checkinsQuery);
+                const checkins = checkinsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                log('Found check-ins: ' + checkins.length);
+                
+                log('✅ Test completed!');
+                
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+                console.error(error);
+            }
+        }
+        
+        // Run the test
+        testPermissions();
+    </script>
+</body>
+</html> 

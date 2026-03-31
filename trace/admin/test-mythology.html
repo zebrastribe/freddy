@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Mythology Names</title>
+</head>
+<body>
+    <h1>Test Mythology Names Loading</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        try {
+            const { mythologyNames } = await import('./js/mythology-names.js');
+            console.log('Mythology names loaded:', mythologyNames);
+            
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h2>✅ Mythology names loaded successfully!</h2>
+                <p>Available categories: ${Object.keys(mythologyNames).join(', ')}</p>
+                <p>Sample Greek names: ${mythologyNames.greek.olympians.join(', ')}</p>
+            `;
+        } catch (error) {
+            console.error('Error loading mythology names:', error);
+            document.getElementById('output').innerHTML = `
+                <h2>❌ Error loading mythology names</h2>
+                <p>Error: ${error.message}</p>
+            `;
+        }
+    </script>
+</body>
+</html> 

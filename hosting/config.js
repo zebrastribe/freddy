@@ -23,6 +23,11 @@ export const hostingConfig = {
         enabled: true,
         theme: 'jekyll-theme-cayman',
         plugins: ['jekyll-feed']
+      },
+      repository: {
+        owner: 'zebrastribe',
+        name: 'trace',
+        branch: 'main'
       }
     },
     
@@ -64,6 +69,19 @@ export const hostingConfig = {
         secure: process.env.FTP_SECURE === 'true',
         webRoot: '/public_html'
       }
+    }
+  },
+  
+  // Simply.com DNS API configuration
+  simply: {
+    accountNo: process.env.SIMPLY_ACCOUNT_NO || 'Sxxxxxx', // Your Simply.com account number (format: Sxxxxxx)
+    apiKey: process.env.SIMPLY_API_KEY || 'your-api-key-here', // Your Simply.com API key
+    domain: 'stri.be',
+    apiUrl: 'https://api.simply.com/2',
+    defaultTTL: 300,
+    rateLimit: {
+      requestsPerMinute: 60,
+      requestsPerHour: 1000
     }
   },
   

@@ -35,7 +35,7 @@ This roadmap outlines the step-by-step implementation of the multi-user, multi-p
 
 #### Day 3-4: Database Schema Migration
 - [ ] **Task 1.3**: Create database migration script
-  - Implement `migration-scripts/migrate-to-multi-user-pet.js`
+  - Implement `migration-scripts/migrate-to-objects.js`
   - Create new collections: `users`, `pets`, `pet_status`, `domains`
   - Migrate existing data to new schema
   - **Deliverable**: Migration script ready for execution

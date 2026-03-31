@@ -1,0 +1,173 @@
+{
+  "greek": {
+    "olympians": [
+      "zeus", "hera", "ares", "iris", "pan"
+    ],
+    "chthonic": [
+      "hades", "hel"
+    ],
+    "titans": [
+      "atlas", "rhea", "theia", "coeus", "crius", "iapetus"
+    ],
+    "lesser_deities": [
+      "nike", "iris", "hebe", "satyr", "nymph", "dryad", "naiad", "oread"
+    ],
+    "heroes": [
+      "jason", "cadmus"
+    ],
+    "monsters": [
+      "hydra", "griffin"
+    ]
+  },
+  "norse": {
+    "aesir": [
+      "odin", "thor", "tyr", "vali", "bragi", "hodr", "ullr"
+    ],
+    "vanir": [
+      "njord", "nanna", "skadi", "kvasir"
+    ],
+    "jotnar": [
+      "loki", "hel", "surtr", "ymir", "thrym", "hymir", "hrod", "aegir", "ran"
+    ],
+    "valkyries": [
+      "kara", "svava", "hildr", "skuld", "urdr"
+    ],
+    "heroes": [
+      "ragnar", "gunnar", "hogni"
+    ]
+  },
+  "egyptian": {
+    "major_gods": [
+      "ra", "isis", "set", "nut", "geb", "shu"
+    ],
+    "minor_gods": [
+      "bes", "heqet", "shu", "nut", "geb"
+    ],
+    "pharaohs": [
+      "seti"
+    ]
+  },
+  "roman": {
+    "major_gods": [
+      "juno", "mars", "venus", "apollo", "diana", "ceres", "vesta", "pluto"
+    ],
+    "minor_gods": [
+      "janus", "salus", "spes", "fides"
+    ],
+    "emperors": [
+      "nero", "marcus"
+    ]
+  },
+  "celtic": {
+    "irish": [
+      "lugh", "finn", "niamh", "ogma"
+    ],
+    "welsh": [
+      "don", "beli"
+    ],
+    "gaulish": [
+      "esus", "mars"
+    ]
+  },
+  "mesopotamian": {
+    "sumerian": [
+      "utu", "dumuzid"
+    ],
+    "babylonian": [
+      "sin", "kingu", "apsu"
+    ],
+    "assyrian": [
+      "sin", "bel"
+    ]
+  },
+  "hindu": {
+    "trimurti": [
+      "rama", "sita", "radha"
+    ],
+    "minor_gods": [
+      "agni", "surya", "yama", "kut"
+    ],
+    "avatars": [
+      "rama"
+    ]
+  },
+  "chinese": {
+    "celestial": [
+      "fuxi", "yandi"
+    ],
+    "deities": [
+      "cao_cao", "liu_bei", "zhang_fei", "zhao_yun", "ma_chao"
+    ]
+  },
+  "japanese": {
+    "shinto": [
+      "inari", "tenjin"
+    ],
+    "yokai": [
+      "kappa", "oni", "nue"
+    ]
+  },
+  "aztec": [
+    "itzli", "itzcoatl"
+  ],
+  "mayan": [
+    "chac", "hun_came", "ah_muzen_cab", "yum_kaax"
+  ],
+  "inca": [
+    "inti", "sinchi_roca", "lloque_yupanqui", "mayta_capac", "capac_yupanqui", "inca_roca", "yahuar_huacac", "viracocha_inca", "pachacuti"
+  ],
+  "slavic": [
+    "rod", "kupala", "kostroma", "yarilo", "marzanna"
+  ],
+  "baltic": [
+    "saul", "kaukas", "aitvaras", "kikimora", "rusalka", "vodyanoy"
+  ],
+  "finnic": [
+    "ukko", "akka", "north", "south", "east", "west", "aino"
+  ],
+  "persian": [
+    "tir", "ram", "mah", "kut", "tyn", "sune"
+  ],
+  "arabic": [
+    "jinn", "hinn", "ghul"
+  ],
+  "african": [
+    "ogun", "eshu", "ogun", "oya", "obba"
+  ],
+  "polynesian": [
+    "kane", "ku", "lono", "laka", "hina", "tane", "rangi", "papa"
+  ],
+  "north_american": [
+    "bear", "wolf", "eagle", "deer", "turtle", "rabbit", "fox", "owl", "hawk"
+  ],
+  "south_american": [
+    "puma", "llama", "sloth", "toucan", "macaw"
+  ],
+  "oceanic": [
+    "tane", "rangi", "papa", "kane", "ku", "lono", "laka", "hina", "tane", "rangi", "papa"
+  ],
+  "siberian": [
+    "kut", "tyn", "sune"
+  ],
+  "caucasian": [
+    "dali", "kaji", "zaden"
+  ],
+  "central_asian": [
+    "kut", "tyn", "sune"
+  ],
+  "south_asian": [
+    "naga", "vetal", "bhuta", "preta"
+  ],
+  "southeast_asian": [
+    "naga", "vetal", "bhuta", "preta"
+  ],
+  "middle_eastern": [
+    "baal", "attis"
+  ],
+  "european_folk": [
+    "leshy", "baba_yaga", "koschei", "rusalka", "vodyanoy", "kikimora", "bannik", "ovinnik"
+  ],
+  "modern_mythology": [
+    "mi_go", "ghasts", "ghouls", "hounds"
+  ]
+} 

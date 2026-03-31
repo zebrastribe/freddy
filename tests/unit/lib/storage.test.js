@@ -24,8 +24,11 @@ Object.defineProperty(window, 'localStorage', {
   writable: true
 });
 
-// Import the component to test
-import { StorageManager } from '../../../js/lib/storage.js';
+let StorageManager;
+
+beforeAll(async () => {
+  ({ StorageManager } = await import('../../../trace/v2-frontend/src/shared/lib/storage.js'));
+});
 
 describe('StorageManager', () => {
   let storage;

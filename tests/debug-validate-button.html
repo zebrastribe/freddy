@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Validate Button</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .log { background-color: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; margin: 10px 0; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Debug Validate Button</h1>
+    
+    <div>
+        <button id="testButton" class="btn btn-success" disabled>Test Button (Disabled)</button>
+        <button id="enableButton" class="btn btn-primary">Enable Test Button</button>
+        <button id="checkSetup" class="btn btn-primary">Check Database Setup</button>
+    </div>
+    
+    <div id="log" class="log"></div>
+
+    <script type="module">
+        import { firebaseConfig } from './firebase_config.js';
+        
+        const testButton = document.getElementById('testButton');
+        const enableButton = document.getElementById('enableButton');
+        const checkSetupButton = document.getElementById('checkSetup');
+        const logDiv = document.getElementById('log');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+        
+        // Test enabling the button
+        enableButton.addEventListener('click', () => {
+            testButton.disabled = false;
+            log('✅ Test button enabled');
+        });
+        
+        // Test clicking the enabled button
+        testButton.addEventListener('click', () => {
+            log('🎉 Test button clicked!');
+        });
+        
+        // Check database setup
+        checkSetupButton.addEventListener('click', async () => {
+            try {
+                log('🔍 Checking database setup...');
+                
+                // Test Firebase connection
+                log('📡 Testing Firebase connection...');
+                log(`Firebase config loaded: ${firebaseConfig ? 'YES' : 'NO'}`);
+                
+                // Import Firebase modules
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js');
+                const { getFirestore, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
+                const { getAuth, signInAnonymously } = await import('https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js');
+                
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const auth = getAuth(app);
+                
+                log('✅ Firebase initialized successfully');
+                
+                // Try to authenticate anonymously first
+                log('🔐 Attempting anonymous authentication...');
+                try {
+                    const userCredential = await signInAnonymously(auth);
+                    log(`✅ Authenticated as: ${userCredential.user.uid}`);
+                } catch (authError) {
+                    log(`❌ Authentication failed: ${authError.message}`);
+                }
+                
+                // Check if collections exist
+                const collections = ['users', 'pets', 'pet_status', 'domains'];
+                for (const collectionName of collections) {
+                    try {
+                        const snapshot = await getDocs(collection(db, collectionName));
+                        if (snapshot.size > 0) {
+                            log(`✅ Collection '${collectionName}': ${snapshot.size} documents`);
+                            const firstDoc = snapshot.docs[0];
+                            log(`   First document ID: ${firstDoc.id}`);
+                        } else {
+                            log(`ℹ️ Collection '${collectionName}': Empty (0 documents) - This is normal for new setup`);
+                        }
+                    } catch (error) {
+                        if (error.message.includes('Null value error') || error.message.includes('permission-denied')) {
+                            log(`ℹ️ Collection '${collectionName}': Access restricted or empty - This is expected for anonymous users`);
+                        } else {
+                            log(`❌ Collection '${collectionName}': ${error.message}`);
+                        }
+                    }
+                }
+                
+                log('🎉 Database check completed!');
+                
+            } catch (error) {
+                log(`❌ Error checking database: ${error.message}`);
+                console.error('Database check error:', error);
+            }
+        });
+        
+        log('🧪 Debug page loaded');
+        log('Click "Enable Test Button" to test button enabling');
+        log('Click "Check Database Setup" to verify database state');
+    </script>
+</body>
+</html> 

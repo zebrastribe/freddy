@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Public Check-ins</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Public Check-ins Access</h1>
+    
+    <div class="test-section info">
+        <h3>Instructions</h3>
+        <p>This page tests that check-ins are now publicly accessible without permission checks.</p>
+        <p>Click the buttons below to test different check-in access methods.</p>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 1: Direct Public Check-ins Access</h3>
+        <button onclick="testPublicCheckIns()">Test getPublicCheckIns()</button>
+        <div id="test1-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 2: Pet-Specific Check-ins Access</h3>
+        <input type="text" id="petId" placeholder="Enter pet ID" value="test-pet-id">
+        <button onclick="testPetCheckIns()">Test getPetCheckIns()</button>
+        <div id="test2-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 3: Check-in Statistics Access</h3>
+        <input type="text" id="statsPetId" placeholder="Enter pet ID for stats" value="test-pet-id">
+        <button onclick="testCheckInStats()">Test getCheckInStats()</button>
+        <div id="test3-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 4: Search Check-ins Access</h3>
+        <input type="text" id="searchPetId" placeholder="Enter pet ID to search" value="test-pet-id">
+        <button onclick="testSearchCheckIns()">Test searchCheckIns()</button>
+        <div id="test4-result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test 5: Verify No Permission Errors</h3>
+        <button onclick="testNoPermissionErrors()">Test All Methods Without Permissions</button>
+        <div id="test5-result"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getFirestore, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+        import { getAuth, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+
+        // Initialize Firebase with emulator
+        const firebaseConfig = {
+            apiKey: "demo-api-key",
+            authDomain: "demo-project.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "demo-project.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "demo-app-id"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Connect to emulators
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectAuthEmulator(auth, 'http://localhost:9099');
+
+        // Mock permission middleware that allows everything
+        const mockPermissionMiddleware = {
+            canPerformAction: () => true,
+            canAccessPet: () => true,
+            hasPermission: () => true
+        };
+
+        // Mock pet manager
+        const mockPetManager = {
+            updatePetStatus: async () => {}
+        };
+
+        // Import CheckInManager
+        const { CheckInManager } = await import('/js/features/checkin/checkin_manager.js?v=20250104');
+        
+        const checkInManager = new CheckInManager(db, auth, {}, mockPermissionMiddleware, mockPetManager);
+
+        window.testPublicCheckIns = async function() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const checkins = await checkInManager.getPublicCheckIns(10);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Success!</h4>
+                        <p>Found ${checkins.length} public check-ins</p>
+                        <pre>${JSON.stringify(checkins.slice(0, 3), null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error!</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testPetCheckIns = async function() {
+            const resultDiv = document.getElementById('test2-result');
+            const petId = document.getElementById('petId').value;
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const checkins = await checkInManager.getPetCheckIns(petId, 5);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Success!</h4>
+                        <p>Found ${checkins.length} check-ins for pet: ${petId}</p>
+                        <pre>${JSON.stringify(checkins, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error!</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testCheckInStats = async function() {
+            const resultDiv = document.getElementById('test3-result');
+            const petId = document.getElementById('statsPetId').value;
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const stats = await checkInManager.getCheckInStats(petId);
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Success!</h4>
+                        <p>Got statistics for pet: ${petId}</p>
+                        <pre>${JSON.stringify(stats, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error!</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testSearchCheckIns = async function() {
+            const resultDiv = document.getElementById('test4-result');
+            const petId = document.getElementById('searchPetId').value;
+            resultDiv.innerHTML = '<p>Testing...</p>';
+            
+            try {
+                const checkins = await checkInManager.searchCheckIns({ petId });
+                resultDiv.innerHTML = `
+                    <div class="success">
+                        <h4>✅ Success!</h4>
+                        <p>Found ${checkins.length} check-ins for pet: ${petId}</p>
+                        <pre>${JSON.stringify(checkins.slice(0, 3), null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error!</h4>
+                        <p>${error.message}</p>
+                        <pre>${error.stack}</pre>
+                    </div>
+                `;
+            }
+        };
+
+        window.testNoPermissionErrors = async function() {
+            const resultDiv = document.getElementById('test5-result');
+            resultDiv.innerHTML = '<p>Testing all methods...</p>';
+            
+            const tests = [
+                { name: 'getPublicCheckIns', fn: () => checkInManager.getPublicCheckIns(5) },
+                { name: 'getPetCheckIns', fn: () => checkInManager.getPetCheckIns('test-pet', 5) },
+                { name: 'getCheckInStats', fn: () => checkInManager.getCheckInStats('test-pet') },
+                { name: 'searchCheckIns', fn: () => checkInManager.searchCheckIns({ petId: 'test-pet' }) }
+            ];
+
+            const results = [];
+            
+            for (const test of tests) {
+                try {
+                    await test.fn();
+                    results.push(`✅ ${test.name}: Success`);
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+
+            resultDiv.innerHTML = `
+                <div class="success">
+                    <h4>Test Results:</h4>
+                    <ul>${results.map(r => `<li>${r}</li>`).join('')}</ul>
+                </div>
+            `;
+        };
+    </script>
+</body>
+</html> 

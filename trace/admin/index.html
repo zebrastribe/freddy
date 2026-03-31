@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trace Admin Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/admin.css">
+  </head>
+  <body class="bg-gray-100">
+    <div id="app">
+      <section id="authSection">
+        <div id="loginFormContainer"></div>
+      </section>
+      <div id="adminShell" class="hidden">
+        <div class="flex h-screen">
+          <!-- Sidebar (Drawer) -->
+          <aside class="fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 md:static md:inset-0" id="sidebarDrawer">
+            <div class="h-16 flex items-center px-6 font-bold text-blue-700 text-2xl border-b border-gray-100">Admin Panel
+              <button class="md:hidden ml-auto text-gray-500 focus:outline-none" id="closeSidebarBtn" aria-label="Close sidebar">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-6">
+              <ul class="space-y-2">
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="overview" id="nav-overview">Overview</a></li>
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="users" id="nav-users">Users</a></li>
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="pets" id="nav-pets">Pets</a></li>
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="notifications" id="nav-notifications">Notifications</a></li>
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="system" id="nav-system">System</a></li>
+                <li><a href="#" class="block nav-item px-6 py-3 rounded transition font-medium text-gray-700 hover:bg-blue-100 hover:text-blue-900" data-section="profile" id="nav-profile">Profile</a></li>
+              </ul>
+            </nav>
+          </aside>
+          <!-- Mobile Hamburger -->
+          <div class="md:hidden fixed top-4 left-4 z-40">
+            <button id="openSidebarBtn" class="p-2 rounded bg-white shadow text-gray-700 focus:outline-none" aria-label="Open sidebar">
+              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+          <!-- Main Content -->
+          <main class="flex-1 ml-0 md:ml-0 p-6 md:p-8 overflow-y-auto bg-gray-100">
+            <div id="userInfo" class="mb-6"></div>
+            <section id="overviewSection">
+              <div id="overviewContent"></div>
+            </section>
+            <section id="usersSection" class="hidden"></section>
+            <section id="petsSection" class="hidden"></section>
+            <section id="notificationsSection" class="hidden"></section>
+            <section id="systemSection" class="hidden"></section>
+            <section id="profileSection" class="hidden"></section>
+          </main>
+        </div>
+      </div>
+    </div>
+    <!-- Toast container for notifications -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- Modal -->
+    <div id="modalOverlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 relative">
+        <button id="modalClose" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 focus:outline-none text-2xl" aria-label="Close">&times;</button>
+        <div class="p-6">
+          <h2 id="modalTitle" class="text-xl font-bold text-gray-900 mb-4"></h2>
+          <div id="modalBody"></div>
+        </div>
+      </div>
+    </div>
+    
+    <script type="module" src="/js/admin.js"></script>
+    <script>
+      // Simple JS for mobile sidebar toggle
+      const sidebar = document.getElementById('sidebarDrawer');
+      const openBtn = document.getElementById('openSidebarBtn');
+      const closeBtn = document.getElementById('closeSidebarBtn');
+      if (openBtn && sidebar) {
+        openBtn.addEventListener('click', () => {
+          sidebar.classList.remove('-translate-x-full');
+        });
+      }
+      if (closeBtn && sidebar) {
+        closeBtn.addEventListener('click', () => {
+          sidebar.classList.add('-translate-x-full');
+        });
+      }
+      // Hide sidebar by default on mobile
+      function handleResize() {
+        if (window.innerWidth < 768) {
+          sidebar.classList.add('-translate-x-full');
+        } else {
+          sidebar.classList.remove('-translate-x-full');
+        }
+      }
+      window.addEventListener('resize', handleResize);
+      document.addEventListener('DOMContentLoaded', handleResize);
+    </script>
+  </body>
+</html>

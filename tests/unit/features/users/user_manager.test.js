@@ -1,356 +1,99 @@
 /**
- * UserManager Unit Tests
- * 
- * Tests for the UserManager class to ensure proper user management and role-based permissions.
+ * UserManager Unit Tests (migrated to current Trace admin implementation)
  */
 
-// Mock Firebase imports
-jest.mock('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
-
-// Mock UUID generator
-
-// Import after mocking
-const { UserManager, USER_ROLES } = require('../../../js/features/users/user_manager.js');
-const { UUIDGenerator } = require('../../../js/lib/uuid.js');
-
-// Get the mocked Firebase functions
-const firebaseFirestore = require('https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js');
-
-// Mock Firebase services
-const mockDb = {
-  collection: jest.fn(),
-  doc: jest.fn()
-};
-
-const mockAuth = {
-  currentUser: { uid: 'test-user-123' }
-};
-
-const mockConfig = {
-  app: { name: 'Test App' }
-};
-
-// Mock document references
-const mockDocRef = {
-  exists: jest.fn(),
-  data: jest.fn()
-};
-
-describe('UserManager', () => {
+describe('UserManager (trace admin)', () => {
+  let UserManager;
   let userManager;
+  let firebaseService;
+  let adminApp;
+
+  beforeAll(async () => {
+    ({ UserManager } = await import('../../../../trace/v2-frontend/src/features/admin/js/components/UserManager.js'));
+  });
 
   beforeEach(() => {
-    // Reset mocks
-    jest.clearAllMocks();
-    
-    // Setup mock document
-    mockDocRef.exists.mockReturnValue(true);
-    mockDocRef.data.mockReturnValue({
-      id: 'test-user-123',
-      role: 'USER',
-      permissions: ['create_checkins', 'view_own_checkins'],
-      pets: ['pet_1', 'pet_2']
-    });
-    
-    // Setup mock Firebase functions
-    firebaseFirestore.doc.mockReturnValue(mockDocRef);
-    firebaseFirestore.getDoc.mockResolvedValue(mockDocRef);
-    firebaseFirestore.setDoc.mockResolvedValue();
-    firebaseFirestore.updateDoc.mockResolvedValue();
-    firebaseFirestore.deleteDoc.mockResolvedValue();
-    firebaseFirestore.collection.mockReturnValue({
-      docs: [
+    document.body.innerHTML = '<div id="usersContent"></div>';
+
+    firebaseService = {
+      getUsers: jest.fn().mockResolvedValue([
         {
-          data: () => ({
-            id: 'user-1',
-            role: 'USER',
-            permissions: ['create_checkins']
-          })
+          id: 'u1',
+          email: 'u1@test.com',
+          displayName: 'User One',
+          role: 'user',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          lastLogin: '2025-01-02T00:00:00.000Z'
         },
         {
-          data: () => ({
-            id: 'user-2',
-            role: 'ADMIN',
-            permissions: ['manage_pets', 'manage_users']
-          })
+          id: 'u2',
+          email: 'admin@test.com',
+          displayName: 'Admin User',
+          role: 'admin',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          lastLogin: '2025-01-03T00:00:00.000Z'
         }
-      ]
-    });
-    firebaseFirestore.getDocs.mockResolvedValue({
-      docs: [
-        {
-          data: () => ({
-            id: 'user-1',
-            role: 'USER',
-            permissions: ['create_checkins']
-          })
-        },
-        {
-          data: () => ({
-            id: 'user-2',
-            role: 'ADMIN',
-            permissions: ['manage_pets', 'manage_users']
-          })
-        }
-      ]
-    });
-    
-    // Setup UUID generator mocks
-    UUIDGenerator.generateUUID.mockReturnValue('550e8400-e29b-41d4-a716-446655440000');
-    UUIDGenerator.generatePetUUID.mockReturnValue('pet_550e8400-e29b-41d4-a716-446655440000');
-    UUIDGenerator.generateUserUUID.mockReturnValue('user_550e8400-e29b-41d4-a716-446655440000');
-    UUIDGenerator.isValidUUID.mockReturnValue(true);
-    UUIDGenerator.isValidPrefixedUUID.mockReturnValue(true);
-    UUIDGenerator.extractUUID.mockReturnValue('550e8400-e29b-41d4-a716-446655440000');
-    UUIDGenerator.generateShortId.mockReturnValue('abc12345');
-    
-    // Create UserManager instance
-    userManager = new UserManager(mockDb, mockAuth, mockConfig);
+      ]),
+      updateUser: jest.fn().mockResolvedValue(undefined)
+    };
+
+    adminApp = {
+      getService: jest.fn().mockImplementation((name) => {
+        if (name === 'firebase') return firebaseService;
+        return null;
+      }),
+      toastService: { show: jest.fn() },
+      modalService: { show: jest.fn(), hide: jest.fn() }
+    };
+
+    userManager = new UserManager(adminApp);
   });
 
-  describe('User Creation', () => {
-    test('should create user with valid role', async () => {
-      const userData = {
-        uid: 'new-user-123',
-        email: 'test@example.com',
-        displayName: 'Test User'
-      };
-      
-      const result = await userManager.createUser(userData, 'USER');
-      
-      expect(result).toBeDefined();
-      expect(result.role).toBe('USER');
-      expect(result.permissions).toEqual(USER_ROLES.USER.permissions);
-      expect(firebaseFirestore.setDoc).toHaveBeenCalled();
-    });
-
-    test('should throw error for invalid role', async () => {
-      const userData = { uid: 'test-user' };
-      
-      await expect(userManager.createUser(userData, 'INVALID_ROLE'))
-        .rejects.toThrow('Invalid role: INVALID_ROLE');
-    });
-
-    test('should generate UUID if no user ID provided', async () => {
-      const userData = { email: 'test@example.com' };
-      
-      const result = await userManager.createUser(userData, 'USER');
-      
-      expect(result.id).toMatch(/^user_/);
-      expect(UUIDGenerator.isValidPrefixedUUID(result.id, 'user')).toBe(true);
-    });
+  test('loads users and renders cards', async () => {
+    await userManager.loadUsers();
+    expect(firebaseService.getUsers).toHaveBeenCalledTimes(1);
+    expect(document.getElementById('usersGrid').innerHTML).toContain('User One');
+    expect(document.getElementById('usersGrid').innerHTML).toContain('Admin User');
   });
 
-  describe('User Retrieval', () => {
-    test('should get user by ID', async () => {
-      const user = await userManager.getUser('test-user-123');
-      
-      expect(user).toBeDefined();
-      expect(user.id).toBe('test-user-123');
-      expect(user.role).toBe('USER');
-    });
-
-    test('should return null for non-existent user', async () => {
-      mockDocRef.exists.mockReturnValue(false);
-      
-      const user = await userManager.getUser('non-existent');
-      
-      expect(user).toBeNull();
-    });
-
-    test('should get current user', async () => {
-      const user = await userManager.getCurrentUser();
-      
-      expect(user).toBeDefined();
-      expect(user.id).toBe('test-user-123');
-    });
+  test('filters users by search input', async () => {
+    await userManager.loadUsers();
+    const search = document.getElementById('searchUsers');
+    search.value = 'admin';
+    userManager.filterUsers();
+    expect(document.getElementById('usersGrid').innerHTML).toContain('Admin User');
+    expect(document.getElementById('usersGrid').innerHTML).not.toContain('User One');
   });
 
-  describe('User Updates', () => {
-    test('should update user profile', async () => {
-      const updates = {
-        profile: {
-          displayName: 'Updated Name'
-        }
-      };
-      
-      const result = await userManager.updateUser('test-user-123', updates);
-      
-      expect(result.profile.displayName).toBe('Updated Name');
-      expect(firebaseFirestore.updateDoc).toHaveBeenCalled();
-    });
+  test('updateUser persists edited values', async () => {
+    userManager.users = [{ id: 'u1', email: 'old@test.com', displayName: 'Old', role: 'user' }];
+    document.body.innerHTML = `
+      <input id="userEmail_u1" value="new@test.com" />
+      <input id="userDisplayName_u1" value="New Name" />
+      <select id="userRole_u1"><option value="admin" selected>Admin</option></select>
+      <div id="usersGrid"></div>
+    `;
+    jest.spyOn(userManager, 'renderUsers').mockImplementation(() => {});
 
-    test('should throw error for non-existent user', async () => {
-      mockDocRef.exists.mockReturnValue(false);
-      
-      await expect(userManager.updateUser('non-existent', {}))
-        .rejects.toThrow('User not found');
+    await userManager.updateUser('u1');
+
+    expect(firebaseService.updateUser).toHaveBeenCalledWith('u1', {
+      email: 'new@test.com',
+      displayName: 'New Name',
+      role: 'admin'
     });
+    expect(adminApp.toastService.show).toHaveBeenCalledWith('User updated successfully', 'success');
+    expect(adminApp.modalService.hide).toHaveBeenCalled();
   });
 
-  describe('User Deletion', () => {
-    test('should delete user with proper permissions', async () => {
-      // Set up admin permissions
-      userManager.userRole = 'ADMIN';
-      userManager.userPermissions = ['manage_users'];
-      
-      const result = await userManager.deleteUser('user-to-delete');
-      
-      expect(result).toBe(true);
-      expect(firebaseFirestore.deleteDoc).toHaveBeenCalled();
-    });
+  test('deleteUser removes user when confirmed', async () => {
+    global.confirm = jest.fn().mockReturnValue(true);
+    userManager.users = [{ id: 'u1', email: 'u1@test.com', displayName: 'User One', role: 'user' }];
+    jest.spyOn(userManager, 'renderUsers').mockImplementation(() => {});
 
-    test('should throw error without proper permissions', async () => {
-      userManager.userRole = 'USER';
-      userManager.userPermissions = ['create_checkins'];
-      
-      await expect(userManager.deleteUser('user-to-delete'))
-        .rejects.toThrow('Insufficient permissions to delete users');
-    });
+    await userManager.deleteUser('u1');
 
-    test('should prevent self-deletion for admins', async () => {
-      userManager.userRole = 'ADMIN';
-      userManager.userPermissions = ['manage_users'];
-      userManager.currentUser = { id: 'admin-user' };
-      
-      await expect(userManager.deleteUser('admin-user'))
-        .rejects.toThrow('Cannot delete your own admin account');
-    });
+    expect(userManager.users).toHaveLength(0);
+    expect(adminApp.toastService.show).toHaveBeenCalledWith('User deleted successfully', 'success');
   });
-
-  describe('Permission Checking', () => {
-    test('should check user permissions correctly', () => {
-      userManager.userRole = 'USER';
-      userManager.userPermissions = ['create_checkins', 'view_own_checkins'];
-      
-      expect(userManager.hasPermission('create_checkins')).toBe(true);
-      expect(userManager.hasPermission('manage_users')).toBe(false);
-    });
-
-    test('should give super admin all permissions', () => {
-      userManager.userRole = 'SUPER_ADMIN';
-      userManager.userPermissions = [];
-      
-      expect(userManager.hasPermission('any_permission')).toBe(true);
-      expect(userManager.hasPermission('manage_users')).toBe(true);
-    });
-
-    test('should check admin status correctly', () => {
-      userManager.userRole = 'ADMIN';
-      expect(userManager.isAdmin()).toBe(true);
-      
-      userManager.userRole = 'SUPER_ADMIN';
-      expect(userManager.isAdmin()).toBe(true);
-      
-      userManager.userRole = 'USER';
-      expect(userManager.isAdmin()).toBe(false);
-    });
-
-    test('should check super admin status correctly', () => {
-      userManager.userRole = 'SUPER_ADMIN';
-      expect(userManager.isSuperAdmin()).toBe(true);
-      
-      userManager.userRole = 'ADMIN';
-      expect(userManager.isSuperAdmin()).toBe(false);
-    });
-  });
-
-  describe('Pet Management', () => {
-    test('should add pet to user', async () => {
-      const result = await userManager.addPetToUser('test-user-123', 'new-pet-456');
-      
-      expect(result).toBe(true);
-      expect(firebaseFirestore.updateDoc).toHaveBeenCalled();
-    });
-
-    test('should remove pet from user', async () => {
-      const result = await userManager.removePetFromUser('test-user-123', 'pet_1');
-      
-      expect(result).toBe(true);
-      expect(firebaseFirestore.updateDoc).toHaveBeenCalled();
-    });
-
-    test('should throw error for non-existent user in pet operations', async () => {
-      mockDocRef.exists.mockReturnValue(false);
-      
-      await expect(userManager.addPetToUser('non-existent', 'pet-1'))
-        .rejects.toThrow('User not found');
-      
-      await expect(userManager.removePetFromUser('non-existent', 'pet-1'))
-        .rejects.toThrow('User not found');
-    });
-  });
-
-  describe('User Listing', () => {
-    test('should get all users with admin permissions', async () => {
-      userManager.userRole = 'ADMIN';
-      userManager.userPermissions = ['manage_users'];
-      
-      const users = await userManager.getAllUsers();
-      
-      expect(users).toHaveLength(2);
-      expect(users[0].role).toBe('USER');
-      expect(users[1].role).toBe('ADMIN');
-    });
-
-    test('should throw error without proper permissions', async () => {
-      userManager.userRole = 'USER';
-      userManager.userPermissions = ['create_checkins'];
-      
-      await expect(userManager.getAllUsers())
-        .rejects.toThrow('Insufficient permissions to view all users');
-    });
-  });
-
-  describe('Static Methods', () => {
-    test('should get role permissions', () => {
-      const permissions = UserManager.getRolePermissions('ADMIN');
-      expect(permissions).toEqual(USER_ROLES.ADMIN.permissions);
-    });
-
-    test('should get role description', () => {
-      const description = UserManager.getRoleDescription('USER');
-      expect(description).toBe(USER_ROLES.USER.description);
-    });
-
-    test('should get available roles', () => {
-      const roles = UserManager.getAvailableRoles();
-      expect(roles).toContain('USER');
-      expect(roles).toContain('ADMIN');
-      expect(roles).toContain('SUPER_ADMIN');
-      expect(roles).toContain('GUEST');
-    });
-  });
-
-  describe('Role Levels', () => {
-    test('should get correct role level', () => {
-      userManager.userRole = 'USER';
-      expect(userManager.getRoleLevel()).toBe(2);
-      
-      userManager.userRole = 'ADMIN';
-      expect(userManager.getRoleLevel()).toBe(3);
-      
-      userManager.userRole = 'SUPER_ADMIN';
-      expect(userManager.getRoleLevel()).toBe(4);
-      
-      userManager.userRole = 'GUEST';
-      expect(userManager.getRoleLevel()).toBe(1);
-    });
-  });
-
-  describe('Error Handling', () => {
-    test('should handle database errors gracefully', async () => {
-      firebaseFirestore.setDoc.mockRejectedValue(new Error('Database error'));
-      
-      await expect(userManager.createUser({ uid: 'test' }, 'USER'))
-        .rejects.toThrow('Database error');
-    });
-
-    test('should handle authentication errors', async () => {
-      mockAuth.currentUser = null;
-      
-      const user = await userManager.getCurrentUser();
-      expect(user).toBeNull();
-    });
-  });
-}); 
+});

@@ -28,9 +28,10 @@ const db = getFirestore(app);
  * DNS Manager for Simply.com API integration
  */
 class DNSManager {
-  constructor(apiKey) {
+  constructor(apiKey, accountNo) {
     this.apiKey = apiKey;
-    this.baseUrl = 'https://api.simply.com/v1';
+    this.accountNo = accountNo;
+    this.baseUrl = 'https://api.simply.com/2'; // Updated to API v2
   }
   
   async createSubdomain(petName) {
@@ -46,7 +47,7 @@ class DNSManager {
       const response = await fetch(`${this.baseUrl}/domains/stri.be/records`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          'Authorization': 'Basic ' + btoa(`${this.accountNo}:${this.apiKey}`), // HTTP Basic Auth
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(cnameRecord)
@@ -71,7 +72,7 @@ class DNSManager {
       const response = await fetch(`${this.baseUrl}/domains/stri.be/records/${domain}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': 'Basic ' + btoa(`${this.accountNo}:${this.apiKey}`) // HTTP Basic Auth
         }
       });
       
@@ -91,7 +92,7 @@ class DNSManager {
     try {
       const response = await fetch(`${this.baseUrl}/domains/stri.be/records`, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': 'Basic ' + btoa(`${this.accountNo}:${this.apiKey}`) // HTTP Basic Auth
         }
       });
       
@@ -364,7 +365,7 @@ async function setupInfrastructure() {
   
   try {
     // 1. Initialize Simply.com DNS API
-    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY);
+    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY, process.env.SIMPLY_ACCOUNT_NO);
     
     // 2. Set up GitHub Pages deployment
     const deploymentManager = new DeploymentManager(process.env.GITHUB_TOKEN);
@@ -443,7 +444,7 @@ async function migrateFreddyToTrace() {
     };
     
     // 2. Set up Freddy's domain
-    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY);
+    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY, process.env.SIMPLY_ACCOUNT_NO);
     const deploymentManager = new DeploymentManager(process.env.GITHUB_TOKEN);
     const domainManager = new DomainManager(dnsManager, deploymentManager);
     
@@ -468,7 +469,7 @@ async function validateInfrastructure() {
     }
     
     // Check DNS manager
-    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY);
+    const dnsManager = new DNSManager(process.env.SIMPLY_API_KEY, process.env.SIMPLY_ACCOUNT_NO);
     const subdomains = await dnsManager.listSubdomains();
     console.log(`✅ Found ${subdomains.length} existing subdomains`);
     
@@ -508,6 +509,7 @@ async function main() {
       console.log('  validate      - Validate infrastructure setup');
       console.log('\nEnvironment Variables:');
       console.log('  SIMPLY_API_KEY - Simply.com API key for DNS management');
+      console.log('  SIMPLY_ACCOUNT_NO - Simply.com account number for API authentication');
       console.log('  GITHUB_TOKEN   - GitHub token for deployment');
   }
 }

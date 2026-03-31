@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Admin Users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .user-list {
+            margin: 20px 0;
+        }
+        .user-item {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .user-email {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .user-role {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 3px solid #28a745;
+        }
+        .log-error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 3px solid #dc3545;
+        }
+        .log-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 3px solid #17a2b8;
+        }
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐱 Add Admin Users to Freddy System</h1>
+        
+        <div class="user-list">
+            <h3>Users to be added:</h3>
+            <div class="user-item">
+                <div class="user-email">user@test.com</div>
+                <div class="user-role">Role: user</div>
+            </div>
+            <div class="user-item">
+                <div class="user-email">admin@test.com</div>
+                <div class="user-role">Role: admin</div>
+            </div>
+            <div class="user-item">
+                <div class="user-email">superadmin@test.com</div>
+                <div class="user-role">Role: superadmin</div>
+            </div>
+            <div class="user-item">
+                <div class="user-email">Password for all users</div>
+                <div class="user-role">AngryLion</div>
+            </div>
+        </div>
+
+        <div style="text-align: center;">
+            <button id="addUsersBtn" class="btn btn-success">➕ Add All Users</button>
+            <button id="checkUsersBtn" class="btn">🔍 Check Existing Users</button>
+            <button id="clearLogBtn" class="btn btn-danger">🗑️ Clear Log</button>
+        </div>
+
+        <div id="status" class="status" style="display: none;"></div>
+
+        <div class="log" id="log">
+            <div class="log-entry log-info">Ready to add admin users. Click "Add All Users" to begin.</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, query, where, getDocs, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+        // Firebase configuration for local emulators
+        const firebaseConfig = {
+            apiKey: "demo-api-key",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Connect to local emulators
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            // Connect to Firestore emulator
+            connectFirestoreEmulator(db, '127.0.0.1', 8080);
+            // Note: Auth emulator connection removed to fix compatibility issue
+            console.log('🔧 Connected to local Firestore emulator');
+        }
+
+        // Admin users to create
+        const ADMIN_USERS = [
+            {
+                email: 'user@test.com',
+                password: 'AngryLion',
+                role: 'user',
+                displayName: 'Test User'
+            },
+            {
+                email: 'admin@test.com',
+                password: 'AngryLion',
+                role: 'admin',
+                displayName: 'Test Admin'
+            },
+            {
+                email: 'superadmin@test.com',
+                password: 'AngryLion',
+                role: 'superadmin',
+                displayName: 'Test Super Admin'
+            }
+        ];
+
+        // DOM elements
+        const addUsersBtn = document.getElementById('addUsersBtn');
+        const checkUsersBtn = document.getElementById('checkUsersBtn');
+        const clearLogBtn = document.getElementById('clearLogBtn');
+        const log = document.getElementById('log');
+        const status = document.getElementById('status');
+
+        // Logging functions
+        function addLog(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function showStatus(message, type = 'success') {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        function hideStatus() {
+            status.style.display = 'none';
+        }
+
+        // Check if user exists in Firebase Auth
+        async function checkUserExists(email) {
+            try {
+                // For emulator, we'll just try to create the user and catch if it already exists
+                // This is a simpler approach that works well with the emulator
+                return false; // Assume user doesn't exist, let createUserWithEmailAndPassword handle it
+            } catch (error) {
+                console.error('Error checking user existence:', error);
+                return false;
+            }
+        }
+
+        // Check if admin document exists
+        async function checkAdminDocExists(email) {
+            try {
+                const usersQuery = query(collection(db, 'users'), where('email', '==', email));
+                const querySnapshot = await getDocs(usersQuery);
+                return !querySnapshot.empty;
+            } catch (error) {
+                console.error('Error checking admin doc:', error);
+                return false;
+            }
+        }
+
+        // Create user in Firebase Auth
+        async function createAuthUser(userData) {
+            try {
+                const userCredential = await createUserWithEmailAndPassword(
+                    auth, 
+                    userData.email, 
+                    userData.password
+                );
+                addLog(`✅ Created Firebase Auth user: ${userData.email}`, 'success');
+                return userCredential.user;
+            } catch (error) {
+                if (error.code === 'auth/email-already-in-use') {
+                    addLog(`⚠️ User already exists in Firebase Auth: ${userData.email}`, 'info');
+                    return null;
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        // Create admin document in Firestore
+        async function createAdminDoc(userData, authUser) {
+            try {
+                const userId = authUser ? authUser.uid : `admin_${Date.now()}_${userData.email.replace('@', '_')}`;
+                
+                const adminData = {
+                    uid: userId,
+                    email: userData.email,
+                    role: userData.role,
+                    displayName: userData.displayName,
+                    createdAt: new Date(),
+                    isActive: true,
+                    permissions: getPermissionsForRole(userData.role)
+                };
+
+                // Add to users collection
+                await setDoc(doc(db, 'users', userId), {
+                    id: userId,
+                    uid: userId,
+                    email: userData.email,
+                    role: userData.role.toUpperCase(),
+                    permissions: getPermissionsForRole(userData.role),
+                    createdAt: new Date(),
+                    lastLoginAt: new Date(),
+                    profile: {
+                        displayName: userData.displayName,
+                        phone: '',
+                        preferences: {
+                            notifications: true,
+                            language: 'en',
+                            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        }
+                    },
+                    pets: [],
+                    accessTokens: [],
+                    isActive: true
+                });
+
+                // Also add to admins collection for admin panel compatibility
+                await setDoc(doc(db, 'admins', userId), adminData);
+
+                addLog(`✅ Created admin document: ${userData.email} (${userData.role})`, 'success');
+                return adminData;
+            } catch (error) {
+                addLog(`❌ Error creating admin document: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+
+        // Get permissions for role
+        function getPermissionsForRole(role) {
+            switch (role.toLowerCase()) {
+                case 'superadmin':
+                    return ['*']; // All permissions
+                case 'admin':
+                    return [
+                        'manage_pets',
+                        'manage_users',
+                        'view_all_checkins',
+                        'delete_checkins',
+                        'manage_tokens',
+                        'view_analytics',
+                        'manage_pet_domains',
+                        'manage_pet_status'
+                    ];
+                case 'user':
+                    return [
+                        'create_checkins',
+                        'view_own_checkins',
+                        'manage_own_pets',
+                        'view_public_pets'
+                    ];
+                default:
+                    return [];
+            }
+        }
+
+        // Add all users
+        async function addAllUsers() {
+            addUsersBtn.disabled = true;
+            addUsersBtn.textContent = 'Adding Users...';
+            hideStatus();
+
+            addLog('🚀 Starting to add admin users...', 'info');
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const userData of ADMIN_USERS) {
+                try {
+                    addLog(`📝 Processing user: ${userData.email}`, 'info');
+
+                    // Check if admin document already exists
+                    const docExists = await checkAdminDocExists(userData.email);
+
+                    if (docExists) {
+                        addLog(`⚠️ User document already exists: ${userData.email}`, 'info');
+                        successCount++;
+                        continue;
+                    }
+
+                    // Create Firebase Auth user (will handle if already exists)
+                    let authUser = null;
+                    try {
+                        authUser = await createAuthUser(userData);
+                    } catch (error) {
+                        if (error.code === 'auth/email-already-in-use') {
+                            addLog(`⚠️ User already exists in Firebase Auth: ${userData.email}`, 'info');
+                            // Continue with document creation
+                        } else {
+                            throw error;
+                        }
+                    }
+
+                    // Create admin document
+                    await createAdminDoc(userData, authUser);
+
+                    successCount++;
+                    addLog(`✅ Successfully processed: ${userData.email}`, 'success');
+
+                } catch (error) {
+                    errorCount++;
+                    addLog(`❌ Error processing ${userData.email}: ${error.message}`, 'error');
+                }
+            }
+
+            addLog(`🎉 Finished! Success: ${successCount}, Errors: ${errorCount}`, 'info');
+            
+            if (errorCount === 0) {
+                showStatus(`Successfully added ${successCount} users!`, 'success');
+            } else {
+                showStatus(`Completed with ${errorCount} errors. Check log for details.`, 'error');
+            }
+
+            addUsersBtn.disabled = false;
+            addUsersBtn.textContent = '➕ Add All Users';
+        }
+
+        // Check existing users
+        async function checkExistingUsers() {
+            checkUsersBtn.disabled = true;
+            checkUsersBtn.textContent = 'Checking...';
+            hideStatus();
+
+            addLog('🔍 Checking existing users...', 'info');
+
+            try {
+                // Check Firebase Auth users
+                addLog('📋 Checking Firebase Auth users...', 'info');
+                for (const userData of ADMIN_USERS) {
+                    const exists = await checkUserExists(userData.email);
+                    addLog(`${exists ? '✅' : '❌'} ${userData.email} in Firebase Auth`, exists ? 'success' : 'error');
+                }
+
+                // Check Firestore documents
+                addLog('📋 Checking Firestore documents...', 'info');
+                for (const userData of ADMIN_USERS) {
+                    const exists = await checkAdminDocExists(userData.email);
+                    addLog(`${exists ? '✅' : '❌'} ${userData.email} in Firestore`, exists ? 'success' : 'error');
+                }
+
+            } catch (error) {
+                addLog(`❌ Error checking users: ${error.message}`, 'error');
+            }
+
+            checkUsersBtn.disabled = false;
+            checkUsersBtn.textContent = '🔍 Check Existing Users';
+        }
+
+        // Clear log
+        function clearLog() {
+            log.innerHTML = '<div class="log-entry log-info">Log cleared.</div>';
+        }
+
+        // Event listeners
+        addUsersBtn.addEventListener('click', addAllUsers);
+        checkUsersBtn.addEventListener('click', checkExistingUsers);
+        clearLogBtn.addEventListener('click', clearLog);
+
+        // Initialize
+        addLog('🚀 Admin user creation tool initialized', 'info');
+        addLog('📧 Users to be created:', 'info');
+        ADMIN_USERS.forEach(user => {
+            addLog(`   • ${user.email} (${user.role})`, 'info');
+        });
+    </script>
+</body>
+</html> 

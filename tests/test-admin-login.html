@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>Admin Login Test</h1>
+    <p>Test the admin users created in Firebase Emulator</p>
+    
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" value="admin@test.com">
+    </div>
+    
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" value="AngryLion">
+    </div>
+    
+    <button onclick="testLogin()">Test Login</button>
+    <button onclick="testAllUsers()">Test All Users</button>
+    
+    <div id="result"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+        import { getFirestore, doc, getDoc, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+        // Firebase config for emulator
+        const firebaseConfig = {
+            apiKey: "demo-api-key",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Connect to emulators
+        connectAuthEmulator(auth, 'http://localhost:9099');
+        connectFirestoreEmulator(db, 'localhost', 8080);
+
+        window.testLogin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                resultDiv.innerHTML = '<div class="info">Logging in...</div>';
+                
+                // Sign in
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Get admin info from Firestore
+                const adminDoc = await getDoc(doc(db, 'admins', user.uid));
+                
+                let result = `<div class="success">
+                    <h3>✅ Login Successful!</h3>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p><strong>User ID:</strong> ${user.uid}</p>
+                `;
+                
+                if (adminDoc.exists()) {
+                    const adminData = adminDoc.data();
+                    result += `<p><strong>Role:</strong> ${adminData.role}</p>`;
+                } else {
+                    result += `<p><strong>Role:</strong> Not found in admins collection</p>`;
+                }
+                
+                result += '</div>';
+                resultDiv.innerHTML = result;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">
+                    <h3>❌ Login Failed</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p><strong>Code:</strong> ${error.code}</p>
+                </div>`;
+            }
+        };
+
+        window.testAllUsers = async function() {
+            const users = [
+                { email: 'user@test.com', password: 'AngryLion' },
+                { email: 'admin@test.com', password: 'AngryLion' },
+                { email: 'superadmin@test.com', password: 'AngryLion' }
+            ];
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="info">Testing all users...</div>';
+            
+            let results = '<div class="info"><h3>Testing All Users:</h3>';
+            
+            for (const user of users) {
+                try {
+                    const userCredential = await signInWithEmailAndPassword(auth, user.email, user.password);
+                    const adminDoc = await getDoc(doc(db, 'admins', userCredential.user.uid));
+                    
+                    if (adminDoc.exists()) {
+                        const adminData = adminDoc.data();
+                        results += `<p>✅ ${user.email} - Role: ${adminData.role}</p>`;
+                    } else {
+                        results += `<p>⚠️ ${user.email} - Auth OK, but not in admins collection</p>`;
+                    }
+                } catch (error) {
+                    results += `<p>❌ ${user.email} - ${error.message}</p>`;
+                }
+            }
+            
+            results += '</div>';
+            resultDiv.innerHTML = results;
+        };
+    </script>
+</body>
+</html> 

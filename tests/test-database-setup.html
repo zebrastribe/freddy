@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Database Setup Test - v2</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            border-color: #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb; 
+        }
+        .info { 
+            background-color: #d1ecf1; 
+            border-color: #bee5eb; 
+        }
+        button { 
+            padding: 10px 15px; 
+            margin: 5px; 
+            border: none; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            font-size: 14px;
+        }
+        .btn-primary { 
+            background-color: #007bff; 
+            color: white; 
+        }
+        .btn-success { 
+            background-color: #28a745; 
+            color: white; 
+        }
+        .btn-danger { 
+            background-color: #dc3545; 
+            color: white; 
+        }
+        .btn-warning { 
+            background-color: #ffc107; 
+            color: white; 
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status.success { color: #28a745; }
+        .status.error { color: #dc3545; }
+        .status.info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Database Setup Test</h1>
+        <p>This page tests the database setup for the multi-user, multi-pet system.</p>
+        
+        <div class="test-section info">
+            <h3>📋 Test Overview</h3>
+            <p>This test will:</p>
+            <ul>
+                <li>Create a super admin user</li>
+                <li>Create Freddy pet with domain configuration</li>
+                <li>Migrate existing check-ins to include petId</li>
+                <li>Migrate Freddy status to new pet_status collection</li>
+                <li>Migrate FCM tokens and access tokens</li>
+                <li>Create domain record for Freddy</li>
+                <li>Validate all migrations</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h3>🚀 Run Database Setup</h3>
+            <button id="runSetup" class="btn-primary">Run Database Setup</button>
+            <button id="validateSetup" class="btn-success" disabled>Validate Setup</button>
+            <button id="enableValidate" class="btn-primary">Enable Validate Button</button>
+            <button id="migrateCheckIns" class="btn-warning">Migrate Check-ins</button>
+            <button id="clearLog" class="btn-danger">Clear Log</button>
+            
+            <div id="status" class="status info">Ready to run database setup</div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 Results</h3>
+            <div id="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Log</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, writeBatch, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { setupDatabaseCollections, validateSetup, migrateCheckIns } from './setup-database-collections.js';
+        
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
+            measurementId: "G-XMHHKFJ9QW"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Authenticate anonymously
+        signInAnonymously(auth).then(() => {
+            log('✅ Authenticated anonymously');
+        }).catch((error) => {
+            log(`❌ Authentication failed: ${error.message}`);
+        });
+        
+        // DOM elements
+        const runSetupBtn = document.getElementById('runSetup');
+        const validateSetupBtn = document.getElementById('validateSetup');
+        const enableValidateBtn = document.getElementById('enableValidate');
+        const migrateCheckInsBtn = document.getElementById('migrateCheckIns');
+        const clearLogBtn = document.getElementById('clearLog');
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const logDiv = document.getElementById('log');
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        // Update status
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Clear log
+        clearLogBtn.addEventListener('click', () => {
+            logDiv.textContent = '';
+            resultsDiv.innerHTML = '';
+            updateStatus('Log cleared', 'info');
+        });
+        
+        // Enable validate button manually
+        enableValidateBtn.addEventListener('click', () => {
+            validateSetupBtn.disabled = false;
+            log('✅ Validate button enabled manually');
+            updateStatus('Validate button enabled - you can now validate the setup', 'info');
+        });
+        
+        // Migrate check-ins manually
+        migrateCheckInsBtn.addEventListener('click', async () => {
+            try {
+                log('🔄 Migrating check-ins...');
+                updateStatus('Migrating check-ins...', 'info');
+                
+                // Get Freddy pet ID
+                const petsSnapshot = await getDocs(collection(db, 'pets'));
+                const freddyPet = petsSnapshot.docs.find(doc => doc.data().name === 'Freddy');
+                
+                if (!freddyPet) {
+                    throw new Error('Freddy pet not found - run setup first');
+                }
+                
+                const migratedCount = await migrateCheckIns(freddyPet.id);
+                log(`✅ Migrated ${migratedCount} check-ins`);
+                updateStatus(`Successfully migrated ${migratedCount} check-ins`, 'success');
+                
+                // Re-validate to see the results
+                setTimeout(async () => {
+                    log('🔍 Re-validating after migration...');
+                    const validation = await validateSetup();
+                    log('📊 Updated validation results:', validation);
+                }, 1000);
+                
+            } catch (error) {
+                log(`❌ Error migrating check-ins: ${error.message}`);
+                updateStatus('Failed to migrate check-ins', 'error');
+            }
+        });
+        
+        // Run database setup
+        runSetupBtn.addEventListener('click', async () => {
+            try {
+                runSetupBtn.disabled = true;
+                updateStatus('Running database setup...', 'info');
+                log('🚀 Starting database setup...');
+                
+                const setupResult = await setupDatabaseCollections();
+                
+                if (setupResult.success) {
+                    updateStatus('Database setup completed successfully!', 'success');
+                    log('✅ Database setup completed successfully!');
+                    log(`📊 Setup Summary:`);
+                    log(`• Super Admin: ${setupResult.superAdmin.id}`);
+                    log(`• Freddy Pet: ${setupResult.freddyPet.id}`);
+                    log(`• Check-ins migrated: ${setupResult.stats.checkIns}`);
+                    log(`• FCM tokens migrated: ${setupResult.stats.fcmTokens}`);
+                    log(`• Access tokens migrated: ${setupResult.stats.accessTokens}`);
+                    
+                    // Display results
+                    resultsDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Setup Results</h4>
+                            <p><strong>Super Admin:</strong> ${setupResult.superAdmin.id}</p>
+                            <p><strong>Freddy Pet:</strong> ${setupResult.freddyPet.id}</p>
+                            <p><strong>Check-ins migrated:</strong> ${setupResult.stats.checkIns}</p>
+                            <p><strong>FCM tokens migrated:</strong> ${setupResult.stats.fcmTokens}</p>
+                            <p><strong>Access tokens migrated:</strong> ${setupResult.stats.accessTokens}</p>
+                        </div>
+                    `;
+                    
+                    validateSetupBtn.disabled = false;
+                } else {
+                    throw new Error('Setup returned success: false');
+                }
+                
+            } catch (error) {
+                updateStatus('Database setup failed!', 'error');
+                log(`❌ Database setup failed: ${error.message}`);
+                console.error('Setup error:', error);
+            } finally {
+                runSetupBtn.disabled = false;
+            }
+        });
+        
+        // Validate setup
+        validateSetupBtn.addEventListener('click', async () => {
+            try {
+                validateSetupBtn.disabled = true;
+                updateStatus('Validating setup...', 'info');
+                log('🔍 Validating database setup...');
+                
+                const validationResult = await validateSetup();
+                
+                log('📊 Validation Results:');
+                Object.entries(validationResult).forEach(([key, value]) => {
+                    const status = typeof value === 'boolean' ? (value ? '✅' : '❌') : (value > 0 ? '✅' : '❌');
+                    log(`  ${status} ${key}: ${value}`);
+                });
+                
+                const allValid = Object.values(validationResult).every(result => 
+                    typeof result === 'boolean' ? result : result > 0
+                );
+                
+                if (allValid) {
+                    updateStatus('All validation checks passed!', 'success');
+                    log('✅ All validation checks passed!');
+                    
+                    resultsDiv.innerHTML += `
+                        <div class="success">
+                            <h4>✅ Validation Results</h4>
+                            <p>All checks passed successfully!</p>
+                        </div>
+                    `;
+                } else {
+                    updateStatus('Some validation checks failed!', 'error');
+                    log('⚠️ Some validation checks failed!');
+                    
+                    let validationHtml = '<div class="error"><h4>⚠️ Validation Results</h4>';
+                    Object.entries(validationResult).forEach(([key, value]) => {
+                        const status = typeof value === 'boolean' ? (value ? '✅' : '❌') : (value > 0 ? '✅' : '❌');
+                        validationHtml += `<p>${status} ${key}: ${value}</p>`;
+                    });
+                    validationHtml += '</div>';
+                    
+                    resultsDiv.innerHTML += validationHtml;
+                }
+                
+            } catch (error) {
+                updateStatus('Validation failed!', 'error');
+                log(`❌ Validation failed: ${error.message}`);
+                console.error('Validation error:', error);
+            } finally {
+                validateSetupBtn.disabled = false;
+            }
+        });
+        
+        // Initialize
+        log('🧪 Database setup test page loaded');
+        log('Click "Run Database Setup" to begin the migration');
+        
+        // Check if setup has already been completed
+        async function checkExistingSetup() {
+            try {
+                log('🔍 Checking if setup has already been completed...');
+                const validationResult = await validateSetup();
+                
+                // Check if we have the basic collections and data
+                if (validationResult.pets > 0 && validationResult.pet_status > 0 && validationResult.domains > 0) {
+                    log('✅ Setup appears to be already completed!');
+                    log('📊 Existing setup found:');
+                    Object.entries(validationResult).forEach(([key, value]) => {
+                        const status = typeof value === 'boolean' ? (value ? '✅' : '❌') : (value > 0 ? '✅' : '❌');
+                        log(`  ${status} ${key}: ${value}`);
+                    });
+                    
+                    updateStatus('Setup already completed - you can validate or run setup again', 'info');
+                    validateSetupBtn.disabled = false;
+                    
+                    // Show existing results
+                    resultsDiv.innerHTML = `
+                        <div class="info">
+                            <h4>ℹ️ Existing Setup Detected</h4>
+                            <p>The database setup appears to have already been completed.</p>
+                            <p>You can click "Validate Setup" to verify everything is working correctly.</p>
+                        </div>
+                    `;
+                } else {
+                    log('ℹ️ No existing setup found - ready to run setup');
+                }
+            } catch (error) {
+                log(`⚠️ Could not check existing setup: ${error.message}`);
+                log('ℹ️ Ready to run setup');
+            }
+        }
+        
+        // Check existing setup on page load
+        checkExistingSetup();
+    </script>
+</body>
+</html> 

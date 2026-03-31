@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Test - Trace</title>
+  <script type="module" src="/@vite/client"></script>
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div class="p-8">
+      <h1 class="text-2xl font-bold mb-4">Firebase Test</h1>
+      <div id="status" class="mb-4">
+        <p>Checking Firebase connection...</p>
+      </div>
+      <div id="results" class="space-y-2">
+        <!-- Results will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db, messaging } from './src/shared/firebase.js'
+    
+    const statusDiv = document.getElementById('status')
+    const resultsDiv = document.getElementById('results')
+    
+    async function testFirebase() {
+      const results = []
+      
+      try {
+        // Test Firebase App
+        results.push({ name: 'Firebase App', status: '✅ Initialized' })
+        
+        // Test Auth
+        if (auth) {
+          results.push({ name: 'Firebase Auth', status: '✅ Available' })
+        } else {
+          results.push({ name: 'Firebase Auth', status: '❌ Not available' })
+        }
+        
+        // Test Firestore
+        if (db) {
+          results.push({ name: 'Firestore', status: '✅ Available' })
+        } else {
+          results.push({ name: 'Firestore', status: '❌ Not available' })
+        }
+        
+        // Test Messaging
+        if (messaging) {
+          results.push({ name: 'Firebase Messaging', status: '✅ Available' })
+        } else {
+          results.push({ name: 'Firebase Messaging', status: '❌ Not available' })
+        }
+        
+        statusDiv.innerHTML = '<p class="text-green-600">✅ Firebase test completed</p>'
+        
+      } catch (error) {
+        results.push({ name: 'Error', status: `❌ ${error.message}` })
+        statusDiv.innerHTML = '<p class="text-red-600">❌ Firebase test failed</p>'
+      }
+      
+      // Display results
+      results.forEach(result => {
+        const div = document.createElement('div')
+        div.className = 'p-2 bg-gray-100 rounded'
+        div.innerHTML = `<strong>${result.name}:</strong> ${result.status}`
+        resultsDiv.appendChild(div)
+      })
+    }
+    
+    // Run test after a short delay
+    setTimeout(testFirebase, 1000)
+  </script>
+</body>
+</html> 

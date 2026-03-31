@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Manager Debug Test</title>
+</head>
+<body>
+    <h1>Auth Manager Debug Test</h1>
+    <div id="output"></div>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { AuthManager } from './js/features/users/auth_manager.js';
+        import { PermissionMiddleware } from './js/features/users/permission_middleware.js';
+        import { getConfig } from './js/config.js';
+        
+        const output = document.getElementById('output');
+        
+        function log(message) {
+            console.log(message);
+            output.innerHTML += '<p>' + message + '</p>';
+        }
+        
+        async function testAuthManager() {
+            try {
+                log('🚀 Starting Auth Manager test...');
+                
+                // Initialize Firebase
+                const config = getConfig();
+                const firebaseApp = initializeApp(config.firebase);
+                log('✅ Firebase initialized');
+                
+                // Create AuthManager
+                const authManager = new AuthManager(firebaseApp);
+                log('✅ AuthManager created');
+                
+                // Check methods
+                log('AuthManager methods:');
+                log('- isAuthenticated: ' + typeof authManager.isAuthenticated);
+                log('- getCurrentUser: ' + typeof authManager.getCurrentUser);
+                log('- getUserRole: ' + typeof authManager.getUserRole);
+                log('- isAdmin: ' + typeof authManager.isAdmin);
+                
+                // Wait for initialization
+                log('⏳ Waiting for AuthManager initialization...');
+                await authManager.waitForInitialization();
+                log('✅ AuthManager initialized');
+                
+                // Test methods
+                log('Testing AuthManager methods:');
+                log('- isAuthenticated(): ' + authManager.isAuthenticated());
+                log('- getCurrentUser(): ' + JSON.stringify(authManager.getCurrentUser()));
+                log('- getUserRole(): ' + authManager.getUserRole());
+                log('- isAdmin(): ' + authManager.isAdmin());
+                
+                // Create PermissionMiddleware
+                log('⏳ Creating PermissionMiddleware...');
+                const permissionMiddleware = new PermissionMiddleware(authManager);
+                log('✅ PermissionMiddleware created');
+                
+                // Test PermissionMiddleware methods
+                log('Testing PermissionMiddleware methods:');
+                log('- getAccessiblePets(): ' + JSON.stringify(permissionMiddleware.getAccessiblePets()));
+                log('- canAccessPet("test"): ' + permissionMiddleware.canAccessPet('test'));
+                
+                log('🎉 All tests passed!');
+                
+            } catch (error) {
+                log('❌ Error: ' + error.message);
+                log('Stack: ' + error.stack);
+            }
+        }
+        
+        testAuthManager();
+    </script>
+</body>
+</html> 

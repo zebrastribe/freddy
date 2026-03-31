@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head><title>Check-in Test</title></head>
+<body>
+<h1>Check-in Test</h1>
+<button onclick="testCheckIns()">Test Check-ins</button>
+<div id="result"></div>
+
+<script>
+async function testCheckIns() {
+    const result = document.getElementById('result');
+    result.innerHTML = '<p>Testing...</p>';
+    
+    try {
+        // Check if we're on a pet page
+        if (!window.currentPetInfo) {
+            result.innerHTML = '<p style="color: red;">❌ No current pet info. Please navigate to a pet page first.</p>';
+            return;
+        }
+        
+        const petUUID = window.currentPetInfo.petUUID;
+        result.innerHTML += `<p>✅ Pet UUID: ${petUUID}</p>`;
+        
+        // Check if app is available
+        if (!window.app) {
+            result.innerHTML += '<p style="color: red;">❌ App not available</p>';
+            return;
+        }
+        
+        // Test loading check-ins
+        if (typeof window.app.loadAndRenderCheckIns === 'function') {
+            result.innerHTML += '<p>✅ Calling loadAndRenderCheckIns...</p>';
+            await window.app.loadAndRenderCheckIns();
+            result.innerHTML += '<p>✅ loadAndRenderCheckIns completed</p>';
+        } else {
+            result.innerHTML += '<p style="color: red;">❌ loadAndRenderCheckIns method not available</p>';
+        }
+        
+    } catch (error) {
+        result.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+    }
+}
+</script>
+</body>
+</html>

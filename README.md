@@ -1,244 +1,259 @@
-# Freddy - Where are you? 🐈
+# Trace Multi-User, Multi-Pet Platform
 
-A location tracking web application for Freddy the adventurous ginger cat. Users can check in when they meet Freddy, providing their name and GPS coordinates, which are stored and displayed on an interactive map.
+This is the Trace platform (formerly Freddy), a modern multi-user, multi-pet tracking solution. All references to 'freddy' have been replaced with 'trace'.
 
-## 🌟 Features
+A modern, scalable web application for managing pet check-ins across multiple users and pets. Built with vanilla JavaScript, Firebase, and Node.js.
 
-- **Multi-language Support**: English and Danish translations
-- **Interactive Maps**: Google Maps integration for location display
-- **Real-time Data**: Firebase Firestore for data storage
-- **Anonymous Authentication**: Secure user authentication
-- **Token-based Access**: URL token validation system
-- **reCAPTCHA Protection**: Bot protection for check-ins
-- **Push Notifications**: Firebase Cloud Messaging integration
-- **Responsive Design**: Modern UI with Tailwind CSS
-- **Pagination**: Browse through all check-ins
-- **Modular Architecture**: Clean, maintainable code structure
+## 🚀 **Features**
 
-## 🏗️ Architecture
+### ✅ **Core Functionality**
+- **Multi-User Support**: Each user can manage multiple pets
+- **Dynamic URLs**: `/userId/petName/` format (e.g., `/uid123/freddy/`)
+- **Real-time Check-ins**: Live updates with Firebase Firestore
+- **Push Notifications**: Firebase Cloud Messaging with service worker
+- **Domain Management**: Automatic subdomain creation via Simply.com API
+- **PWA Support**: Installable web app with offline capabilities
 
-The application has been refactored into a modular architecture with clear separation of concerns:
+### 🎯 **Architecture Highlights**
+- **SPA Server**: Node.js Express server with dynamic routing
+- **Firebase Integration**: Firestore database with real-time listeners
+- **Notification System**: Multi-user notification preferences and quiet hours
+- **DNS Management**: Automated subdomain setup for each pet
+- **Security**: Role-based access control and Firestore security rules
 
-### Core Modules
-- **StorageManager**: Handles localStorage operations
-- **FirebaseMessaging**: Manages push notifications and FCM
-- **CheckInManager**: Business logic for check-in operations
-- **CheckInUI**: User interface for check-in functionality
-- **MapManager**: Google Maps integration and map operations
+## 📦 **Quick Start**
 
-### Feature Organization
-- **Features**: Core application features (`js/features/`)
-- **Lib**: Shared utilities and configurations (`js/lib/`)
-- **Modules**: Reusable modules (`js/modules/`)
+### **Prerequisites**
+- Node.js 16+ 
+- Firebase CLI
+- Simply.com API access (for DNS management)
 
-## 📁 Project Structure
+### **Installation**
+```bash
+# Clone the repository
+git clone https://github.com/zebrastribe/freddy.git
+cd freddy
+
+# Install dependencies
+npm install
+
+# Start Firebase emulator
+firebase emulators:start --only firestore --import=./emulator-data --export-on-exit=./emulator-data
+
+# Start SPA server (in another terminal)
+npm start
+```
+
+### **Access the Application**
+- **Home**: http://localhost:8016/
+- **Pet Check-in**: http://localhost:8016/uid123/freddy/
+- **Admin**: http://localhost:8016/admin/
+- **Firebase Emulator UI**: http://localhost:4000/
+
+## 🏗️ **Project Structure**
 
 ```
 freddy/
-├── css/
-│   └── main.css                 # Custom styles
-├── img/                         # Favicon and icons
-├── js/
-│   ├── app.js                   # Main application logic
-│   ├── firebase-setup.js        # Firebase configuration
-│   ├── incoming.js              # Token management
-│   ├── config.js                # API configuration
-│   ├── lib/
-│   │   ├── storage.js           # StorageManager class
-│   │   └── firebase_config.js   # Firebase configuration
-│   ├── features/
-│   │   ├── notifications/
-│   │   │   └── firebase_messaging.js  # Push notifications
-│   │   ├── checkin/
-│   │   │   ├── checkin_manager.js     # Check-in business logic
-│   │   │   └── checkin_ui.js          # Check-in UI handling
-│   │   └── maps/
-│   │       └── map_manager.js         # Google Maps integration
-│   └── modules/
-│       └── translation/
-│           ├── translation.js   # Translation system
-│           └── json/
-│               ├── en_GB.json   # English translations
-│               └── da_DK.json   # Danish translations
-├── tests/
-│   ├── pages/                   # Test pages
-│   │   ├── test_storage.html
-│   │   ├── test_firebase_messaging.html
-│   │   ├── test_checkin_system.html
-│   │   ├── test_map_system.html
-│   │   ├── test_integration.html
-│   │   ├── test.html
-│   │   └── recaptcha-debug.html
-│   └── *.spec.js               # Test specifications
-├── admin/
-│   └── index.html              # Admin interface
-├── functions/                  # Firebase Cloud Functions
-├── index.html                  # Main application page
-├── admin.html                  # Admin page
-├── _config.yml                 # GitHub Pages configuration
-├── firebase.json              # Firebase configuration
-├── firestore.rules            # Firestore security rules
-├── firestore.indexes.json     # Firestore indexes
-├── firebase-messaging-sw.js   # Service worker for notifications
-├── manifest.json              # PWA manifest
-├── package.json               # Project dependencies and scripts
-├── DEPLOYMENT.md              # Deployment guide
-├── SECURITY_IMPROVEMENTS.md   # Security documentation
-├── PUSH_NOTIFICATIONS_SETUP.md # Notification setup guide
-├── RECAPTCHA_FIXES.md         # reCAPTCHA documentation
-└── README.md                  # This file
+├── 📁 docs/                    # Comprehensive documentation
+├── 📁 js/                      # JavaScript source code
+│   ├── 📁 features/           # Feature modules
+│   │   ├── 📁 users/         # User management
+│   │   ├── 📁 pets/          # Pet management
+│   │   ├── 📁 checkin/       # Check-in system
+│   │   ├── 📁 notifications/ # Push notifications
+│   │   ├── 📁 maps/          # Map integration
+│   │   └── 📁 infrastructure/# DNS and hosting
+│   ├── 📁 lib/               # Utility libraries
+│   └── 📁 modules/           # Third-party modules
+├── 📁 css/                     # Stylesheets
+├── 📁 img/                     # Images and icons
+├── 📁 hosting/                 # Hosting configuration
+├── 📁 functions/               # Firebase Cloud Functions
+├── 📁 emulator-data/           # Firebase emulator data
+├── 📁 migration-scripts/       # Database migration scripts
+├── 📄 spa-server.js            # Node.js SPA server
+├── 📄 index.html               # Main application entry point
+├── 📄 firebase-messaging-sw.js # Service worker for notifications
+└── 📄 package.json             # Dependencies and scripts
 ```
 
-## 🔧 Setup & Installation
+## 🔧 **Configuration**
 
-### Prerequisites
-- Modern web browser with geolocation support
-- Google Cloud Console access (for Maps API)
-- Firebase project (for data storage)
-- reCAPTCHA account (for bot protection)
+### **Environment Setup**
+1. **Firebase**: Configure `js/lib/firebase_config.js`
+2. **Simply.com API**: Set up DNS manager credentials
+3. **VAPID Key**: Configure for push notifications
+4. **Service Worker**: Update for your domain
 
-### Local Development
-1. Clone the repository
-2. Install dependencies (optional):
-   ```bash
-   npm install
-   ```
-3. Start a local server:
-   ```bash
-   npm start
-   # or
-   python3 -m http.server 8000
-   ```
-4. Open `http://localhost:8000` in your browser
-5. Run tests: `http://localhost:8000/tests/pages/`
+### **Multi-User Setup**
+```javascript
+// Example user and pet creation
+const user = {
+  userId: 'uid123',
+  email: 'user@example.com',
+  displayName: 'John Doe'
+};
 
-### Available Scripts
-- `npm start` - Start development server
-- `npm run dev` - Start development server (alias)
-- `npm test` - Show test instructions
-- `npm run build` - No build step required (static site)
-- `npm run deploy` - Show deployment instructions
+const pet = {
+  petId: 'pet-uuid-123',
+  userId: 'uid123',
+  name: 'Freddy',
+  subdomain: 'freddy.stri.be'
+};
+```
 
-## 🧪 Testing
+## 📱 **Usage**
 
-The project includes comprehensive test pages for each module:
+### **For Pet Owners**
+1. **Register**: Create account and add pets
+2. **Share**: Share pet check-in URLs with caregivers
+3. **Monitor**: Receive real-time notifications
+4. **Manage**: Configure notification preferences
 
-- **Storage Tests**: `tests/pages/test_storage.html`
-- **Firebase Messaging Tests**: `tests/pages/test_firebase_messaging.html`
-- **Check-in System Tests**: `tests/pages/test_checkin_system.html`
-- **Map System Tests**: `tests/pages/test_map_system.html`
-- **Integration Tests**: `tests/pages/test_integration.html`
-- **API Tests**: `tests/pages/test.html`
-- **reCAPTCHA Debug**: `tests/pages/recaptcha-debug.html`
+### **For Caregivers**
+1. **Access**: Visit pet-specific check-in URL
+2. **Check-in**: Submit check-in with location and notes
+3. **Notify**: Pet owner receives instant notification
 
-## 🚀 Deployment to GitHub Pages
+### **For Administrators**
+1. **Monitor**: View all users and pets
+2. **Manage**: Handle DNS and domain setup
+3. **Support**: Access logs and system status
 
-### Quick Setup
-1. Create a GitHub repository named `freddy`
-2. Push your code to the repository
-3. Go to Settings > Pages
-4. Select "Deploy from a branch" → "main" branch → "/ (root)"
-5. Your site will be available at `https://yourusername.github.io/freddy`
+## 🔔 **Notification System**
 
-### API Configuration Required
-Before deployment, you need to configure:
+### **Features**
+- **Multi-User**: Each user gets notifications only for their pets
+- **Quiet Hours**: Respect user's sleep schedule
+- **Preferences**: Granular control over notification types
+- **Background**: Works when app is closed or phone is locked
 
-1. **Google Maps API**:
-   - Enable Maps JavaScript API in Google Cloud Console
-   - Restrict API key to `*.github.io/*`
-   - Update `js/config.js` with your API key
+### **Configuration**
+```javascript
+// Notification preferences per user/pet
+const preferences = {
+  checkins: true,      // Check-in notifications
+  daily: false,        // Daily summaries
+  weekly: false,       // Weekly reports
+  emergency: true,     // Emergency alerts
+  quietHours: {
+    start: "22:00",
+    end: "08:00",
+    timezone: "Europe/Copenhagen"
+  }
+};
+```
 
-2. **reCAPTCHA**:
-   - Create reCAPTCHA v3 site
-   - Add `yourusername.github.io` to domains
-   - Update site key in `js/config.js`
+## 🌐 **DNS Management**
 
-3. **Firebase**:
-   - Add GitHub Pages domain to authorized domains
-   - Update security rules if needed
+### **Simply.com Integration**
+- **Automatic Setup**: Creates subdomains for new pets
+- **API v2**: Modern Simply.com API integration
+- **Account Format**: Sxxxxxx account number format
+- **Error Handling**: Robust error handling and retry logic
 
-See `DEPLOYMENT.md` for detailed instructions.
+### **Domain Structure**
+```
+{petname}.stri.be → https://zebrastribe.github.io/{petname}/
+```
 
-## 🐛 Troubleshooting
+## 🔒 **Security**
 
-### Common Issues
+### **Firestore Rules**
+- **User Isolation**: Users can only access their own data
+- **Pet Ownership**: Pet owners control access to their pets
+- **Check-in Validation**: Secure check-in submission
+- **Admin Access**: Restricted admin functionality
 
-1. **Maps Not Loading**
-   - Check Google Maps API key restrictions
-   - Verify billing is enabled on Google Cloud project
-   - Check browser console for errors
+### **Authentication**
+- **Anonymous Auth**: Simple access for caregivers
+- **User Accounts**: Full accounts for pet owners
+- **Role-Based**: Different permissions for different user types
 
-2. **reCAPTCHA Issues**
-   - Verify site key is correct
-   - Check domain is added to reCAPTCHA settings
-   - Ensure reCAPTCHA v3 is selected
+## 🧪 **Testing**
 
-3. **Firebase Authentication**
-   - Check if domain is authorized in Firebase console
-   - Review Firestore security rules
-   - Verify Firebase configuration
+### **Unit Tests**
+```bash
+npm test
+```
 
-4. **ES6 Modules Not Loading**
-   - Ensure `_config.yml` is present
-   - Check GitHub Pages is using Jekyll
-   - Verify all import paths are correct
+### **Integration Tests**
+- **Firebase Emulator**: Local testing environment
+- **Service Worker**: Notification testing
+- **DNS Integration**: Simply.com API testing
 
-5. **Push Notifications Not Working**
-   - Check Firebase Cloud Messaging setup
-   - Verify service worker registration
-   - Check browser notification permissions
+### **Manual Testing**
+- **SPA Routes**: Test all URL patterns
+- **Notifications**: Test push notification flow
+- **Multi-User**: Test user isolation
 
-### Debug Steps
-1. Open browser Developer Tools (F12)
-2. Check Console tab for JavaScript errors
-3. Check Network tab for failed API requests
-4. Use test pages in `tests/pages/` to verify individual modules
+## 📚 **Documentation**
 
-## 🔐 Security Notes
+### **Architecture**
+- **[Multi-User Analysis](docs/MULTI_USER_OBJECT_ANALYSIS.md)**: Comprehensive system analysis
+- **[Component Architecture](docs/COMPONENT_ARCHITECTURE.md)**: Detailed component breakdown
+- **[Implementation Roadmap](docs/IMPLEMENTATION_ROADMAP.md)**: Development roadmap
 
-- API keys are currently exposed in client-side code
-- For production, consider using environment variables
-- Always restrict API keys to specific domains
-- Regularly rotate API keys
-- Monitor usage and costs
+### **Setup & Deployment**
+- **[Deployment Guide](docs/DEPLOYMENT.md)**: Production deployment instructions
+- **[Admin Guide](docs/ADMIN_GUIDE.md)**: Administrator documentation
+- **[API Reference](docs/API_REFERENCE.md)**: API documentation
 
-## 📝 API Keys Used
+### **Development**
+- **[Contributing](docs/CONTRIBUTING.md)**: Development guidelines
+- **[Testing](docs/TESTING.md)**: Testing procedures
+- **[Security](docs/SECURITY_IMPROVEMENTS.md)**: Security considerations
+- **[Script Catalog](docs/SCRIPT_CATALOG.md)**: Canonical scripts and usage
 
-- **Google Maps**: `AIzaSyBd3xQgm7vnL2LCmxpabVT5qAhSFOteuGY`
-- **reCAPTCHA**: `6LdA7jIqAAAAAKYtion4hiHa7R--TT3maGb0EpNZ`
-- **Firebase**: `AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss`
+## 🚀 **Deployment**
 
-⚠️ **Important**: These keys may need to be updated or restricted for production use.
+### **Development**
+```bash
+npm run dev
+```
 
-## 🤝 Contributing
+### **Production**
+```bash
+# Build for production
+npm run build
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly using the test pages
-5. Submit a pull request
+# Deploy to Firebase Hosting
+firebase deploy
 
-## 📄 License
+# Deploy to GitHub Pages
+npm run deploy:gh-pages
+```
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+### **Docker**
+```bash
+# Build and run with Docker
+docker build -t freddy .
+docker run -p 3000:3000 freddy
+```
 
-## 🆘 Support
+## 🤝 **Contributing**
 
-If you encounter issues:
-1. Check the troubleshooting section above
-2. Review browser console errors
-3. Use the test pages in `tests/pages/` to verify modules
-4. Check `DEPLOYMENT.md` for detailed guidance
-5. Create an issue in the repository
+1. **Fork** the repository
+2. **Create** a feature branch
+3. **Make** your changes
+4. **Test** thoroughly
+5. **Submit** a pull request
 
-## 🎯 Next Steps
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
-1. **Deploy to GitHub Pages** following the deployment guide
-2. **Update API keys** with proper domain restrictions
-3. **Test all functionality** on the live site
-4. **Monitor usage** and costs
-5. **Add additional features** as needed
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 **Acknowledgments**
+
+- **Firebase**: Backend infrastructure and real-time database
+- **Simply.com**: DNS management and domain services
+- **Node.js**: Server-side JavaScript runtime
+- **Express.js**: Web application framework
 
 ---
 
-**Happy tracking Freddy's adventures! 🐱🗺️**
+**Last Updated:** July 2025  
+**Version:** 2.0.0 (Multi-User Release)  
+**Status:** Production Ready

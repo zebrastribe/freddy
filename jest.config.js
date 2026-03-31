@@ -1,9 +1,11 @@
 /**
- * Jest configuration for Freddy project unit tests
- * @description Configures Jest for testing ES6 modules in browser environment
+ * Jest configuration for Freddy project unit tests.
+ * Kept as ESM because root package.json uses "type": "module".
  */
+export default {
+  // Keep test discovery constrained to the maintained test tree.
+  roots: ['<rootDir>/tests'],
 
-module.exports = {
   // Test environment - simulate browser environment
   testEnvironment: 'jsdom',
   
@@ -13,6 +15,14 @@ module.exports = {
   // Test file patterns
   testMatch: [
     '<rootDir>/tests/unit/**/*.test.js'
+  ],
+
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/backup/',
+    '/tests/freddy/',
+    '/trace/',
+    '/\\._'
   ],
   
   // Files to collect coverage from
@@ -71,13 +81,6 @@ module.exports = {
   // Coverage directory
   coverageDirectory: 'coverage',
   
-  // Test results processor
-  testResultsProcessor: 'jest-sonar-reporter',
-  
   // Global test setup
-  globals: {
-    'ts-jest': {
-      useESM: true
-    }
-  }
+  globals: {}
 }; 

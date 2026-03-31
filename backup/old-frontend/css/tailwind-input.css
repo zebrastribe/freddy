@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@source "../admin";
+@source "../js";
+@source "../index.html";
+
+@import "tailwindcss";
+@source "../admin";
+@source "../js";
+@source "../index.html";
+
+/* Custom animations */
+@layer utilities {
+  .animate-fade-in-scale {
+    animation: fadeInScale 1.5s ease-in forwards;
+  }
+  .animate-spin-slow {
+    animation: spin 2s linear infinite;
+  }
+}
+
+@keyframes fadeInScale {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+} 

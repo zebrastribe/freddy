@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprehensive Test Suite - Freddy Pet Tracker</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+        }
+        .success { 
+            background-color: #d4edda; 
+            border-color: #c3e6cb; 
+        }
+        .error { 
+            background-color: #f8d7da; 
+            border-color: #f5c6cb; 
+        }
+        .info { 
+            background-color: #d1ecf1; 
+            border-color: #bee5eb; 
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-color: #ffeaa7;
+        }
+        button { 
+            padding: 10px 15px; 
+            margin: 5px; 
+            border: none; 
+            border-radius: 3px; 
+            cursor: pointer; 
+            font-size: 14px;
+        }
+        .btn-primary { 
+            background-color: #007bff; 
+            color: white; 
+        }
+        .btn-success { 
+            background-color: #28a745; 
+            color: white; 
+        }
+        .btn-danger { 
+            background-color: #dc3545; 
+            color: white; 
+        }
+        .btn-warning { 
+            background-color: #ffc107; 
+            color: white; 
+        }
+        .btn-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .status.success { color: #28a745; }
+        .status.error { color: #dc3545; }
+        .status.info { color: #17a2b8; }
+        .status.warning { color: #856404; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-card {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        .test-card h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #28a745;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Comprehensive Test Suite - Freddy Pet Tracker</h1>
+        <p>This test suite consolidates all testing functionality for the multi-user, multi-pet system.</p>
+        
+        <div class="test-section info">
+            <h3>📋 Test Overview</h3>
+            <p>This comprehensive test suite includes:</p>
+            <ul>
+                <li><strong>Firebase Emulator Connection Tests</strong> - Verify emulator connectivity</li>
+                <li><strong>Admin User Management Tests</strong> - Test admin user creation and authentication</li>
+                <li><strong>Database Setup Tests</strong> - Test database collections and migrations</li>
+                <li><strong>Check-in System Tests</strong> - Test check-in creation and retrieval</li>
+                <li><strong>Pet Management Tests</strong> - Test pet creation and management</li>
+                <li><strong>Authentication Tests</strong> - Test user authentication flows</li>
+                <li><strong>Permission Tests</strong> - Test role-based access control</li>
+                <li><strong>Notification Tests</strong> - Test notification system</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>🚀 Quick Test Runner</h3>
+            <button id="runAllTests" class="btn-primary">Run All Tests</button>
+            <button id="runEmulatorTests" class="btn-info">Test Emulator Connection</button>
+            <button id="runAdminTests" class="btn-success">Test Admin Users</button>
+            <button id="runCheckinTests" class="btn-warning">Test Check-ins</button>
+            <button id="clearLog" class="btn-danger">Clear Log</button>
+            
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+            <div id="status" class="status info">Ready to run tests</div>
+        </div>
+
+        <div class="test-grid">
+            <div class="test-card">
+                <h4>🔧 Firebase Setup</h4>
+                <button onclick="testFirebaseConnection()" class="btn-primary">Test Connection</button>
+                <button onclick="testEmulatorConnection()" class="btn-info">Test Emulator</button>
+                <button onclick="testFirestoreAccess()" class="btn-success">Test Firestore</button>
+            </div>
+
+            <div class="test-card">
+                <h4>👤 Admin Users</h4>
+                <button onclick="createAdminUsers()" class="btn-primary">Create Admin Users</button>
+                <button onclick="testAdminLogin()" class="btn-success">Test Login</button>
+                <button onclick="testAllUsers()" class="btn-info">Test All Users</button>
+            </div>
+
+            <div class="test-card">
+                <h4>📊 Database</h4>
+                <button onclick="setupDatabase()" class="btn-primary">Setup Database</button>
+                <button onclick="validateDatabase()" class="btn-success">Validate Setup</button>
+                <button onclick="migrateCheckIns()" class="btn-warning">Migrate Check-ins</button>
+            </div>
+
+            <div class="test-card">
+                <h4>📍 Check-ins</h4>
+                <button onclick="testCheckinCreation()" class="btn-primary">Create Check-in</button>
+                <button onclick="testCheckinRetrieval()" class="btn-success">Get Check-ins</button>
+                <button onclick="testPetSpecificCheckins()" class="btn-info">Pet Check-ins</button>
+            </div>
+
+            <div class="test-card">
+                <h4>🐾 Pet Management</h4>
+                <button onclick="testPetCreation()" class="btn-primary">Create Pet</button>
+                <button onclick="testPetRetrieval()" class="btn-success">Get Pets</button>
+                <button onclick="testPetUUID()" class="btn-info">Test UUID</button>
+            </div>
+
+            <div class="test-card">
+                <h4>🔐 Authentication</h4>
+                <button onclick="testAnonymousAuth()" class="btn-primary">Anonymous Auth</button>
+                <button onclick="testUserAuth()" class="btn-success">User Auth</button>
+                <button onclick="testPermissions()" class="btn-info">Permissions</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Test Results</h3>
+            <div id="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📝 Log</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, getDoc, doc, setDoc, writeBatch, query, where, orderBy, limit, addDoc, serverTimestamp, connectFirestoreEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+        import { getAuth, signInAnonymously, signInWithEmailAndPassword, createUserWithEmailAndPassword, connectAuthEmulator } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
+            measurementId: "G-XMHHKFJ9QW"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        // Connect to emulators
+        if (window.location.hostname === "localhost") {
+            connectFirestoreEmulator(db, "localhost", 8080);
+            connectAuthEmulator(auth, "http://localhost:9099");
+            log('✅ Connected to Firebase emulators');
+        }
+        
+        // Global variables
+        let testResults = [];
+        let currentTest = 0;
+        let totalTests = 0;
+        
+        // DOM elements
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const logDiv = document.getElementById('log');
+        const progressFill = document.getElementById('progressFill');
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logDiv.textContent += logEntry;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        // Update status
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        // Update progress
+        function updateProgress(current, total) {
+            const percentage = (current / total) * 100;
+            progressFill.style.width = `${percentage}%`;
+        }
+        
+        // Add test result
+        function addTestResult(testName, success, message, details = null) {
+            testResults.push({
+                name: testName,
+                success: success,
+                message: message,
+                details: details,
+                timestamp: new Date()
+            });
+            
+            const resultClass = success ? 'success' : 'error';
+            const resultIcon = success ? '✅' : '❌';
+            
+            log(`${resultIcon} ${testName}: ${message}`, success ? 'success' : 'error');
+            
+            if (details) {
+                log(`   Details: ${JSON.stringify(details, null, 2)}`, 'info');
+            }
+        }
+        
+        // Display results
+        function displayResults() {
+            const successCount = testResults.filter(r => r.success).length;
+            const totalCount = testResults.length;
+            
+            let html = `
+                <h4>Test Summary: ${successCount}/${totalCount} passed</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Test</th>
+                            <th>Status</th>
+                            <th>Message</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            testResults.forEach(result => {
+                const status = result.success ? '✅ Pass' : '❌ Fail';
+                const rowClass = result.success ? 'success' : 'error';
+                html += `
+                    <tr class="${rowClass}">
+                        <td>${result.name}</td>
+                        <td>${status}</td>
+                        <td>${result.message}</td>
+                        <td>${result.timestamp.toLocaleTimeString()}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Clear log
+        document.getElementById('clearLog').addEventListener('click', () => {
+            logDiv.textContent = '';
+            resultsDiv.innerHTML = '';
+            testResults = [];
+            updateStatus('Log cleared', 'info');
+            updateProgress(0, 1);
+        });
+        
+        // Firebase Connection Tests
+        window.testFirebaseConnection = async function() {
+            try {
+                log('🧪 Testing Firebase connection...');
+                
+                // Test basic Firebase initialization
+                if (app && db && auth) {
+                    addTestResult('Firebase Initialization', true, 'Firebase app, Firestore, and Auth initialized successfully');
+                } else {
+                    addTestResult('Firebase Initialization', false, 'Failed to initialize Firebase components');
+                    return;
+                }
+                
+                // Test Firestore connection
+                const testDoc = await setDoc(doc(db, 'test', 'connection-test'), {
+                    message: 'Connection test',
+                    timestamp: serverTimestamp()
+                });
+                
+                addTestResult('Firestore Write', true, 'Successfully wrote to Firestore');
+                
+                // Test Firestore read
+                const readDoc = await getDoc(doc(db, 'test', 'connection-test'));
+                if (readDoc.exists()) {
+                    addTestResult('Firestore Read', true, 'Successfully read from Firestore');
+                } else {
+                    addTestResult('Firestore Read', false, 'Failed to read from Firestore');
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Firebase Connection', false, `Connection failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Emulator Connection Test
+        window.testEmulatorConnection = async function() {
+            try {
+                log('🧪 Testing emulator connection...');
+                
+                // Test if we're connected to emulators
+                const isLocalhost = window.location.hostname === "localhost";
+                if (isLocalhost) {
+                    addTestResult('Emulator Environment', true, 'Running on localhost - emulator mode');
+                } else {
+                    addTestResult('Emulator Environment', false, 'Not running on localhost - production mode');
+                }
+                
+                // Test emulator-specific functionality
+                const testDoc = await setDoc(doc(db, 'emulator-test', 'test'), {
+                    message: 'Emulator test',
+                    timestamp: serverTimestamp()
+                });
+                
+                addTestResult('Emulator Write', true, 'Successfully wrote to emulator');
+                
+                const readDoc = await getDoc(doc(db, 'emulator-test', 'test'));
+                if (readDoc.exists()) {
+                    addTestResult('Emulator Read', true, 'Successfully read from emulator');
+                } else {
+                    addTestResult('Emulator Read', false, 'Failed to read from emulator');
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Emulator Connection', false, `Emulator test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Firestore Access Test
+        window.testFirestoreAccess = async function() {
+            try {
+                log('🧪 Testing Firestore access...');
+                
+                // Test collection access
+                const collections = ['clicks', 'pets', 'admins', 'users'];
+                
+                for (const collectionName of collections) {
+                    try {
+                        const snapshot = await getDocs(collection(db, collectionName));
+                        addTestResult(`Collection Access: ${collectionName}`, true, `Found ${snapshot.size} documents`);
+                    } catch (error) {
+                        addTestResult(`Collection Access: ${collectionName}`, false, `Access failed: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Firestore Access', false, `Access test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Admin User Management
+        window.createAdminUsers = async function() {
+            try {
+                log('🧪 Creating admin users...');
+                
+                const users = [
+                    { email: 'user@test.com', role: 'user' },
+                    { email: 'admin@test.com', role: 'admin' },
+                    { email: 'superadmin@test.com', role: 'superadmin' }
+                ];
+                
+                const password = 'AngryLion';
+                
+                for (const user of users) {
+                    try {
+                        // Create user in Auth
+                        const userCredential = await createUserWithEmailAndPassword(auth, user.email, password);
+                        const userId = userCredential.user.uid;
+                        
+                        // Add to Firestore admins collection
+                        await setDoc(doc(db, 'admins', userId), {
+                            email: user.email,
+                            role: user.role,
+                            userId: userId,
+                            createdAt: serverTimestamp()
+                        });
+                        
+                        addTestResult(`Admin User Creation: ${user.email}`, true, `Created with role: ${user.role}`);
+                        
+                    } catch (error) {
+                        if (error.code === 'auth/email-already-in-use') {
+                            addTestResult(`Admin User Creation: ${user.email}`, true, `User already exists`);
+                        } else {
+                            addTestResult(`Admin User Creation: ${user.email}`, false, `Creation failed: ${error.message}`);
+                        }
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Admin User Creation', false, `Admin creation failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Admin Login Test
+        window.testAdminLogin = async function() {
+            try {
+                log('🧪 Testing admin login...');
+                
+                const testUsers = [
+                    { email: 'user@test.com', password: 'AngryLion' },
+                    { email: 'admin@test.com', password: 'AngryLion' },
+                    { email: 'superadmin@test.com', password: 'AngryLion' }
+                ];
+                
+                for (const user of testUsers) {
+                    try {
+                        const userCredential = await signInWithEmailAndPassword(auth, user.email, user.password);
+                        const adminDoc = await getDoc(doc(db, 'admins', userCredential.user.uid));
+                        
+                        if (adminDoc.exists()) {
+                            const adminData = adminDoc.data();
+                            addTestResult(`Admin Login: ${user.email}`, true, `Login successful - Role: ${adminData.role}`);
+                        } else {
+                            addTestResult(`Admin Login: ${user.email}`, true, `Login successful - No admin record`);
+                        }
+                        
+                    } catch (error) {
+                        addTestResult(`Admin Login: ${user.email}`, false, `Login failed: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Admin Login', false, `Login test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Test All Users
+        window.testAllUsers = async function() {
+            try {
+                log('🧪 Testing all users...');
+                
+                const users = [
+                    { email: 'user@test.com', password: 'AngryLion' },
+                    { email: 'admin@test.com', password: 'AngryLion' },
+                    { email: 'superadmin@test.com', password: 'AngryLion' }
+                ];
+                
+                for (const user of users) {
+                    try {
+                        const userCredential = await signInWithEmailAndPassword(auth, user.email, user.password);
+                        const adminDoc = await getDoc(doc(db, 'admins', userCredential.user.uid));
+                        
+                        if (adminDoc.exists()) {
+                            const adminData = adminDoc.data();
+                            addTestResult(`User Test: ${user.email}`, true, `Auth OK - Role: ${adminData.role}`);
+                        } else {
+                            addTestResult(`User Test: ${user.email}`, true, `Auth OK - No admin record`);
+                        }
+                        
+                    } catch (error) {
+                        addTestResult(`User Test: ${user.email}`, false, `Test failed: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('All Users Test', false, `User test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Database Setup
+        window.setupDatabase = async function() {
+            try {
+                log('🧪 Setting up database...');
+                
+                // Create essential collections
+                const collections = [
+                    { name: 'admins', doc: 'setup-test', data: { setup: true, timestamp: serverTimestamp() } },
+                    { name: 'pets', doc: 'setup-test', data: { setup: true, timestamp: serverTimestamp() } },
+                    { name: 'clicks', doc: 'setup-test', data: { setup: true, timestamp: serverTimestamp() } },
+                    { name: 'users', doc: 'setup-test', data: { setup: true, timestamp: serverTimestamp() } }
+                ];
+                
+                for (const collection of collections) {
+                    try {
+                        await setDoc(doc(db, collection.name, collection.doc), collection.data);
+                        addTestResult(`Database Setup: ${collection.name}`, true, 'Collection setup successful');
+                    } catch (error) {
+                        addTestResult(`Database Setup: ${collection.name}`, false, `Setup failed: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Database Setup', false, `Database setup failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Validate Database
+        window.validateDatabase = async function() {
+            try {
+                log('🧪 Validating database...');
+                
+                const collections = ['admins', 'pets', 'clicks', 'users'];
+                
+                for (const collectionName of collections) {
+                    try {
+                        const snapshot = await getDocs(collection(db, collectionName));
+                        addTestResult(`Database Validation: ${collectionName}`, true, `Collection accessible - ${snapshot.size} documents`);
+                    } catch (error) {
+                        addTestResult(`Database Validation: ${collectionName}`, false, `Validation failed: ${error.message}`);
+                    }
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Database Validation', false, `Database validation failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Migrate Check-ins
+        window.migrateCheckIns = async function() {
+            try {
+                log('🧪 Migrating check-ins...');
+                
+                // Get all check-ins
+                const snapshot = await getDocs(collection(db, 'clicks'));
+                let migratedCount = 0;
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!data.petId) {
+                        // Add default petId if missing
+                        setDoc(doc.ref, { ...data, petId: 'default-pet' }, { merge: true });
+                        migratedCount++;
+                    }
+                });
+                
+                addTestResult('Check-in Migration', true, `Migrated ${migratedCount} check-ins`);
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Check-in Migration', false, `Migration failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Check-in Tests
+        window.testCheckinCreation = async function() {
+            try {
+                log('🧪 Testing check-in creation...');
+                
+                const testCheckin = {
+                    name: 'Test User',
+                    latitude: 55.6761,
+                    longitude: 12.5683,
+                    petId: 'test-pet-123',
+                    timestamp: serverTimestamp(),
+                    domain: window.location.hostname
+                };
+                
+                const docRef = await addDoc(collection(db, 'clicks'), testCheckin);
+                addTestResult('Check-in Creation', true, `Created check-in with ID: ${docRef.id}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Check-in Creation', false, `Creation failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testCheckinRetrieval = async function() {
+            try {
+                log('🧪 Testing check-in retrieval...');
+                
+                const snapshot = await getDocs(collection(db, 'clicks'));
+                const checkins = [];
+                
+                snapshot.forEach(doc => {
+                    checkins.push({ id: doc.id, ...doc.data() });
+                });
+                
+                addTestResult('Check-in Retrieval', true, `Retrieved ${checkins.length} check-ins`);
+                
+                // Display recent check-ins
+                const recentCheckins = checkins.slice(0, 5);
+                if (recentCheckins.length > 0) {
+                    let tableHtml = `
+                        <h4>Recent Check-ins:</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Pet ID</th>
+                                    <th>Location</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    recentCheckins.forEach(checkin => {
+                        tableHtml += `
+                            <tr>
+                                <td>${checkin.id}</td>
+                                <td>${checkin.name || 'N/A'}</td>
+                                <td>${checkin.petId || 'N/A'}</td>
+                                <td>${checkin.latitude?.toFixed(4)}, ${checkin.longitude?.toFixed(4)}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHtml += '</tbody></table>';
+                    log(tableHtml, 'info');
+                }
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Check-in Retrieval', false, `Retrieval failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testPetSpecificCheckins = async function() {
+            try {
+                log('🧪 Testing pet-specific check-ins...');
+                
+                const petId = 'test-pet-123';
+                const q = query(
+                    collection(db, 'clicks'),
+                    where('petId', '==', petId),
+                    orderBy('timestamp', 'desc'),
+                    limit(10)
+                );
+                
+                const snapshot = await getDocs(q);
+                const checkins = [];
+                
+                snapshot.forEach(doc => {
+                    checkins.push({ id: doc.id, ...doc.data() });
+                });
+                
+                addTestResult('Pet-Specific Check-ins', true, `Found ${checkins.length} check-ins for pet: ${petId}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Pet-Specific Check-ins', false, `Test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Pet Management Tests
+        window.testPetCreation = async function() {
+            try {
+                log('🧪 Testing pet creation...');
+                
+                const testPet = {
+                    name: 'Test Pet',
+                    userId: 'test-user-123',
+                    petUUID: 'test-pet-uuid-123',
+                    createdAt: serverTimestamp(),
+                    domain: window.location.hostname
+                };
+                
+                await setDoc(doc(db, 'pets', testPet.petUUID), testPet);
+                addTestResult('Pet Creation', true, `Created pet: ${testPet.name}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Pet Creation', false, `Creation failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testPetRetrieval = async function() {
+            try {
+                log('🧪 Testing pet retrieval...');
+                
+                const snapshot = await getDocs(collection(db, 'pets'));
+                const pets = [];
+                
+                snapshot.forEach(doc => {
+                    pets.push({ id: doc.id, ...doc.data() });
+                });
+                
+                addTestResult('Pet Retrieval', true, `Retrieved ${pets.length} pets`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Pet Retrieval', false, `Retrieval failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testPetUUID = async function() {
+            try {
+                log('🧪 Testing pet UUID generation...');
+                
+                // Generate a test UUID
+                const timestamp = Date.now();
+                const userId = 'test-user-123';
+                const petName = 'test-pet';
+                const petUUID = `pet_${userId}_${petName}_${timestamp}`;
+                
+                addTestResult('Pet UUID Generation', true, `Generated UUID: ${petUUID}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Pet UUID Generation', false, `UUID generation failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Authentication Tests
+        window.testAnonymousAuth = async function() {
+            try {
+                log('🧪 Testing anonymous authentication...');
+                
+                const userCredential = await signInAnonymously(auth);
+                const user = userCredential.user;
+                
+                addTestResult('Anonymous Authentication', true, `Signed in anonymously - UID: ${user.uid}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Anonymous Authentication', false, `Authentication failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testUserAuth = async function() {
+            try {
+                log('🧪 Testing user authentication...');
+                
+                const userCredential = await signInWithEmailAndPassword(auth, 'admin@test.com', 'AngryLion');
+                const user = userCredential.user;
+                
+                addTestResult('User Authentication', true, `Signed in as: ${user.email}`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('User Authentication', false, `Authentication failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        window.testPermissions = async function() {
+            try {
+                log('🧪 Testing permissions...');
+                
+                // Test admin collection access
+                const adminSnapshot = await getDocs(collection(db, 'admins'));
+                addTestResult('Admin Collection Access', true, `Can access admins collection - ${adminSnapshot.size} documents`);
+                
+                // Test pets collection access
+                const petsSnapshot = await getDocs(collection(db, 'pets'));
+                addTestResult('Pets Collection Access', true, `Can access pets collection - ${petsSnapshot.size} documents`);
+                
+                displayResults();
+                
+            } catch (error) {
+                addTestResult('Permissions Test', false, `Permissions test failed: ${error.message}`);
+                displayResults();
+            }
+        };
+        
+        // Run All Tests
+        document.getElementById('runAllTests').addEventListener('click', async () => {
+            log('🚀 Running all tests...');
+            testResults = [];
+            
+            const tests = [
+                { name: 'Firebase Connection', func: testFirebaseConnection },
+                { name: 'Emulator Connection', func: testEmulatorConnection },
+                { name: 'Firestore Access', func: testFirestoreAccess },
+                { name: 'Create Admin Users', func: createAdminUsers },
+                { name: 'Admin Login', func: testAdminLogin },
+                { name: 'Database Setup', func: setupDatabase },
+                { name: 'Database Validation', func: validateDatabase },
+                { name: 'Check-in Creation', func: testCheckinCreation },
+                { name: 'Check-in Retrieval', func: testCheckinRetrieval },
+                { name: 'Pet Creation', func: testPetCreation },
+                { name: 'Pet Retrieval', func: testPetRetrieval },
+                { name: 'Anonymous Auth', func: testAnonymousAuth },
+                { name: 'User Auth', func: testUserAuth },
+                { name: 'Permissions', func: testPermissions }
+            ];
+            
+            totalTests = tests.length;
+            currentTest = 0;
+            
+            for (const test of tests) {
+                currentTest++;
+                updateProgress(currentTest, totalTests);
+                updateStatus(`Running test ${currentTest}/${totalTests}: ${test.name}`);
+                
+                try {
+                    await test.func();
+                } catch (error) {
+                    addTestResult(test.name, false, `Test failed: ${error.message}`);
+                }
+            }
+            
+            updateStatus('All tests completed');
+            displayResults();
+        });
+        
+        // Individual test runners
+        document.getElementById('runEmulatorTests').addEventListener('click', async () => {
+            testResults = [];
+            await testFirebaseConnection();
+            await testEmulatorConnection();
+            await testFirestoreAccess();
+            displayResults();
+        });
+        
+        document.getElementById('runAdminTests').addEventListener('click', async () => {
+            testResults = [];
+            await createAdminUsers();
+            await testAdminLogin();
+            await testAllUsers();
+            displayResults();
+        });
+        
+        document.getElementById('runCheckinTests').addEventListener('click', async () => {
+            testResults = [];
+            await testCheckinCreation();
+            await testCheckinRetrieval();
+            await testPetSpecificCheckins();
+            displayResults();
+        });
+        
+        // Initialize
+        log('✅ Test suite loaded successfully');
+        log('�� Available tests: Firebase connection, Admin users, Database setup, Check-ins, Pet management, Authentication');
+        log('🚀 Click "Run All Tests" to execute the complete test suite');
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Check-in Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .error { color: red; }
+        .success { color: green; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Add Check-in Data for uid123/freddy</h1>
+    
+    <div>
+        <label for="checkinName">Check-in Name:</label>
+        <input type="text" id="checkinName" value="Freddy Check-in" />
+        
+        <label for="checkinCount">Number of Check-ins:</label>
+        <input type="number" id="checkinCount" value="5" min="1" max="20" />
+        
+        <button onclick="addCheckins()">Add Check-ins</button>
+        <button onclick="checkExistingData()">Check Existing Data</button>
+    </div>
+    
+    <div id="output"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, addDoc, query, where, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: 'AIzaSyBxJjAoqqT-HcMjcTtDbFZBHoPqbwqXjzE',
+            authDomain: 'tracker-6a648.firebaseapp.com',
+            projectId: 'tracker-6a648',
+            storageBucket: 'tracker-6a648.appspot.com',
+            messagingSenderId: '123456789',
+            appId: '1:123456789:web:abcdef123456'
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // In browser environment, Firebase automatically connects to emulator on localhost
+        // No need to call db.settings() - it's only available in Node.js
+
+        window.checkExistingData = async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<div class="result">Checking existing data...</div>';
+            
+            try {
+                // First find the pet
+                const petsSnap = await getDocs(collection(db, 'pets'));
+                let petId = null;
+                let petData = null;
+                
+                petsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.name && data.name.toLowerCase() === 'freddy' && data.userId === 'uid123') {
+                        petId = doc.id;
+                        petData = data;
+                    }
+                });
+                
+                if (!petId) {
+                    output.innerHTML = '<div class="result error">No pet found for uid123/freddy. Please add the pet first.</div>';
+                    return;
+                }
+                
+                output.innerHTML = `<div class="result success">Found pet: ${petData.name} (ID: ${petId})</div>`;
+                
+                // Now check for existing check-ins
+                const checkinsSnap = await getDocs(query(collection(db, 'clicks'), where('petId', '==', petId)));
+                
+                if (checkinsSnap.empty) {
+                    output.innerHTML += '<div class="result">No check-ins found for this pet</div>';
+                } else {
+                    let html = `<div class="result success">Found ${checkinsSnap.size} existing check-ins:</div>`;
+                    checkinsSnap.forEach(doc => {
+                        const data = doc.data();
+                        const timestamp = data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp);
+                        html += `
+                            <div class="result">
+                                <strong>ID:</strong> ${doc.id}<br>
+                                <strong>Name:</strong> ${data.name || 'N/A'}<br>
+                                <strong>Timestamp:</strong> ${timestamp.toLocaleString()}<br>
+                                <strong>PetID:</strong> ${data.petId}
+                            </div>
+                        `;
+                    });
+                    output.innerHTML += html;
+                }
+            } catch (error) {
+                output.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+            }
+        };
+
+        window.addCheckins = async function() {
+            const output = document.getElementById('output');
+            const checkinName = document.getElementById('checkinName').value;
+            const checkinCount = parseInt(document.getElementById('checkinCount').value);
+            
+            if (!checkinName || checkinCount < 1) {
+                output.innerHTML = '<div class="result error">Please enter a valid name and count</div>';
+                return;
+            }
+            
+            output.innerHTML = '<div class="result">Adding check-ins...</div>';
+            
+            try {
+                // First find the pet
+                const petsSnap = await getDocs(collection(db, 'pets'));
+                let petId = null;
+                
+                petsSnap.forEach(doc => {
+                    const data = doc.data();
+                    if (data.name && data.name.toLowerCase() === 'freddy' && data.userId === 'uid123') {
+                        petId = doc.id;
+                    }
+                });
+                
+                if (!petId) {
+                    output.innerHTML = '<div class="result error">No pet found for uid123/freddy. Please add the pet first using the test-check-pets.html page.</div>';
+                    return;
+                }
+                
+                output.innerHTML = `<div class="result success">Found pet with ID: ${petId}</div>`;
+                
+                // Add multiple check-ins with different timestamps
+                const addedCheckins = [];
+                for (let i = 0; i < checkinCount; i++) {
+                    const checkinData = {
+                        petId: petId,
+                        name: `${checkinName} #${i + 1}`,
+                        timestamp: serverTimestamp(),
+                        // Add some random data to make it more realistic
+                        location: `Location ${i + 1}`,
+                        notes: `Check-in note ${i + 1}`
+                    };
+                    
+                    const docRef = await addDoc(collection(db, 'clicks'), checkinData);
+                    addedCheckins.push({
+                        id: docRef.id,
+                        name: checkinData.name,
+                        petId: petId
+                    });
+                }
+                
+                let html = `<div class="result success">Successfully added ${addedCheckins.length} check-ins:</div>`;
+                addedCheckins.forEach(checkin => {
+                    html += `
+                        <div class="result">
+                            <strong>ID:</strong> ${checkin.id}<br>
+                            <strong>Name:</strong> ${checkin.name}<br>
+                            <strong>PetID:</strong> ${checkin.petId}
+                        </div>
+                    `;
+                });
+                output.innerHTML += html;
+                
+            } catch (error) {
+                output.innerHTML = `<div class="result error">Error adding check-ins: ${error.message}</div>`;
+            }
+        };
+
+        // Auto-check existing data on page load
+        window.addEventListener('load', checkExistingData);
+    </script>
+</body>
+</html> 

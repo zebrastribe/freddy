@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role-Based DNS Information Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        pre { background-color: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Role-Based DNS Information Test</h1>
+    <p>This test verifies that DNS cleanup information is only shown to super admins during pet deletion.</p>
+
+    <div class="test-section info">
+        <h3>Test Overview</h3>
+        <p>This test simulates pet deletion for different user roles to verify:</p>
+        <ul>
+            <li>✅ Super admins see DNS cleanup information</li>
+            <li>✅ Regular users/admins don't see DNS details</li>
+            <li>✅ Confirmation dialogs are role-appropriate</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Controls</h3>
+        <button class="btn-primary" onclick="testSuperAdmin()">Test Super Admin</button>
+        <button class="btn-primary" onclick="testAdmin()">Test Admin</button>
+        <button class="btn-primary" onclick="testUser()">Test Regular User</button>
+        <button class="btn-danger" onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div id="results" class="test-section">
+        <h3>Test Results</h3>
+        <div id="test-output">No tests run yet.</div>
+    </div>
+
+    <script>
+        // Mock PetUI class for testing
+        class MockPetUI {
+            constructor(userRole) {
+                this.userRole = userRole;
+                this.petManager = {
+                    permissionMiddleware: {
+                        isSuperAdmin: () => this.userRole === 'SUPER_ADMIN'
+                    }
+                };
+            }
+
+            // Mock the confirmation dialog logic
+            getDeleteConfirmationMessage() {
+                let confirmMessage = `Are you sure you want to delete this pet?
+
+This will:
+• Delete the pet from the database
+• Delete all associated check-ins
+• Remove pet status information`;
+
+                // Only show DNS cleanup info to super admins
+                if (this.petManager.permissionMiddleware.isSuperAdmin()) {
+                    confirmMessage += `
+
+Note: DNS cleanup (subdomain deletion) requires manual action in Simply.com dashboard.`;
+                }
+
+                confirmMessage += `
+
+This action cannot be undone.`;
+
+                return confirmMessage;
+            }
+
+            // Mock the success message logic
+            getDeleteSuccessMessage(result) {
+                let successMessage = `Pet "${result.petName}" deleted successfully!`;
+                
+                // Only show DNS cleanup info to super admins
+                if (result.dnsCleanup === 'manual_required' && this.petManager.permissionMiddleware.isSuperAdmin()) {
+                    successMessage += `\n\n⚠️ Manual DNS cleanup required: Please delete the DNS record for ${result.petName}.stri.be in your Simply.com dashboard.`;
+                }
+                
+                if (result.relatedDataCleanup === 'completed') {
+                    successMessage += '\n\n✅ All related data has been cleaned up:';
+                    
+                    if (result.cleanupResults) {
+                        const results = result.cleanupResults;
+                        if (results.checkIns > 0) successMessage += `\n• ${results.checkIns} check-ins deleted`;
+                        if (results.tokens > 0) successMessage += `\n• ${results.tokens} access tokens deleted`;
+                        if (results.domainRecords > 0) successMessage += `\n• Domain record deleted`;
+                    }
+                }
+                
+                return successMessage;
+            }
+        }
+
+        // Test data
+        const testResult = {
+            petName: 'anna',
+            dnsCleanup: 'manual_required',
+            relatedDataCleanup: 'completed',
+            cleanupResults: {
+                checkIns: 15,
+                tokens: 3,
+                domainRecords: 1
+            }
+        };
+
+        function testSuperAdmin() {
+            const petUI = new MockPetUI('SUPER_ADMIN');
+            const confirmation = petUI.getDeleteConfirmationMessage();
+            const success = petUI.getDeleteSuccessMessage(testResult);
+            
+            displayTestResult('SUPER_ADMIN', confirmation, success, true);
+        }
+
+        function testAdmin() {
+            const petUI = new MockPetUI('ADMIN');
+            const confirmation = petUI.getDeleteConfirmationMessage();
+            const success = petUI.getDeleteSuccessMessage(testResult);
+            
+            displayTestResult('ADMIN', confirmation, success, false);
+        }
+
+        function testUser() {
+            const petUI = new MockPetUI('USER');
+            const confirmation = petUI.getDeleteConfirmationMessage();
+            const success = petUI.getDeleteSuccessMessage(testResult);
+            
+            displayTestResult('USER', confirmation, success, false);
+        }
+
+        function displayTestResult(role, confirmation, success, shouldShowDNS) {
+            const output = document.getElementById('test-output');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const dnsStatus = shouldShowDNS ? '✅ Shows DNS info' : '❌ Hides DNS info';
+            const dnsCheck = shouldShowDNS ? 
+                (confirmation.includes('DNS cleanup') && success.includes('DNS record')) : 
+                (!confirmation.includes('DNS cleanup') && !success.includes('DNS record'));
+            
+            const statusClass = dnsCheck ? 'success' : 'error';
+            
+            const resultHTML = `
+                <div class="test-section ${statusClass}">
+                    <h4>🧪 Test: ${role} (${timestamp})</h4>
+                    <p><strong>Expected:</strong> ${dnsStatus}</p>
+                    <p><strong>Result:</strong> ${dnsCheck ? '✅ PASS' : '❌ FAIL'}</p>
+                    
+                    <details>
+                        <summary>View Confirmation Dialog</summary>
+                        <pre>${confirmation}</pre>
+                    </details>
+                    
+                    <details>
+                        <summary>View Success Message</summary>
+                        <pre>${success}</pre>
+                    </details>
+                </div>
+            `;
+            
+            output.innerHTML = resultHTML + output.innerHTML;
+        }
+
+        function clearResults() {
+            document.getElementById('test-output').innerHTML = 'No tests run yet.';
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testSuperAdmin();
+                testAdmin();
+                testUser();
+            }, 500);
+        });
+    </script>
+</body>
+</html> 

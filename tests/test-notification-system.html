@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Multi-Pet Notification System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        .warning { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .pet-card { border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .notification-status { font-weight: bold; }
+        .status-granted { color: green; }
+        .status-denied { color: red; }
+        .status-default { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Test Multi-Pet Notification System</h1>
+    
+    <div class="test-section info">
+        <h2>📋 Test Overview</h2>
+        <p>This test verifies that the notification system works correctly in a multi-pet setup:</p>
+        <ul>
+            <li>✅ Notifications include the correct pet name</li>
+            <li>✅ Notifications are sent to the right users (pet owners + admin)</li>
+            <li>✅ Click actions navigate to the correct pet page</li>
+            <li>✅ FCM tokens are properly stored with pet-specific information</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Setup & Status</h2>
+        <button onclick="checkSystemStatus()">Check System Status</button>
+        <button onclick="requestNotificationPermission()">Request Notification Permission</button>
+        <button onclick="checkFCMTokens()">Check FCM Tokens</button>
+        <div id="statusOutput"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🐱 Test Pets</h2>
+        <div id="petsList"></div>
+        <button onclick="loadTestPets()">Load Test Pets</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Notification Testing</h2>
+        <div id="notificationTestArea">
+            <p>Select a pet and create a test check-in to trigger notifications:</p>
+            <select id="testPetSelect">
+                <option value="">Select a pet...</option>
+            </select>
+            <button onclick="createTestCheckIn()">Create Test Check-in</button>
+            <button onclick="testForegroundNotification()">Test Foreground Notification</button>
+        </div>
+        <div id="notificationOutput"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔍 Debug Information</h2>
+        <button onclick="showDebugInfo()">Show Debug Info</button>
+        <div id="debugOutput"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js';
+        import { getFirestore, collection, getDocs, doc, setDoc, addDoc } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBwLFO04OQgD6LjYdYlrEXb73THTp5H0Ss",
+            authDomain: "tracker-6a648.firebaseapp.com",
+            projectId: "tracker-6a648",
+            storageBucket: "tracker-6a648.appspot.com",
+            messagingSenderId: "789878332530",
+            appId: "1:789878332530:web:9bd999d86df0fe9caef6eb",
+            measurementId: "G-XMHHKFJ9QW"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // Test pets data
+        const testPets = [
+            { id: 'pet_freddy_uid123', name: 'Freddy', userId: 'uid123', ownerName: 'Jesper' },
+            { id: 'pet_luna_uid456', name: 'Luna', userId: 'uid456', ownerName: 'Anna' },
+            { id: 'pet_max_uid789', name: 'Max', userId: 'uid789', ownerName: 'Peter' }
+        ];
+
+        window.testNotificationSystem = {
+            app,
+            db,
+            auth,
+            testPets,
+            
+            async init() {
+                try {
+                    // Sign in anonymously for testing
+                    await signInAnonymously(auth);
+                    console.log('✅ Signed in anonymously for testing');
+                    
+                    // Load test pets
+                    await this.loadTestPets();
+                    
+                    console.log('✅ Test notification system initialized');
+                } catch (error) {
+                    console.error('❌ Test initialization failed:', error);
+                }
+            },
+
+            async loadTestPets() {
+                try {
+                    const petsList = document.getElementById('petsList');
+                    const testPetSelect = document.getElementById('testPetSelect');
+                    
+                    petsList.innerHTML = '';
+                    testPetSelect.innerHTML = '<option value="">Select a pet...</option>';
+                    
+                    for (const pet of testPets) {
+                        // Create pet card
+                        const petCard = document.createElement('div');
+                        petCard.className = 'pet-card';
+                        petCard.innerHTML = `
+                            <h3>🐱 ${pet.name}</h3>
+                            <p><strong>Owner:</strong> ${pet.ownerName} (${pet.userId})</p>
+                            <p><strong>Pet ID:</strong> ${pet.id}</p>
+                            <button onclick="testNotificationSystem.createTestCheckIn('${pet.id}')">Create Check-in</button>
+                        `;
+                        petsList.appendChild(petCard);
+                        
+                        // Add to select dropdown
+                        const option = document.createElement('option');
+                        option.value = pet.id;
+                        option.textContent = `${pet.name} (${pet.ownerName})`;
+                        testPetSelect.appendChild(option);
+                    }
+                    
+                    console.log('✅ Test pets loaded');
+                } catch (error) {
+                    console.error('❌ Failed to load test pets:', error);
+                }
+            },
+
+            async createTestCheckIn(petId = null) {
+                try {
+                    if (!petId) {
+                        petId = document.getElementById('testPetSelect').value;
+                        if (!petId) {
+                            alert('Please select a pet first');
+                            return;
+                        }
+                    }
+
+                    const pet = testPets.find(p => p.id === petId);
+                    if (!pet) {
+                        throw new Error('Pet not found');
+                    }
+
+                    // Create test check-in data
+                    const checkInData = {
+                        name: 'Test User',
+                        latitude: 55.6761 + (Math.random() - 0.5) * 0.01, // Random location in Copenhagen
+                        longitude: 12.5683 + (Math.random() - 0.5) * 0.01,
+                        timestamp: new Date(),
+                        petId: petId,
+                        userId: 'test_user_' + Date.now(),
+                        domain: window.location.hostname,
+                        metadata: {
+                            test: true,
+                            petName: pet.name,
+                            petOwner: pet.ownerName
+                        }
+                    };
+
+                    // Add to Firestore
+                    const checkInRef = await addDoc(collection(db, 'clicks'), checkInData);
+                    
+                    const output = document.getElementById('notificationOutput');
+                    output.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Test Check-in Created</h3>
+                            <p><strong>Pet:</strong> ${pet.name} (${pet.ownerName})</p>
+                            <p><strong>Check-in ID:</strong> ${checkInRef.id}</p>
+                            <p><strong>Location:</strong> ${checkInData.latitude.toFixed(6)}, ${checkInData.longitude.toFixed(6)}</p>
+                            <p><strong>Time:</strong> ${checkInData.timestamp.toLocaleString('da-DK')}</p>
+                            <p><em>This should trigger a notification with the pet name "${pet.name}"</em></p>
+                        </div>
+                    `;
+
+                    console.log('✅ Test check-in created:', checkInRef.id);
+                } catch (error) {
+                    console.error('❌ Failed to create test check-in:', error);
+                    const output = document.getElementById('notificationOutput');
+                    output.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                }
+            },
+
+            async checkSystemStatus() {
+                try {
+                    const statusOutput = document.getElementById('statusOutput');
+                    
+                    // Check notification permission
+                    const permission = Notification.permission;
+                    const permissionStatus = permission === 'granted' ? 
+                        '<span class="notification-status status-granted">GRANTED</span>' :
+                        permission === 'denied' ? 
+                        '<span class="notification-status status-denied">DENIED</span>' :
+                        '<span class="notification-status status-default">DEFAULT</span>';
+                    
+                    // Check if service worker is registered
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    const swStatus = registration ? '✅ Registered' : '❌ Not registered';
+                    
+                    // Check Firebase auth
+                    const user = auth.currentUser;
+                    const authStatus = user ? `✅ Signed in (${user.uid})` : '❌ Not signed in';
+                    
+                    statusOutput.innerHTML = `
+                        <div class="info">
+                            <h3>System Status</h3>
+                            <p><strong>Notification Permission:</strong> ${permissionStatus}</p>
+                            <p><strong>Service Worker:</strong> ${swStatus}</p>
+                            <p><strong>Firebase Auth:</strong> ${authStatus}</p>
+                            <p><strong>Firebase Project:</strong> ${firebaseConfig.projectId}</p>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('❌ Failed to check system status:', error);
+                }
+            },
+
+            async checkFCMTokens() {
+                try {
+                    const statusOutput = document.getElementById('statusOutput');
+                    
+                    // Get all FCM tokens
+                    const tokensSnapshot = await getDocs(collection(db, 'fcm_tokens'));
+                    const tokens = [];
+                    
+                    tokensSnapshot.forEach(doc => {
+                        tokens.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    
+                    statusOutput.innerHTML = `
+                        <div class="info">
+                            <h3>FCM Tokens</h3>
+                            <p><strong>Total tokens:</strong> ${tokens.length}</p>
+                            ${tokens.map(token => `
+                                <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px;">
+                                    <p><strong>ID:</strong> ${token.id}</p>
+                                    <p><strong>User ID:</strong> ${token.userId || 'N/A'}</p>
+                                    <p><strong>Pet ID:</strong> ${token.petId || 'N/A'}</p>
+                                    <p><strong>Token:</strong> ${token.token ? token.token.substring(0, 20) + '...' : 'N/A'}</p>
+                                    <p><strong>Timestamp:</strong> ${token.timestamp ? new Date(token.timestamp.seconds ? token.timestamp.seconds * 1000 : token.timestamp).toLocaleString('da-DK') : 'N/A'}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('❌ Failed to check FCM tokens:', error);
+                }
+            },
+
+            async testForegroundNotification() {
+                try {
+                    if (Notification.permission !== 'granted') {
+                        alert('Please grant notification permission first');
+                        return;
+                    }
+
+                    const petId = document.getElementById('testPetSelect').value;
+                    const pet = testPets.find(p => p.id === petId);
+                    
+                    if (!pet) {
+                        alert('Please select a pet first');
+                        return;
+                    }
+
+                    // Create a test notification
+                    const notification = new Notification(`Ny ${pet.name} Check-in! 🐱`, {
+                        body: 'Test User har lige checket ind',
+                        icon: '/img/emoji-cat-192x192.png',
+                        badge: '/img/emoji-cat-192x192.png',
+                        tag: `test-checkin-${pet.id}`,
+                        data: {
+                            userId: 'test_user',
+                            petId: pet.id,
+                            petName: pet.name,
+                            url: `/${pet.userId}/${pet.name}/`
+                        }
+                    });
+
+                    const output = document.getElementById('notificationOutput');
+                    output.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Test Foreground Notification Sent</h3>
+                            <p><strong>Title:</strong> Ny ${pet.name} Check-in! 🐱</p>
+                            <p><strong>Body:</strong> Test User har lige checket ind</p>
+                            <p><strong>Pet:</strong> ${pet.name} (${pet.ownerName})</p>
+                            <p><em>This simulates a foreground notification with the correct pet name</em></p>
+                        </div>
+                    `;
+
+                    console.log('✅ Test foreground notification sent');
+                } catch (error) {
+                    console.error('❌ Failed to send test notification:', error);
+                }
+            },
+
+            async showDebugInfo() {
+                try {
+                    const debugOutput = document.getElementById('debugOutput');
+                    
+                    const debugInfo = {
+                        userAgent: navigator.userAgent,
+                        platform: navigator.platform,
+                        language: navigator.language,
+                        notificationPermission: Notification.permission,
+                        serviceWorker: 'serviceWorker' in navigator,
+                        firebaseConfig: {
+                            projectId: firebaseConfig.projectId,
+                            authDomain: firebaseConfig.authDomain
+                        },
+                        currentUser: auth.currentUser ? {
+                            uid: auth.currentUser.uid,
+                            isAnonymous: auth.currentUser.isAnonymous
+                        } : null,
+                        testPets: testPets,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    debugOutput.innerHTML = `
+                        <div class="info">
+                            <h3>Debug Information</h3>
+                            <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
+                        </div>
+                    `;
+                } catch (error) {
+                    console.error('❌ Failed to show debug info:', error);
+                }
+            }
+        };
+
+        // Global functions for button clicks
+        window.checkSystemStatus = () => window.testNotificationSystem.checkSystemStatus();
+        window.requestNotificationPermission = async () => {
+            const permission = await Notification.requestPermission();
+            console.log('Notification permission:', permission);
+            window.testNotificationSystem.checkSystemStatus();
+        };
+        window.checkFCMTokens = () => window.testNotificationSystem.checkFCMTokens();
+        window.loadTestPets = () => window.testNotificationSystem.loadTestPets();
+        window.createTestCheckIn = () => window.testNotificationSystem.createTestCheckIn();
+        window.testForegroundNotification = () => window.testNotificationSystem.testForegroundNotification();
+        window.showDebugInfo = () => window.testNotificationSystem.showDebugInfo();
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.testNotificationSystem.init();
+        });
+    </script>
+</body>
+</html> 
