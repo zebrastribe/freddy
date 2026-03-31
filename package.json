@@ -18,6 +18,7 @@
     "test:qa": "npm run preflight -- --lite && npm run test:unit && npm run test:e2e:smoke",
     "security:rules:check": "node ./scripts/check-firestore-rules.cjs --mode=release",
     "health:local": "node ./scripts/health-local.cjs",
+    "db:clean-exports": "node ./scripts/clean-firebase-exports.cjs",
     "build-css": "node ./node_modules/@tailwindcss/cli/dist/index.mjs -i ./trace/v2-frontend/styles/tailwind-input.css -o ./trace/v2-frontend/public/styles/tailwind.css --watch --config ./trace/v2-frontend/tailwind.config.js",
     "emulators:start": "npm run preflight -- --lite && node start-emulators-with-users.js",
     "emu:add-url-names": "node trace/add-url-names.cjs"

@@ -37,8 +37,11 @@ cd freddy
 # Install dependencies
 npm install
 
-# Start Firebase emulator
-firebase emulators:start --only firestore --import=./emulator-data --export-on-exit=./emulator-data
+# Start Firebase emulators + local seed data (recommended)
+npm run emulators:start
+
+# Optional: clean accidental timestamped exports if they exist
+npm run db:clean-exports
 
 # Start SPA server (in another terminal)
 npm start
